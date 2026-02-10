@@ -71,16 +71,16 @@ so that **possa lavorare in modo efficiente senza confusione**.
   - [x] 5.3 Su mobile: aggiungere SidebarTrigger (hamburger menu) per accesso menu esteso
   - [x] 5.4 Predisporre lo spazio per il selettore sede (sara' implementato in Epica 2)
 
-- [ ] Task 6: Creare le pagine placeholder per le route autenticate (AC: #1)
-  - [ ] 6.1 Creare `src/app/(auth)/agenda/page.tsx` — placeholder "Agenda" (sara' implementata in Epica 4)
-  - [ ] 6.2 Creare `src/app/(auth)/clients/page.tsx` — placeholder "Clienti" (sara' implementata in Epica 3)
-  - [ ] 6.3 Creare `src/app/(auth)/dogs/page.tsx` — placeholder "Cani" (sara' implementata in Epica 3)
-  - [ ] 6.4 Creare `src/app/(auth)/services/page.tsx` — placeholder "Servizi" (sara' implementata in Epica 2)
-  - [ ] 6.5 Creare `src/app/(auth)/dashboard/page.tsx` — placeholder "Dashboard" (sara' implementata in Epica 5)
-  - [ ] 6.6 Creare `src/app/(auth)/settings/page.tsx` — placeholder "Impostazioni" (Admin only)
-  - [ ] 6.7 Creare `src/app/(auth)/settings/users/page.tsx` — placeholder "Gestione Utenze" (sara' implementata in Story 1.3)
-  - [ ] 6.8 Creare `src/app/(auth)/settings/locations/page.tsx` — placeholder "Gestione Sedi" (sara' implementata in Epica 2)
-  - [ ] 6.9 Aggiornare `src/app/page.tsx` per redirigere a `/agenda` (la pagina principale dell'app)
+- [x] Task 6: Creare le pagine placeholder per le route autenticate (AC: #1)
+  - [x] 6.1 Creare `src/app/(auth)/agenda/page.tsx` — placeholder "Agenda" (sara' implementata in Epica 4)
+  - [x] 6.2 Creare `src/app/(auth)/clients/page.tsx` — placeholder "Clienti" (sara' implementata in Epica 3)
+  - [x] 6.3 Creare `src/app/(auth)/dogs/page.tsx` — placeholder "Cani" (sara' implementata in Epica 3)
+  - [x] 6.4 Creare `src/app/(auth)/services/page.tsx` — placeholder "Servizi" (sara' implementata in Epica 2)
+  - [x] 6.5 Creare `src/app/(auth)/dashboard/page.tsx` — placeholder "Dashboard" (sara' implementata in Epica 5)
+  - [x] 6.6 Creare `src/app/(auth)/settings/page.tsx` — placeholder "Impostazioni" (Admin only)
+  - [x] 6.7 Creare `src/app/(auth)/settings/users/page.tsx` — placeholder "Gestione Utenze" (sara' implementata in Story 1.3)
+  - [x] 6.8 Creare `src/app/(auth)/settings/locations/page.tsx` — placeholder "Gestione Sedi" (sara' implementata in Epica 2)
+  - [x] 6.9 Aggiornare `src/app/page.tsx` per redirigere a `/agenda` (la pagina principale dell'app)
 
 - [ ] Task 7: Implementare RBAC sulle route (AC: #3, #4, #5)
   - [ ] 7.1 Aggiornare `src/lib/auth/permissions.ts` — aggiungere mappa dei permessi per route: definire quali route sono accessibili per ruolo
@@ -291,6 +291,7 @@ Il layout `(auth)/layout.tsx` serve per la UI (sidebar, header) ma NON e' il pun
 - Task 3: Creato Sidebar.tsx con shadcn/ui Sidebar (collapsible="icon"). Nav items definiti in nav-items.ts condiviso. Voce attiva styled con #E8F0ED bg, #4A7C6F text, 3px left border. Filtraggio voci per ruolo. Footer con nome/ruolo utente e logout.
 - Task 4: Creato BottomBar.tsx — barra fissa in basso, 4 voci (Agenda, Clienti, Cani, Home), touch target 64px altezza, voce attiva #4A7C6F, inattive #94A3B8, md:hidden.
 - Task 5: Creato Header.tsx — titolo pagina dinamico da pathname, nome utente, SidebarTrigger. Spazio riservato per selettore sede (Epica 2).
+- Task 6: Create 8 pagine placeholder (agenda, clients, dogs, services, dashboard, settings, settings/users, settings/locations). Pagine admin-only (settings/*) includono verifica ruolo server-side con redirect a /agenda. Aggiornato page.tsx root per redirect a /agenda.
 
 ### Change Log
 
@@ -308,3 +309,12 @@ Il layout `(auth)/layout.tsx` serve per la UI (sidebar, header) ma NON e' il pun
 - src/components/layout/BottomBar.tsx (nuovo)
 - src/components/layout/Header.tsx (nuovo)
 - src/components/layout/nav-items.ts (nuovo)
+- src/app/(auth)/agenda/page.tsx (nuovo)
+- src/app/(auth)/clients/page.tsx (nuovo)
+- src/app/(auth)/dogs/page.tsx (nuovo)
+- src/app/(auth)/services/page.tsx (nuovo)
+- src/app/(auth)/dashboard/page.tsx (nuovo)
+- src/app/(auth)/settings/page.tsx (nuovo)
+- src/app/(auth)/settings/users/page.tsx (nuovo)
+- src/app/(auth)/settings/locations/page.tsx (nuovo)
+- src/app/page.tsx (modificato — redirect a /agenda)
