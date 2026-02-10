@@ -89,9 +89,9 @@ so that **possa lavorare in modo efficiente senza confusione**.
   - [x] 7.4 Ogni pagina admin-only deve anche verificare il ruolo server-side come doppia protezione (non affidarsi solo al middleware)
   - [x] 7.5 Messaggio di redirect/errore senza dettagli tecnici — redirigere a `/agenda` se il collaboratore tenta di accedere a una route admin
 
-- [ ] Task 8: Aggiornare pagina di login per redirect post-login (AC: #1)
-  - [ ] 8.1 Dopo il login, redirigere a `/agenda` invece che a `/` (la home dell'app e' l'agenda)
-  - [ ] 8.2 Verificare che il logout rediriga a `/login`
+- [x] Task 8: Aggiornare pagina di login per redirect post-login (AC: #1)
+  - [x] 8.1 Dopo il login, redirigere a `/agenda` invece che a `/` (la home dell'app e' l'agenda)
+  - [x] 8.2 Verificare che il logout rediriga a `/login`
 
 ## Dev Notes
 
@@ -293,6 +293,7 @@ Il layout `(auth)/layout.tsx` serve per la UI (sidebar, header) ma NON e' il pun
 - Task 5: Creato Header.tsx — titolo pagina dinamico da pathname, nome utente, SidebarTrigger. Spazio riservato per selettore sede (Epica 2).
 - Task 6: Create 8 pagine placeholder (agenda, clients, dogs, services, dashboard, settings, settings/users, settings/locations). Pagine admin-only (settings/*) includono verifica ruolo server-side con redirect a /agenda. Aggiornato page.tsx root per redirect a /agenda.
 - Task 7: RBAC implementato su 2 livelli: (1) middleware.ts verifica ruolo per route admin-only (/settings, /settings/users, /settings/locations) con redirect a /agenda; (2) pagine admin-only verificano ruolo server-side come doppia protezione. Aggiunto adminOnlyRoutes e isAdminOnlyRoute() in permissions.ts.
+- Task 8: Login page redirect aggiornato da '/' a '/agenda'. Middleware redirect da login (se autenticato) aggiornato a /agenda. Logout usa signOut({ callbackUrl: '/login' }) nella Sidebar.
 
 ### Change Log
 
@@ -321,3 +322,4 @@ Il layout `(auth)/layout.tsx` serve per la UI (sidebar, header) ma NON e' il pun
 - src/app/page.tsx (modificato — redirect a /agenda)
 - src/lib/auth/permissions.ts (modificato — aggiunto adminOnlyRoutes e isAdminOnlyRoute)
 - src/middleware.ts (modificato — aggiunto RBAC per route admin-only, redirect login a /agenda)
+- src/app/(public)/login/page.tsx (modificato — redirect post-login a /agenda)

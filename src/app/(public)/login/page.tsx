@@ -39,7 +39,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError('Credenziali non valide')
       } else {
-        router.push('/')
+        router.push('/agenda')
         router.refresh()
       }
     } catch {
