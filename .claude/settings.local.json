@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if not exist \"C:\\\\dog-grooming\\\\_bmad-output\\\\planning-artifacts\" mkdir \"C:\\\\dog-grooming\\\\_bmad-output\\\\planning-artifacts\")",
+      "WebSearch",
+      "Bash(if not exist \"C:\\\\dog-grooming\\\\_bmad-output\\\\implementation-artifacts\" mkdir \"C:\\\\dog-grooming\\\\_bmad-output\\\\implementation-artifacts\")",
+      "Bash(dir:*)",
+      "Bash(npx create-next-app@16:*)",
+      "Bash(powershell -Command \"Copy-Item -Path ''temp-next\\\\*'' -Destination ''.'' -Recurse -Force -Exclude ''.git''\")",
+      "Bash(powershell -Command \"Copy-Item ''temp-next\\\\.gitignore'' -Destination ''.\\\\.gitignore'' -Force\")",
+      "Bash(powershell:*)",
+      "Bash(powershell -Command \"Remove-Item -Path ''nul'' -Force -ErrorAction SilentlyContinue\")",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(npx next build:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx shadcn@latest add button input label card toast -y)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm install:*)",
+      "Bash(npm view:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e:*)",
+      "Bash(npx drizzle-kit push:*)",
+      "Bash(npx tsx:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

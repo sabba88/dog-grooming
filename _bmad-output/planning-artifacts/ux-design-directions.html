@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dog Grooming — Design Directions</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #F1F5F9; color: #1A202C; }
+
+  /* Navigation */
+  .nav { position: sticky; top: 0; z-index: 100; background: #FFFFFF; border-bottom: 1px solid #E2E8F0; padding: 16px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .nav h1 { font-size: 18px; font-weight: 700; color: #4A7C6F; white-space: nowrap; }
+  .nav-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .nav-btn { padding: 8px 16px; border-radius: 6px; border: 1px solid #E2E8F0; background: #FFFFFF; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; color: #64748B; transition: all 0.15s; }
+  .nav-btn:hover { border-color: #4A7C6F; color: #4A7C6F; }
+  .nav-btn.active { background: #4A7C6F; color: #FFFFFF; border-color: #4A7C6F; }
+
+  /* Direction Container */
+  .direction { display: none; padding: 24px; }
+  .direction.active { display: block; }
+  .direction-header { margin-bottom: 24px; }
+  .direction-header h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+  .direction-header p { font-size: 15px; color: #64748B; line-height: 1.5; }
+  .tag { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 500; background: #E8F0ED; color: #4A7C6F; margin-right: 6px; margin-bottom: 6px; }
+
+  /* Mockup Frame */
+  .mockup-frame { background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .mockup-bar { background: #F8FAFB; border-bottom: 1px solid #E2E8F0; padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+  .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .mockup-dot.r { background: #EF4444; }
+  .mockup-dot.y { background: #F59E0B; }
+  .mockup-dot.g { background: #22C55E; }
+  .mockup-label { font-size: 11px; color: #94A3B8; margin-left: auto; }
+
+  /* Shared Component Styles */
+  .sidebar { width: 220px; background: #F8FAFB; border-right: 1px solid #E2E8F0; padding: 16px 0; flex-shrink: 0; }
+  .sidebar-item { padding: 10px 20px; font-size: 14px; color: #64748B; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.15s; }
+  .sidebar-item:hover { background: #E8F0ED; color: #345A50; }
+  .sidebar-item.active { background: #E8F0ED; color: #4A7C6F; font-weight: 600; border-left: 3px solid #4A7C6F; }
+  .sidebar-icon { width: 18px; text-align: center; }
+
+  .main-content { flex: 1; padding: 24px; overflow-x: auto; }
+  .page-title { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+  .page-subtitle { font-size: 13px; color: #64748B; margin-bottom: 20px; }
+
+  .btn-primary { background: #4A7C6F; color: #FFFFFF; border: none; padding: 10px 20px; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+  .btn-primary:hover { background: #345A50; }
+  .btn-secondary { background: #FFFFFF; color: #4A7C6F; border: 1px solid #4A7C6F; padding: 10px 20px; border-radius: 6px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; }
+
+  .search-bar { display: flex; align-items: center; background: #F8FAFB; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 14px; gap: 8px; }
+  .search-bar input { border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 14px; outline: none; flex: 1; color: #1A202C; }
+  .search-bar .icon { color: #94A3B8; font-size: 14px; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .badge-blue { background: #DBEAFE; color: #2563EB; }
+  .badge-green { background: #DCFCE7; color: #16A34A; }
+  .badge-lavender { background: #E8DEF8; color: #7C3AED; }
+  .badge-peach { background: #FED7AA; color: #C2410C; }
+
+  .toast { position: fixed; bottom: 24px; right: 24px; background: #1A202C; color: #FFFFFF; padding: 12px 20px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .toast-check { color: #22C55E; }
+
+  /* ============ DIRECTION 1: Desktop Agenda ============ */
+  .d1-layout { display: flex; min-height: 560px; }
+  .d1-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .d1-tabs { display: flex; gap: 4px; background: #F8FAFB; border-radius: 8px; padding: 4px; }
+  .d1-tab { padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; color: #64748B; transition: all 0.15s; }
+  .d1-tab.active { background: #FFFFFF; color: #4A7C6F; box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .d1-nav-date { display: flex; align-items: center; gap: 12px; }
+  .d1-nav-date button { background: none; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 14px; color: #64748B; }
+  .d1-nav-date span { font-size: 16px; font-weight: 600; min-width: 200px; text-align: center; }
+
+  .d1-grid { display: grid; grid-template-columns: 60px repeat(3, 1fr); gap: 0; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; }
+  .d1-grid-header { background: #F8FAFB; padding: 12px 8px; font-size: 13px; font-weight: 600; text-align: center; border-bottom: 1px solid #E2E8F0; color: #4A7C6F; }
+  .d1-grid-time { background: #F8FAFB; padding: 8px 6px; font-size: 11px; color: #94A3B8; text-align: right; border-right: 1px solid #E2E8F0; border-bottom: 1px solid #F1F5F9; display: flex; align-items: flex-start; justify-content: flex-end; }
+  .d1-grid-cell { border-right: 1px solid #F1F5F9; border-bottom: 1px solid #F1F5F9; min-height: 48px; padding: 2px; position: relative; }
+  .d1-grid-cell:last-child { border-right: none; }
+  .d1-grid-cell.empty { background: repeating-linear-gradient(135deg, transparent, transparent 4px, #F8FAFB 4px, #F8FAFB 5px); }
+
+  .d1-appt { border-radius: 4px; padding: 6px 8px; font-size: 12px; line-height: 1.3; border-left: 3px solid; cursor: pointer; transition: box-shadow 0.15s; }
+  .d1-appt:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .d1-appt .name { font-weight: 600; font-size: 12px; }
+  .d1-appt .detail { font-size: 11px; color: #64748B; margin-top: 2px; }
+  .d1-appt.bagno { background: #DBEAFE; border-color: #93C5FD; }
+  .d1-appt.taglio { background: #DCFCE7; border-color: #86EFAC; }
+  .d1-appt.combo { background: #E8DEF8; border-color: #C4B5FD; }
+  .d1-appt.stripping { background: #FED7AA; border-color: #FDBA74; }
+
+  /* ============ DIRECTION 2: Mobile Booking Flow ============ */
+  .d2-phone { width: 375px; margin: 0 auto; background: #FFFFFF; border-radius: 24px; border: 2px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+  .d2-statusbar { background: #FFFFFF; padding: 8px 20px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; }
+  .d2-content { padding: 0 16px 16px; }
+  .d2-step { margin-bottom: 16px; }
+  .d2-step-label { font-size: 11px; font-weight: 500; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .d2-client-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: #E8F0ED; border-radius: 8px; border: 1px solid #4A7C6F; }
+  .d2-client-avatar { width: 40px; height: 40px; border-radius: 50%; background: #4A7C6F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 16px; }
+  .d2-client-info .name { font-weight: 600; font-size: 15px; }
+  .d2-client-info .sub { font-size: 13px; color: #64748B; }
+  .d2-dog-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: #F8FAFB; border-radius: 8px; border: 1px solid #E2E8F0; }
+  .d2-dog-icon { font-size: 24px; }
+  .d2-service-option { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #F8FAFB; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+  .d2-service-option.selected { background: #E8F0ED; border-color: #4A7C6F; }
+  .d2-service-option .svc-name { font-weight: 500; font-size: 14px; }
+  .d2-service-option .svc-meta { font-size: 12px; color: #64748B; margin-top: 2px; }
+  .d2-service-option .svc-price { font-weight: 600; color: #4A7C6F; font-size: 15px; }
+  .d2-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .d2-slot { padding: 10px; text-align: center; border-radius: 6px; border: 1px solid #E2E8F0; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .d2-slot:hover { border-color: #4A7C6F; }
+  .d2-slot.selected { background: #4A7C6F; color: #FFFFFF; border-color: #4A7C6F; }
+  .d2-slot .slot-station { font-size: 11px; color: #94A3B8; margin-top: 2px; }
+  .d2-slot.selected .slot-station { color: rgba(255,255,255,0.7); }
+  .d2-bottombar { display: flex; justify-content: space-around; padding: 12px 16px; border-top: 1px solid #E2E8F0; background: #FFFFFF; }
+  .d2-bottombar-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: #94A3B8; cursor: pointer; }
+  .d2-bottombar-item.active { color: #4A7C6F; }
+  .d2-bottombar-item .bb-icon { font-size: 20px; }
+
+  /* ============ DIRECTION 3: Dashboard ============ */
+  .d3-layout { display: flex; min-height: 560px; }
+  .d3-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .d3-card { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; }
+  .d3-card-label { font-size: 12px; color: #94A3B8; margin-bottom: 4px; }
+  .d3-card-value { font-size: 28px; font-weight: 700; color: #1A202C; }
+  .d3-card-sub { font-size: 12px; color: #64748B; margin-top: 4px; }
+  .d3-card.highlight { border-left: 3px solid #4A7C6F; }
+  .d3-today { background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; }
+  .d3-today h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+  .d3-today-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F1F5F9; }
+  .d3-today-item:last-child { border-bottom: none; }
+  .d3-today-time { font-size: 13px; font-weight: 600; color: #4A7C6F; min-width: 50px; }
+  .d3-today-info .t-name { font-size: 14px; font-weight: 500; }
+  .d3-today-info .t-detail { font-size: 12px; color: #64748B; }
+
+  /* ============ DIRECTION 4: Client Detail ============ */
+  .d4-layout { display: flex; min-height: 560px; }
+  .d4-client-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #E2E8F0; }
+  .d4-avatar { width: 56px; height: 56px; border-radius: 50%; background: #4A7C6F; color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 22px; }
+  .d4-client-name { font-size: 22px; font-weight: 600; }
+  .d4-client-meta { font-size: 13px; color: #64748B; margin-top: 2px; }
+  .d4-section { margin-bottom: 24px; }
+  .d4-section h3 { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .d4-dog-card { display: flex; align-items: center; gap: 16px; padding: 16px; background: #F8FAFB; border-radius: 8px; border: 1px solid #E2E8F0; margin-bottom: 8px; }
+  .d4-dog-icon { font-size: 28px; }
+  .d4-dog-name { font-weight: 600; font-size: 15px; }
+  .d4-dog-meta { font-size: 13px; color: #64748B; }
+  .d4-note { padding: 12px; background: #FFFBEB; border-left: 3px solid #F59E0B; border-radius: 0 6px 6px 0; font-size: 13px; color: #64748B; margin-top: 8px; line-height: 1.5; }
+  .d4-history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #F1F5F9; }
+  .d4-history-item:last-child { border-bottom: none; }
+  .d4-h-date { font-size: 13px; font-weight: 600; color: #4A7C6F; min-width: 90px; }
+  .d4-h-service { font-size: 14px; font-weight: 500; }
+  .d4-h-note { font-size: 12px; color: #64748B; }
+  .d4-h-price { font-size: 14px; font-weight: 600; }
+
+  /* ============ DIRECTION 5: Mobile Agenda ============ */
+  .d5-phone { width: 375px; margin: 0 auto; background: #FFFFFF; border-radius: 24px; border: 2px solid #E2E8F0; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+  .d5-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .d5-header h2 { font-size: 20px; font-weight: 700; }
+  .d5-date-strip { display: flex; gap: 8px; padding: 0 16px 12px; overflow-x: auto; }
+  .d5-date-item { display: flex; flex-direction: column; align-items: center; padding: 8px 12px; border-radius: 8px; cursor: pointer; min-width: 44px; }
+  .d5-date-item .day-name { font-size: 11px; color: #94A3B8; }
+  .d5-date-item .day-num { font-size: 16px; font-weight: 600; margin-top: 2px; }
+  .d5-date-item.active { background: #4A7C6F; }
+  .d5-date-item.active .day-name, .d5-date-item.active .day-num { color: #FFFFFF; }
+  .d5-station-tabs { display: flex; gap: 4px; padding: 0 16px 12px; }
+  .d5-station-tab { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; background: #F8FAFB; color: #64748B; cursor: pointer; }
+  .d5-station-tab.active { background: #E8F0ED; color: #4A7C6F; }
+  .d5-timeline { padding: 0 16px 16px; }
+  .d5-time-row { display: flex; gap: 8px; margin-bottom: 4px; min-height: 56px; }
+  .d5-time-label { font-size: 11px; color: #94A3B8; min-width: 44px; padding-top: 4px; text-align: right; }
+  .d5-time-content { flex: 1; }
+  .d5-appt-card { border-radius: 8px; padding: 10px 12px; border-left: 3px solid; margin-bottom: 4px; }
+  .d5-appt-card .a-name { font-weight: 600; font-size: 14px; }
+  .d5-appt-card .a-detail { font-size: 12px; color: #64748B; margin-top: 2px; }
+  .d5-empty-slot { height: 48px; border-radius: 8px; background: repeating-linear-gradient(135deg, transparent, transparent 4px, #F8FAFB 4px, #F8FAFB 5px); border: 1px dashed #E2E8F0; display: flex; align-items: center; justify-content: center; color: #94A3B8; font-size: 12px; cursor: pointer; }
+  .d5-empty-slot:hover { border-color: #4A7C6F; color: #4A7C6F; }
+
+  /* ============ DIRECTION 6: Settings / Services ============ */
+  .d6-layout { display: flex; min-height: 560px; }
+  .d6-table { width: 100%; border-collapse: collapse; }
+  .d6-table th { text-align: left; padding: 12px 16px; font-size: 12px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #E2E8F0; }
+  .d6-table td { padding: 14px 16px; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
+  .d6-table tr:hover { background: #F8FAFB; }
+  .d6-color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; }
+  .d6-actions { display: flex; gap: 8px; }
+  .d6-action-btn { padding: 6px 12px; border-radius: 4px; border: 1px solid #E2E8F0; background: #FFFFFF; font-size: 12px; cursor: pointer; color: #64748B; transition: all 0.15s; }
+  .d6-action-btn:hover { border-color: #4A7C6F; color: #4A7C6F; }
+  .d6-action-btn.danger:hover { border-color: #EF4444; color: #EF4444; }
+
+  /* Comparison Grid */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 900px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-item { background: #FFFFFF; border-radius: 12px; border: 1px solid #E2E8F0; overflow: hidden; }
+  .compare-item h3 { padding: 16px; font-size: 16px; font-weight: 600; border-bottom: 1px solid #E2E8F0; }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <h1>Dog Grooming — Design Directions</h1>
+  <div class="nav-buttons">
+    <button class="nav-btn active" onclick="showDirection(1)">1. Agenda Desktop</button>
+    <button class="nav-btn" onclick="showDirection(2)">2. Prenotazione Mobile</button>
+    <button class="nav-btn" onclick="showDirection(3)">3. Dashboard</button>
+    <button class="nav-btn" onclick="showDirection(4)">4. Dettaglio Cliente</button>
+    <button class="nav-btn" onclick="showDirection(5)">5. Agenda Mobile</button>
+    <button class="nav-btn" onclick="showDirection(6)">6. Gestione Servizi</button>
+    <button class="nav-btn" onclick="showDirection(7)">7. Confronto</button>
+  </div>
+</div>
+
+<!-- DIRECTION 1: Desktop Agenda -->
+<div class="direction active" id="dir1">
+  <div class="direction-header">
+    <h2>Direzione 1 — Vista Agenda Desktop</h2>
+    <p>Il quadro di comando del salone. Griglia temporale con postazioni come colonne, fasce orarie come righe. I buchi emergono visivamente con il pattern a righe diagonali.</p>
+    <div style="margin-top: 8px;">
+      <span class="tag">Desktop-first</span>
+      <span class="tag">Griglia temporale</span>
+      <span class="tag">Buchi visibili</span>
+      <span class="tag">Blocchi colorati</span>
+    </div>
+  </div>
+
+  <div class="mockup-frame">
+    <div class="mockup-bar">
+      <div class="mockup-dot r"></div>
+      <div class="mockup-dot y"></div>
+      <div class="mockup-dot g"></div>
+      <div class="mockup-label">dog-grooming — Agenda</div>
+    </div>
+    <div class="d1-layout">
+      <div class="sidebar">
+        <div class="sidebar-item active"><span class="sidebar-icon">📅</span> Agenda</div>
+        <div class="sidebar-item"><span class="sidebar-icon">👤</span> Clienti</div>
+        <div class="sidebar-item"><span class="sidebar-icon">🐕</span> Cani</div>
+        <div class="sidebar-item"><span class="sidebar-icon">✂️</span> Servizi</div>
+        <div class="sidebar-item"><span class="sidebar-icon">📊</span> Dashboard</div>
+        <div style="border-top: 1px solid #E2E8F0; margin: 12px 20px;"></div>
+        <div class="sidebar-item"><span class="sidebar-icon">⚙️</span> Impostazioni</div>
+      </div>
+      <div class="main-content">
+        <div class="d1-header">
+          <div>
+            <div class="page-title">Agenda</div>
+            <div class="page-subtitle">Sede Centro — Mercoledi' 12 Febbraio 2026</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="d1-tabs">
+              <div class="d1-tab active">Giorno</div>
+              <div class="d1-tab">Settimana</div>
+            </div>
+            <div class="d1-nav-date">
+              <button>&#8249;</button>
+              <span>Mer 12 Feb 2026</span>
+              <button>&#8250;</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="d1-grid">
+          <div class="d1-grid-header" style="background:#F8FAFB;"></div>
+          <div class="d1-grid-header">Postazione 1</div>
+          <div class="d1-grid-header">Postazione 2</div>
+          <div class="d1-grid-header">Vasca</div>
+
+          <div class="d1-grid-time">09:00</div>
+          <div class="d1-grid-cell">
+            <div class="d1-appt bagno" style="min-height: 88px;">
+              <div class="name">Maria Rossi</div>
+              <div class="detail">Teddy — Bagno</div>
+              <div class="detail">09:00 - 10:00 · €35</div>
+            </div>
+          </div>
+          <div class="d1-grid-cell empty"></div>
+          <div class="d1-grid-cell">
+            <div class="d1-appt combo" style="min-height: 40px;">
+              <div class="name">Luca Bianchi</div>
+              <div class="detail">Rex — Bagno + Taglio</div>
+              <div class="detail">09:00 - 09:30 · €50</div>
+            </div>
+          </div>
+
+          <div class="d1-grid-time">09:30</div>
+          <div class="d1-grid-cell" style="border-top: none;"></div>
+          <div class="d1-grid-cell">
+            <div class="d1-appt taglio" style="min-height: 40px;">
+              <div class="name">Anna Verdi</div>
+              <div class="detail">Luna — Taglio</div>
+              <div class="detail">09:30 - 10:00 · €25</div>
+            </div>
+          </div>
+          <div class="d1-grid-cell empty"></div>
+
+          <div class="d1-grid-time">10:00</div>
+          <div class="d1-grid-cell empty"></div>
+          <div class="d1-grid-cell empty"></div>
+          <div class="d1-grid-cell">
+            <div class="d1-appt stripping" style="min-height: 88px;">
+              <div class="name">Paolo Neri</div>
+              <div class="detail">Rocky — Stripping</div>
+              <div class="detail">10:00 - 11:00 · €60</div>
+            </div>
+          </div>
+
+          <div class="d1-grid-time">10:30</div>
+          <div class="d1-grid-cell empty"></div>
+          <div class="d1-grid-cell">
+            <div class="d1-appt bagno" style="min-height: 88px;">
+              <div class="name">Giulia Conti</div>
+              <div class="detail">Milo — Bagno</div>
+              <div class="detail">10:30 - 11:30 · €35</div>
+            </div>
+          </div>
+          <div class="d1-grid-cell" style="border-top: none;"></div>
+
+          <div class="d1-grid-time">11:00</div>
+          <div class="d1-grid-cell">
+            <div class="d1-appt combo" style="min-height: 88px;">
+              <div class="name">Sara Russo</div>
+              <div class="detail">Bella — Bagno + Taglio</div>
+              <div class="detail">11:00 - 12:00 · €50</div>
+            </div>
+          </div>
+          <div class="d1-grid-cell" style="border-top:none;"></div>
+          <div class="d1-grid-cell empty"></div>
+
+          <div class="d1-grid-time">11:30</div>
+          <div class="d1-grid-cell" style="border-top:none;"></div>
+          <div class="d1-grid-cell empty"></div>
+          <div class="d1-grid-cell empty"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DIRECTION 2: Mobile Booking Flow -->
+<div class="direction" id="dir2">
+  <div class="direction-header">
+    <h2>Direzione 2 — Flusso Prenotazione Mobile</h2>
+    <p>Il flusso di presa appuntamento dalla rubrica. Cascata: Cliente → Cane → Servizio → Slot. Form compatto, dati pre-compilati, conferma in un tocco.</p>
+    <div style="margin-top: 8px;">
+      <span class="tag">Mobile-first</span>
+      <span class="tag">Flusso rubrica</span>
+      <span class="tag">Pre-compilazione</span>
+      <span class="tag">&lt;30 secondi</span>
+    </div>
+  </div>
+
+  <div class="d2-phone">
+    <div class="d2-statusbar">
+      <span>9:41</span>
+      <span>📶 🔋</span>
+    </div>
+    <div style="padding: 12px 16px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between;">
+      <span style="font-size: 14px; color: #64748B;">← Indietro</span>
+      <span style="font-size: 16px; font-weight: 600;">Nuovo Appuntamento</span>
+      <span style="width: 60px;"></span>
+    </div>
+    <div class="d2-content" style="padding-top: 16px;">
+
+      <div class="d2-step">
+        <div class="d2-step-label">Cliente</div>
+        <div class="d2-client-card">
+          <div class="d2-client-avatar">MR</div>
+          <div class="d2-client-info">
+            <div class="name">Maria Rossi</div>
+            <div class="sub">3 cani · Cliente dal 2024</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d2-step">
+        <div class="d2-step-label">Cane</div>
+        <div class="d2-dog-card" style="border-color: #4A7C6F; background: #E8F0ED;">
+          <div class="d2-dog-icon">🐕</div>
+          <div>
+            <div style="font-weight: 600;">Teddy</div>
+            <div style="font-size: 12px; color: #64748B;">Barboncino · Maschio · 3 anni</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d2-step">
+        <div class="d2-step-label">Servizio</div>
+        <div class="d2-service-option selected">
+          <div>
+            <div class="svc-name">Bagno + Taglio</div>
+            <div class="svc-meta">~90 min · Postazione 1, 2</div>
+          </div>
+          <div class="svc-price">€50</div>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+          <div style="flex: 1;">
+            <div style="font-size: 11px; color: #94A3B8; margin-bottom: 4px;">Durata</div>
+            <div style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px;">90 min</div>
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 11px; color: #94A3B8; margin-bottom: 4px;">Prezzo</div>
+            <div style="padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px;">€50,00</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d2-step">
+        <div class="d2-step-label">Disponibilita' — Mer 12 Feb</div>
+        <div class="d2-slots">
+          <div class="d2-slot"><strong>09:00</strong><div class="slot-station">Post. 1</div></div>
+          <div class="d2-slot selected"><strong>10:00</strong><div class="slot-station">Post. 2</div></div>
+          <div class="d2-slot"><strong>11:30</strong><div class="slot-station">Post. 1</div></div>
+          <div class="d2-slot"><strong>14:00</strong><div class="slot-station">Post. 1</div></div>
+          <div class="d2-slot"><strong>14:00</strong><div class="slot-station">Post. 2</div></div>
+          <div class="d2-slot"><strong>15:30</strong><div class="slot-station">Post. 2</div></div>
+        </div>
+      </div>
+
+      <button class="btn-primary" style="width: 100%; padding: 14px; font-size: 16px; margin-top: 8px;">Conferma Appuntamento</button>
+    </div>
+    <div class="d2-bottombar">
+      <div class="d2-bottombar-item"><span class="bb-icon">📅</span> Agenda</div>
+      <div class="d2-bottombar-item active"><span class="bb-icon">👤</span> Clienti</div>
+      <div class="d2-bottombar-item"><span class="bb-icon">🐕</span> Cani</div>
+      <div class="d2-bottombar-item"><span class="bb-icon">📊</span> Home</div>
+    </div>
+  </div>
+</div>
+
+<!-- DIRECTION 3: Dashboard -->
+<div class="direction" id="dir3">
+  <div class="direction-header">
+    <h2>Direzione 3 — Dashboard</h2>
+    <p>La vista d'insieme. Poche informazioni chiare: appuntamenti di oggi, prossimi impegni, statistiche essenziali. Nessun sovraccarico.</p>
+    <div style="margin-top: 8px;">
+      <span class="tag">Overview</span>
+      <span class="tag">Essenziale</span>
+      <span class="tag">Punto di partenza</span>
+    </div>
+  </div>
+
+  <div class="mockup-frame">
+    <div class="mockup-bar">
+      <div class="mockup-dot r"></div>
+      <div class="mockup-dot y"></div>
+      <div class="mockup-dot g"></div>
+      <div class="mockup-label">dog-grooming — Dashboard</div>
+    </div>
+    <div class="d3-layout">
+      <div class="sidebar">
+        <div class="sidebar-item"><span class="sidebar-icon">📅</span> Agenda</div>
+        <div class="sidebar-item"><span class="sidebar-icon">👤</span> Clienti</div>
+        <div class="sidebar-item"><span class="sidebar-icon">🐕</span> Cani</div>
+        <div class="sidebar-item"><span class="sidebar-icon">✂️</span> Servizi</div>
+        <div class="sidebar-item active"><span class="sidebar-icon">📊</span> Dashboard</div>
+        <div style="border-top: 1px solid #E2E8F0; margin: 12px 20px;"></div>
+        <div class="sidebar-item"><span class="sidebar-icon">⚙️</span> Impostazioni</div>
+      </div>
+      <div class="main-content">
+        <div class="page-title">Buongiorno, Marco 👋</div>
+        <div class="page-subtitle">Sede Centro — Mercoledi' 12 Febbraio 2026</div>
+
+        <div class="d3-cards">
+          <div class="d3-card highlight">
+            <div class="d3-card-label">Appuntamenti oggi</div>
+            <div class="d3-card-value">7</div>
+            <div class="d3-card-sub">su 3 postazioni</div>
+          </div>
+          <div class="d3-card">
+            <div class="d3-card-label">Prossimo appuntamento</div>
+            <div class="d3-card-value" style="font-size: 20px;">09:00</div>
+            <div class="d3-card-sub">Maria Rossi — Teddy</div>
+          </div>
+          <div class="d3-card">
+            <div class="d3-card-label">Buchi oggi</div>
+            <div class="d3-card-value" style="color: #F59E0B;">3</div>
+            <div class="d3-card-sub">2h 30min totali liberi</div>
+          </div>
+          <div class="d3-card">
+            <div class="d3-card-label">Incasso previsto</div>
+            <div class="d3-card-value">€285</div>
+            <div class="d3-card-sub">7 servizi programmati</div>
+          </div>
+        </div>
+
+        <div class="d3-today">
+          <h3>Programma di oggi</h3>
+          <div class="d3-today-item">
+            <div class="d3-today-time">09:00</div>
+            <div class="d3-today-info">
+              <div class="t-name">Maria Rossi — Teddy</div>
+              <div class="t-detail">Bagno · Post. 1 · €35</div>
+            </div>
+            <span class="badge badge-blue">Bagno</span>
+          </div>
+          <div class="d3-today-item">
+            <div class="d3-today-time">09:00</div>
+            <div class="d3-today-info">
+              <div class="t-name">Luca Bianchi — Rex</div>
+              <div class="t-detail">Bagno + Taglio · Vasca · €50</div>
+            </div>
+            <span class="badge badge-lavender">Combo</span>
+          </div>
+          <div class="d3-today-item">
+            <div class="d3-today-time">09:30</div>
+            <div class="d3-today-info">
+              <div class="t-name">Anna Verdi — Luna</div>
+              <div class="t-detail">Taglio · Post. 2 · €25</div>
+            </div>
+            <span class="badge badge-green">Taglio</span>
+          </div>
+          <div class="d3-today-item">
+            <div class="d3-today-time">10:00</div>
+            <div class="d3-today-info">
+              <div class="t-name">Paolo Neri — Rocky</div>
+              <div class="t-detail">Stripping · Vasca · €60</div>
+            </div>
+            <span class="badge badge-peach">Stripping</span>
+          </div>
+          <div class="d3-today-item" style="color: #94A3B8;">
+            <div class="d3-today-time" style="color: #F59E0B;">10:00</div>
+            <div class="d3-today-info">
+              <div class="t-name" style="color: #94A3B8; font-style: italic;">Slot libero</div>
+              <div class="t-detail">Post. 1 · 30 min disponibili</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DIRECTION 4: Client Detail -->
+<div class="direction" id="dir4">
+  <div class="direction-header">
+    <h2>Direzione 4 — Dettaglio Cliente</h2>
+    <p>La scheda cliente con anagrafica, cani associati, note e storico prestazioni. Il patrimonio informativo che rende il sistema indispensabile.</p>
+    <div style="margin-top: 8px;">
+      <span class="tag">Anagrafica</span>
+      <span class="tag">Storico note</span>
+      <span class="tag">Relazione cliente-cani</span>
+    </div>
+  </div>
+
+  <div class="mockup-frame">
+    <div class="mockup-bar">
+      <div class="mockup-dot r"></div>
+      <div class="mockup-dot y"></div>
+      <div class="mockup-dot g"></div>
+      <div class="mockup-label">dog-grooming — Clienti</div>
+    </div>
+    <div class="d4-layout">
+      <div class="sidebar">
+        <div class="sidebar-item"><span class="sidebar-icon">📅</span> Agenda</div>
+        <div class="sidebar-item active"><span class="sidebar-icon">👤</span> Clienti</div>
+        <div class="sidebar-item"><span class="sidebar-icon">🐕</span> Cani</div>
+        <div class="sidebar-item"><span class="sidebar-icon">✂️</span> Servizi</div>
+        <div class="sidebar-item"><span class="sidebar-icon">📊</span> Dashboard</div>
+        <div style="border-top: 1px solid #E2E8F0; margin: 12px 20px;"></div>
+        <div class="sidebar-item"><span class="sidebar-icon">⚙️</span> Impostazioni</div>
+      </div>
+      <div class="main-content">
+        <div class="d4-client-header">
+          <div class="d4-avatar">MR</div>
+          <div>
+            <div class="d4-client-name">Maria Rossi</div>
+            <div class="d4-client-meta">📞 338 123 4567 · Cliente dal Gennaio 2025</div>
+          </div>
+          <div style="margin-left: auto; display: flex; gap: 8px;">
+            <button class="btn-primary">Nuovo Appuntamento</button>
+            <button class="btn-secondary">Modifica</button>
+          </div>
+        </div>
+
+        <div class="d4-section">
+          <h3>🐕 Cani (3)</h3>
+          <div class="d4-dog-card">
+            <div class="d4-dog-icon">🐩</div>
+            <div style="flex: 1;">
+              <div class="d4-dog-name">Teddy</div>
+              <div class="d4-dog-meta">Barboncino · Maschio · 3 anni · Taglia media</div>
+              <div class="d4-note">⚠️ Sensibile alle zampe posteriori, usare il pettine a denti larghi</div>
+            </div>
+          </div>
+          <div class="d4-dog-card">
+            <div class="d4-dog-icon">🐕</div>
+            <div style="flex: 1;">
+              <div class="d4-dog-name">Luna</div>
+              <div class="d4-dog-meta">Golden Retriever · Femmina · 5 anni · Taglia grande</div>
+            </div>
+          </div>
+          <div class="d4-dog-card">
+            <div class="d4-dog-icon">🐕</div>
+            <div style="flex: 1;">
+              <div class="d4-dog-name">Milo</div>
+              <div class="d4-dog-meta">Jack Russell · Maschio · 2 anni · Taglia piccola</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d4-section">
+          <h3>📋 Storico Prestazioni</h3>
+          <div class="d4-history-item">
+            <div class="d4-h-date">10 Feb 2026</div>
+            <div style="flex: 1;">
+              <div class="d4-h-service">Teddy — Bagno + Taglio</div>
+              <div class="d4-h-note">Arrossamento dietro orecchio sinistro, segnalato alla proprietaria</div>
+            </div>
+            <div class="d4-h-price">€50</div>
+          </div>
+          <div class="d4-history-item">
+            <div class="d4-h-date">28 Gen 2026</div>
+            <div style="flex: 1;">
+              <div class="d4-h-service">Luna — Bagno</div>
+              <div class="d4-h-note">Pelo in ottime condizioni</div>
+            </div>
+            <div class="d4-h-price">€40</div>
+          </div>
+          <div class="d4-history-item">
+            <div class="d4-h-date">15 Gen 2026</div>
+            <div style="flex: 1;">
+              <div class="d4-h-service">Teddy — Taglio</div>
+              <div class="d4-h-note">Richiesta taglio corto per estate</div>
+            </div>
+            <div class="d4-h-price">€25</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DIRECTION 5: Mobile Agenda -->
+<div class="direction" id="dir5">
+  <div class="direction-header">
+    <h2>Direzione 5 — Agenda Mobile</h2>
+    <p>L'agenda su smartphone. Strip dei giorni in alto, tab per postazione, timeline verticale con slot vuoti toccabili.</p>
+    <div style="margin-top: 8px;">
+      <span class="tag">Mobile</span>
+      <span class="tag">Timeline verticale</span>
+      <span class="tag">Tocco su slot vuoto</span>
+    </div>
+  </div>
+
+  <div class="d5-phone">
+    <div class="d2-statusbar">
+      <span>9:41</span>
+      <span>📶 🔋</span>
+    </div>
+    <div class="d5-header">
+      <h2>Agenda</h2>
+      <span style="font-size: 13px; color: #4A7C6F; font-weight: 500;">Sede Centro</span>
+    </div>
+    <div class="d5-date-strip">
+      <div class="d5-date-item"><span class="day-name">Lun</span><span class="day-num">10</span></div>
+      <div class="d5-date-item"><span class="day-name">Mar</span><span class="day-num">11</span></div>
+      <div class="d5-date-item active"><span class="day-name">Mer</span><span class="day-num">12</span></div>
+      <div class="d5-date-item"><span class="day-name">Gio</span><span class="day-num">13</span></div>
+      <div class="d5-date-item"><span class="day-name">Ven</span><span class="day-num">14</span></div>
+      <div class="d5-date-item"><span class="day-name">Sab</span><span class="day-num">15</span></div>
+    </div>
+    <div class="d5-station-tabs">
+      <div class="d5-station-tab active">Tutte</div>
+      <div class="d5-station-tab">Post. 1</div>
+      <div class="d5-station-tab">Post. 2</div>
+      <div class="d5-station-tab">Vasca</div>
+    </div>
+    <div class="d5-timeline">
+      <div class="d5-time-row">
+        <div class="d5-time-label">09:00</div>
+        <div class="d5-time-content">
+          <div class="d5-appt-card bagno">
+            <div class="a-name">Maria Rossi — Teddy</div>
+            <div class="a-detail">Bagno · Post. 1 · 09:00-10:00 · €35</div>
+          </div>
+        </div>
+      </div>
+      <div class="d5-time-row">
+        <div class="d5-time-label">09:00</div>
+        <div class="d5-time-content">
+          <div class="d5-appt-card combo">
+            <div class="a-name">Luca Bianchi — Rex</div>
+            <div class="a-detail">Bagno + Taglio · Vasca · 09:00-09:30 · €50</div>
+          </div>
+        </div>
+      </div>
+      <div class="d5-time-row">
+        <div class="d5-time-label">10:00</div>
+        <div class="d5-time-content">
+          <div class="d5-empty-slot">+ Slot libero · Post. 1</div>
+        </div>
+      </div>
+      <div class="d5-time-row">
+        <div class="d5-time-label">10:00</div>
+        <div class="d5-time-content">
+          <div class="d5-appt-card stripping">
+            <div class="a-name">Paolo Neri — Rocky</div>
+            <div class="a-detail">Stripping · Vasca · 10:00-11:00 · €60</div>
+          </div>
+        </div>
+      </div>
+      <div class="d5-time-row">
+        <div class="d5-time-label">10:30</div>
+        <div class="d5-time-content">
+          <div class="d5-appt-card bagno">
+            <div class="a-name">Giulia Conti — Milo</div>
+            <div class="a-detail">Bagno · Post. 2 · 10:30-11:30 · €35</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="d2-bottombar">
+      <div class="d2-bottombar-item active"><span class="bb-icon">📅</span> Agenda</div>
+      <div class="d2-bottombar-item"><span class="bb-icon">👤</span> Clienti</div>
+      <div class="d2-bottombar-item"><span class="bb-icon">🐕</span> Cani</div>
+      <div class="d2-bottombar-item"><span class="bb-icon">📊</span> Home</div>
+    </div>
+  </div>
+</div>
+
+<!-- DIRECTION 6: Services Management -->
+<div class="direction" id="dir6">
+  <div class="direction-header">
+    <h2>Direzione 6 — Gestione Servizi</h2>
+    <p>Il listino servizi dell'amministratore. Tabella pulita con colore identificativo, durata, prezzo e azioni rapide.</p>
+    <div style="margin-top: 8px;">
+      <span class="tag">Admin</span>
+      <span class="tag">Tabella</span>
+      <span class="tag">CRUD servizi</span>
+    </div>
+  </div>
+
+  <div class="mockup-frame">
+    <div class="mockup-bar">
+      <div class="mockup-dot r"></div>
+      <div class="mockup-dot y"></div>
+      <div class="mockup-dot g"></div>
+      <div class="mockup-label">dog-grooming — Servizi</div>
+    </div>
+    <div class="d6-layout">
+      <div class="sidebar">
+        <div class="sidebar-item"><span class="sidebar-icon">📅</span> Agenda</div>
+        <div class="sidebar-item"><span class="sidebar-icon">👤</span> Clienti</div>
+        <div class="sidebar-item"><span class="sidebar-icon">🐕</span> Cani</div>
+        <div class="sidebar-item active"><span class="sidebar-icon">✂️</span> Servizi</div>
+        <div class="sidebar-item"><span class="sidebar-icon">📊</span> Dashboard</div>
+        <div style="border-top: 1px solid #E2E8F0; margin: 12px 20px;"></div>
+        <div class="sidebar-item"><span class="sidebar-icon">⚙️</span> Impostazioni</div>
+      </div>
+      <div class="main-content">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div>
+            <div class="page-title">Listino Servizi</div>
+            <div class="page-subtitle">6 servizi attivi</div>
+          </div>
+          <button class="btn-primary">+ Nuovo Servizio</button>
+        </div>
+        <table class="d6-table">
+          <thead>
+            <tr>
+              <th>Servizio</th>
+              <th>Durata</th>
+              <th>Prezzo</th>
+              <th>Postazioni</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="d6-color-dot" style="background: #93C5FD;"></span>Bagno</td>
+              <td>60 min</td>
+              <td>€35,00</td>
+              <td><span class="badge badge-blue">Post. 1</span> <span class="badge badge-blue">Post. 2</span> <span class="badge badge-blue">Vasca</span></td>
+              <td class="d6-actions"><button class="d6-action-btn">Modifica</button><button class="d6-action-btn danger">Elimina</button></td>
+            </tr>
+            <tr>
+              <td><span class="d6-color-dot" style="background: #86EFAC;"></span>Taglio</td>
+              <td>30 min</td>
+              <td>€25,00</td>
+              <td><span class="badge badge-green">Post. 1</span> <span class="badge badge-green">Post. 2</span></td>
+              <td class="d6-actions"><button class="d6-action-btn">Modifica</button><button class="d6-action-btn danger">Elimina</button></td>
+            </tr>
+            <tr>
+              <td><span class="d6-color-dot" style="background: #C4B5FD;"></span>Bagno + Taglio</td>
+              <td>90 min</td>
+              <td>€50,00</td>
+              <td><span class="badge badge-lavender">Post. 1</span> <span class="badge badge-lavender">Post. 2</span> <span class="badge badge-lavender">Vasca</span></td>
+              <td class="d6-actions"><button class="d6-action-btn">Modifica</button><button class="d6-action-btn danger">Elimina</button></td>
+            </tr>
+            <tr>
+              <td><span class="d6-color-dot" style="background: #FDBA74;"></span>Stripping</td>
+              <td>60 min</td>
+              <td>€60,00</td>
+              <td><span class="badge badge-peach">Vasca</span></td>
+              <td class="d6-actions"><button class="d6-action-btn">Modifica</button><button class="d6-action-btn danger">Elimina</button></td>
+            </tr>
+            <tr>
+              <td><span class="d6-color-dot" style="background: #93C5FD;"></span>Bagno Taglia Grande</td>
+              <td>90 min</td>
+              <td>€45,00</td>
+              <td><span class="badge badge-blue">Vasca</span></td>
+              <td class="d6-actions"><button class="d6-action-btn">Modifica</button><button class="d6-action-btn danger">Elimina</button></td>
+            </tr>
+            <tr>
+              <td><span class="d6-color-dot" style="background: #86EFAC;"></span>Tosatura</td>
+              <td>45 min</td>
+              <td>€30,00</td>
+              <td><span class="badge badge-green">Post. 1</span> <span class="badge badge-green">Post. 2</span></td>
+              <td class="d6-actions"><button class="d6-action-btn">Modifica</button><button class="d6-action-btn danger">Elimina</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DIRECTION 7: Comparison -->
+<div class="direction" id="dir7">
+  <div class="direction-header">
+    <h2>Confronto Direzioni</h2>
+    <p>Tutte le viste principali dell'applicazione a confronto. Queste non sono alternative — sono le diverse schermate che compongono l'esperienza completa di dog-grooming.</p>
+  </div>
+  <div class="compare-grid">
+    <div class="compare-item"><h3>Agenda Desktop (Griglia)</h3><div style="padding:12px; font-size:13px; color:#64748B;">Il quadro di comando: postazioni come colonne, buchi evidenziati, blocchi colorati per servizio. Per la consultazione e riorganizzazione su desktop.</div></div>
+    <div class="compare-item"><h3>Prenotazione Mobile (Rubrica)</h3><div style="padding:12px; font-size:13px; color:#64748B;">Il flusso core: Cliente → Cane → Servizio → Slot → Conferma. Form compatto con pre-compilazione. Per la presa appuntamento rapida su smartphone.</div></div>
+    <div class="compare-item"><h3>Dashboard</h3><div style="padding:12px; font-size:13px; color:#64748B;">Il punto di partenza: appuntamenti di oggi, prossimo impegno, buchi, incasso previsto. Poche informazioni chiare, nessun sovraccarico.</div></div>
+    <div class="compare-item"><h3>Dettaglio Cliente</h3><div style="padding:12px; font-size:13px; color:#64748B;">Il patrimonio informativo: anagrafica, cani con note, storico prestazioni. Il valore crescente che rende il sistema indispensabile.</div></div>
+    <div class="compare-item"><h3>Agenda Mobile (Timeline)</h3><div style="padding:12px; font-size:13px; color:#64748B;">La versione mobile dell'agenda: timeline verticale, strip dei giorni, filtro per postazione, slot vuoti toccabili.</div></div>
+    <div class="compare-item"><h3>Gestione Servizi</h3><div style="padding:12px; font-size:13px; color:#64748B;">Il listino dell'amministratore: tabella pulita con colore, durata, prezzo, postazioni abilitate. Setup rapido e modifiche immediate.</div></div>
+  </div>
+</div>
+
+<script>
+function showDirection(n) {
+  document.querySelectorAll('.direction').forEach(d => d.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('dir' + n).classList.add('active');
+  document.querySelectorAll('.nav-btn')[n - 1].classList.add('active');
+}
+</script>
+
+</body>
+</html>
