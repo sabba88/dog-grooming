@@ -82,12 +82,12 @@ so that **possa lavorare in modo efficiente senza confusione**.
   - [x] 6.8 Creare `src/app/(auth)/settings/locations/page.tsx` — placeholder "Gestione Sedi" (sara' implementata in Epica 2)
   - [x] 6.9 Aggiornare `src/app/page.tsx` per redirigere a `/agenda` (la pagina principale dell'app)
 
-- [ ] Task 7: Implementare RBAC sulle route (AC: #3, #4, #5)
-  - [ ] 7.1 Aggiornare `src/lib/auth/permissions.ts` — aggiungere mappa dei permessi per route: definire quali route sono accessibili per ruolo
-  - [ ] 7.2 Le route admin-only: `/settings`, `/settings/users`, `/settings/locations`
-  - [ ] 7.3 Aggiornare `src/middleware.ts` per verificare il ruolo nelle route admin-only e redirigere se non autorizzato
-  - [ ] 7.4 Ogni pagina admin-only deve anche verificare il ruolo server-side come doppia protezione (non affidarsi solo al middleware)
-  - [ ] 7.5 Messaggio di redirect/errore senza dettagli tecnici — redirigere a `/agenda` se il collaboratore tenta di accedere a una route admin
+- [x] Task 7: Implementare RBAC sulle route (AC: #3, #4, #5)
+  - [x] 7.1 Aggiornare `src/lib/auth/permissions.ts` — aggiungere mappa dei permessi per route: definire quali route sono accessibili per ruolo
+  - [x] 7.2 Le route admin-only: `/settings`, `/settings/users`, `/settings/locations`
+  - [x] 7.3 Aggiornare `src/middleware.ts` per verificare il ruolo nelle route admin-only e redirigere se non autorizzato
+  - [x] 7.4 Ogni pagina admin-only deve anche verificare il ruolo server-side come doppia protezione (non affidarsi solo al middleware)
+  - [x] 7.5 Messaggio di redirect/errore senza dettagli tecnici — redirigere a `/agenda` se il collaboratore tenta di accedere a una route admin
 
 - [ ] Task 8: Aggiornare pagina di login per redirect post-login (AC: #1)
   - [ ] 8.1 Dopo il login, redirigere a `/agenda` invece che a `/` (la home dell'app e' l'agenda)
@@ -292,6 +292,7 @@ Il layout `(auth)/layout.tsx` serve per la UI (sidebar, header) ma NON e' il pun
 - Task 4: Creato BottomBar.tsx — barra fissa in basso, 4 voci (Agenda, Clienti, Cani, Home), touch target 64px altezza, voce attiva #4A7C6F, inattive #94A3B8, md:hidden.
 - Task 5: Creato Header.tsx — titolo pagina dinamico da pathname, nome utente, SidebarTrigger. Spazio riservato per selettore sede (Epica 2).
 - Task 6: Create 8 pagine placeholder (agenda, clients, dogs, services, dashboard, settings, settings/users, settings/locations). Pagine admin-only (settings/*) includono verifica ruolo server-side con redirect a /agenda. Aggiornato page.tsx root per redirect a /agenda.
+- Task 7: RBAC implementato su 2 livelli: (1) middleware.ts verifica ruolo per route admin-only (/settings, /settings/users, /settings/locations) con redirect a /agenda; (2) pagine admin-only verificano ruolo server-side come doppia protezione. Aggiunto adminOnlyRoutes e isAdminOnlyRoute() in permissions.ts.
 
 ### Change Log
 
@@ -318,3 +319,5 @@ Il layout `(auth)/layout.tsx` serve per la UI (sidebar, header) ma NON e' il pun
 - src/app/(auth)/settings/users/page.tsx (nuovo)
 - src/app/(auth)/settings/locations/page.tsx (nuovo)
 - src/app/page.tsx (modificato — redirect a /agenda)
+- src/lib/auth/permissions.ts (modificato — aggiunto adminOnlyRoutes e isAdminOnlyRoute)
+- src/middleware.ts (modificato — aggiunto RBAC per route admin-only, redirect login a /agenda)

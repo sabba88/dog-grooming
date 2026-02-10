@@ -16,3 +16,16 @@ export const permissions = {
   manageAppointments: ['admin', 'collaborator'] as UserRole[],
   viewDashboard: ['admin'] as UserRole[],
 } as const
+
+// Route admin-only: collaboratore viene rediretto a /agenda
+export const adminOnlyRoutes = [
+  '/settings',
+  '/settings/users',
+  '/settings/locations',
+]
+
+export function isAdminOnlyRoute(pathname: string): boolean {
+  return adminOnlyRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + '/')
+  )
+}
