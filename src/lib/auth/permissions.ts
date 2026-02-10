@@ -2,20 +2,28 @@ import { auth } from './auth'
 
 export type UserRole = 'admin' | 'collaborator'
 
-export async function checkRole(...allowedRoles: UserRole[]): Promise<boolean> {
-  const session = await auth()
-  if (!session?.user?.role) return false
-  return allowedRoles.includes(session.user.role as UserRole)
-}
-
 export const permissions = {
   manageUsers: ['admin'] as UserRole[],
   manageServices: ['admin'] as UserRole[],
   manageLocations: ['admin'] as UserRole[],
   viewAgenda: ['admin', 'collaborator'] as UserRole[],
   manageAppointments: ['admin', 'collaborator'] as UserRole[],
-  viewDashboard: ['admin'] as UserRole[],
+  viewDashboard: ['admin', 'collaborator'] as UserRole[],
 } as const
+
+export type Permission = keyof typeof permissions
+
+export async function checkRole(...allowedRoles: UserRole[]): Promise<boolean> {
+  const session = await auth()
+  if (!session?.user?.role) return false
+  return allowedRoles.includes(session.user.role as UserRole)
+}
+
+export async function checkPermission(permission: Permission): Promise<boolean> {
+  const session = await auth()
+  if (!session?.user?.role) return false
+  return permissions[permission].includes(session.user.role as UserRole)
+}
 
 // Route admin-only: collaboratore viene rediretto a /agenda
 export const adminOnlyRoutes = [

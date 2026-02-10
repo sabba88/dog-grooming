@@ -1,6 +1,6 @@
 # Story 1.2: Layout Applicazione e Controllo Accesso per Ruolo
 
-Status: review
+Status: done
 
 ## Story
 
@@ -298,6 +298,7 @@ Claude Opus 4.6 (claude-opus-4-6)
 ### Change Log
 
 - 2026-02-10: Implementazione completa story 1.2 — Layout applicazione con Sidebar desktop, BottomBar mobile, Header, 8 pagine placeholder, RBAC su 2 livelli (middleware + server-side), redirect post-login a /agenda.
+- 2026-02-10: Code Review (AI) — Fix 7 issues (3 HIGH, 4 MEDIUM): centralizzato RBAC con checkPermission(), corretto viewDashboard nella mappa permessi, aggiunto auto-collapse sidebar md/lg, migrato colori a design tokens Tailwind, aggiunto aria-label/aria-current per WCAG, migliorato middleware matcher per asset statici.
 
 ### File List
 

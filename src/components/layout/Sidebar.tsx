@@ -44,14 +44,11 @@ export function AppSidebar({ userRole, userName }: AppSidebarProps) {
     <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
-          <div
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white text-sm font-bold"
-            style={{ backgroundColor: '#4A7C6F' }}
-          >
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-primary text-white text-sm font-bold">
             DG
           </div>
           {!isCollapsed && (
-            <span className="text-sm font-semibold" style={{ color: '#1A202C' }}>
+            <span className="text-sm font-semibold text-brand-text-primary">
               Dog Grooming
             </span>
           )}
@@ -74,17 +71,8 @@ export function AppSidebar({ userRole, userName }: AppSidebarProps) {
                       tooltip={item.label}
                       className={
                         active
-                          ? 'border-l-[3px] rounded-l-none'
-                          : ''
-                      }
-                      style={
-                        active
-                          ? {
-                              backgroundColor: '#E8F0ED',
-                              color: '#4A7C6F',
-                              borderLeftColor: '#4A7C6F',
-                            }
-                          : { color: '#64748B' }
+                          ? 'border-l-[3px] rounded-l-none bg-brand-primary-light text-brand-primary border-l-brand-primary'
+                          : 'text-brand-text-secondary'
                       }
                     >
                       <Link href={item.href}>
@@ -115,17 +103,8 @@ export function AppSidebar({ userRole, userName }: AppSidebarProps) {
                       tooltip={item.label}
                       className={
                         active
-                          ? 'border-l-[3px] rounded-l-none'
-                          : ''
-                      }
-                      style={
-                        active
-                          ? {
-                              backgroundColor: '#E8F0ED',
-                              color: '#4A7C6F',
-                              borderLeftColor: '#4A7C6F',
-                            }
-                          : { color: '#64748B' }
+                          ? 'border-l-[3px] rounded-l-none bg-brand-primary-light text-brand-primary border-l-brand-primary'
+                          : 'text-brand-text-secondary'
                       }
                     >
                       <Link href={item.href}>
@@ -145,10 +124,10 @@ export function AppSidebar({ userRole, userName }: AppSidebarProps) {
         <div className="p-2">
           {!isCollapsed && (
             <div className="mb-2 px-2">
-              <p className="text-sm font-medium truncate" style={{ color: '#1A202C' }}>
+              <p className="text-sm font-medium truncate text-brand-text-primary">
                 {userName}
               </p>
-              <p className="text-xs capitalize" style={{ color: '#64748B' }}>
+              <p className="text-xs capitalize text-brand-text-secondary">
                 {userRole === 'admin' ? 'Amministratore' : 'Collaboratore'}
               </p>
             </div>
@@ -158,7 +137,7 @@ export function AppSidebar({ userRole, userName }: AppSidebarProps) {
               <SidebarMenuButton
                 tooltip="Esci"
                 onClick={() => signOut({ callbackUrl: '/login' })}
-                style={{ color: '#64748B' }}
+                className="text-brand-text-secondary"
               >
                 <LogOut className="shrink-0" />
                 <span>Esci</span>

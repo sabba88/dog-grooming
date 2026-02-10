@@ -1,9 +1,8 @@
-import { auth } from '@/lib/auth/auth'
 import { redirect } from 'next/navigation'
+import { checkPermission } from '@/lib/auth/permissions'
 
 export default async function SettingsPage() {
-  const session = await auth()
-  if (session?.user?.role !== 'admin') {
+  if (!(await checkPermission('manageUsers'))) {
     redirect('/agenda')
   }
 

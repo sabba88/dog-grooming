@@ -21,18 +21,15 @@ export function Header({ userName }: HeaderProps) {
   }
 
   return (
-    <header
-      className="flex h-14 shrink-0 items-center gap-2 border-b px-4"
-      style={{ borderColor: '#E2E8F0' }}
-    >
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-brand-border px-4">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 h-4" />
-      <h1 className="text-lg font-semibold" style={{ color: '#1A202C' }}>
+      <h1 className="text-lg font-semibold text-brand-text-primary">
         {getPageTitle()}
       </h1>
       <div className="ml-auto flex items-center gap-3">
         {/* Spazio riservato per selettore sede (Epica 2) */}
-        <span className="hidden md:block text-sm" style={{ color: '#64748B' }}>
+        <span className="hidden md:block text-sm text-brand-text-secondary">
           {userName}
         </span>
       </div>
