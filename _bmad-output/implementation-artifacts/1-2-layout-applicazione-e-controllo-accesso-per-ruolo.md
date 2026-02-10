@@ -40,36 +40,36 @@ so that **possa lavorare in modo efficiente senza confusione**.
   - [x] 1.2 Aggiungere componenti supplementari se necessari: `npx shadcn@latest add tooltip separator scroll-area sheet`
   - [x] 1.3 Installare Lucide React (icone) se non gia' presente: verificare in package.json
 
-- [ ] Task 2: Creare il layout autenticato `(auth)/layout.tsx` (AC: #1, #2)
-  - [ ] 2.1 Creare `src/app/(auth)/layout.tsx` — layout wrapper per tutte le pagine protette
-  - [ ] 2.2 Il layout deve includere: Sidebar (desktop), BottomBar (mobile), Header
-  - [ ] 2.3 Utilizzare le classi responsive Tailwind: `hidden md:flex` per sidebar, `md:hidden` per bottom bar
-  - [ ] 2.4 Il contenuto principale deve avere `pb-20 md:pb-0` per evitare sovrapposizione con la bottom bar su mobile
-  - [ ] 2.5 Il layout deve leggere la sessione per ottenere il ruolo dell'utente e passarlo ai componenti di navigazione
+- [x] Task 2: Creare il layout autenticato `(auth)/layout.tsx` (AC: #1, #2)
+  - [x] 2.1 Creare `src/app/(auth)/layout.tsx` — layout wrapper per tutte le pagine protette
+  - [x] 2.2 Il layout deve includere: Sidebar (desktop), BottomBar (mobile), Header
+  - [x] 2.3 Utilizzare le classi responsive Tailwind: `hidden md:flex` per sidebar, `md:hidden` per bottom bar
+  - [x] 2.4 Il contenuto principale deve avere `pb-20 md:pb-0` per evitare sovrapposizione con la bottom bar su mobile
+  - [x] 2.5 Il layout deve leggere la sessione per ottenere il ruolo dell'utente e passarlo ai componenti di navigazione
 
-- [ ] Task 3: Creare il componente Sidebar desktop (AC: #1, #3, #4)
-  - [ ] 3.1 Creare `src/components/layout/Sidebar.tsx`
-  - [ ] 3.2 Utilizzare i componenti shadcn/ui Sidebar (SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarMenu, SidebarMenuButton, SidebarFooter)
-  - [ ] 3.3 Larghezza: 220px espansa, 56px collassata (icone)
-  - [ ] 3.4 Voci di navigazione con icone Lucide: Agenda (Calendar), Clienti (Users), Cani (Dog/PawPrint), Servizi (Scissors), Dashboard (LayoutDashboard)
-  - [ ] 3.5 Voce "Impostazioni" (Settings) nel SidebarFooter in fondo
-  - [ ] 3.6 Voce attiva: sfondo `#E8F0ED`, testo `#4A7C6F`, bordo sinistro 3px primary — usare `usePathname()` per determinare la voce attiva
-  - [ ] 3.7 Filtrare le voci in base al ruolo: Collaboratore NON vede "Impostazioni" (che contiene Utenze, Sedi/Postazioni)
-  - [ ] 3.8 Mostrare nome utente e ruolo nel footer della sidebar con opzione logout
+- [x] Task 3: Creare il componente Sidebar desktop (AC: #1, #3, #4)
+  - [x] 3.1 Creare `src/components/layout/Sidebar.tsx`
+  - [x] 3.2 Utilizzare i componenti shadcn/ui Sidebar (SidebarProvider, Sidebar, SidebarContent, SidebarGroup, SidebarMenu, SidebarMenuButton, SidebarFooter)
+  - [x] 3.3 Larghezza: 220px espansa, 56px collassata (icone)
+  - [x] 3.4 Voci di navigazione con icone Lucide: Agenda (Calendar), Clienti (Users), Cani (Dog/PawPrint), Servizi (Scissors), Dashboard (LayoutDashboard)
+  - [x] 3.5 Voce "Impostazioni" (Settings) nel SidebarFooter in fondo
+  - [x] 3.6 Voce attiva: sfondo `#E8F0ED`, testo `#4A7C6F`, bordo sinistro 3px primary — usare `usePathname()` per determinare la voce attiva
+  - [x] 3.7 Filtrare le voci in base al ruolo: Collaboratore NON vede "Impostazioni" (che contiene Utenze, Sedi/Postazioni)
+  - [x] 3.8 Mostrare nome utente e ruolo nel footer della sidebar con opzione logout
 
-- [ ] Task 4: Creare il componente BottomBar mobile (AC: #2, #3, #4)
-  - [ ] 4.1 Creare `src/components/layout/BottomBar.tsx`
-  - [ ] 4.2 Barra fissa in basso (`fixed bottom-0 left-0 right-0`), 4 voci: Agenda (Calendar), Clienti (Users), Cani (PawPrint), Home (LayoutDashboard)
-  - [ ] 4.3 Voce attiva: icona + label in `#4A7C6F`, le altre in `#94A3B8`
-  - [ ] 4.4 Touch target minimo 44x44px per ogni voce
-  - [ ] 4.5 Sfondo bianco con bordo superiore `#E2E8F0`
-  - [ ] 4.6 Visibile solo sotto md (768px): `className="md:hidden"`
+- [x] Task 4: Creare il componente BottomBar mobile (AC: #2, #3, #4)
+  - [x] 4.1 Creare `src/components/layout/BottomBar.tsx`
+  - [x] 4.2 Barra fissa in basso (`fixed bottom-0 left-0 right-0`), 4 voci: Agenda (Calendar), Clienti (Users), Cani (PawPrint), Home (LayoutDashboard)
+  - [x] 4.3 Voce attiva: icona + label in `#4A7C6F`, le altre in `#94A3B8`
+  - [x] 4.4 Touch target minimo 44x44px per ogni voce
+  - [x] 4.5 Sfondo bianco con bordo superiore `#E2E8F0`
+  - [x] 4.6 Visibile solo sotto md (768px): `className="md:hidden"`
 
-- [ ] Task 5: Creare il componente Header (AC: #1, #2)
-  - [ ] 5.1 Creare `src/components/layout/Header.tsx`
-  - [ ] 5.2 Contenuto: titolo pagina corrente (dinamico dal pathname), nome utente, bottone logout
-  - [ ] 5.3 Su mobile: aggiungere SidebarTrigger (hamburger menu) per accesso menu esteso
-  - [ ] 5.4 Predisporre lo spazio per il selettore sede (sara' implementato in Epica 2)
+- [x] Task 5: Creare il componente Header (AC: #1, #2)
+  - [x] 5.1 Creare `src/components/layout/Header.tsx`
+  - [x] 5.2 Contenuto: titolo pagina corrente (dinamico dal pathname), nome utente, bottone logout
+  - [x] 5.3 Su mobile: aggiungere SidebarTrigger (hamburger menu) per accesso menu esteso
+  - [x] 5.4 Predisporre lo spazio per il selettore sede (sara' implementato in Epica 2)
 
 - [ ] Task 6: Creare le pagine placeholder per le route autenticate (AC: #1)
   - [ ] 6.1 Creare `src/app/(auth)/agenda/page.tsx` — placeholder "Agenda" (sara' implementata in Epica 4)
@@ -287,6 +287,10 @@ Il layout `(auth)/layout.tsx` serve per la UI (sidebar, header) ma NON e' il pun
 ### Completion Notes List
 
 - Task 1: Installati componenti shadcn/ui (sidebar, separator, sheet, tooltip, skeleton, scroll-area). lucide-react gia' presente (v0.563.0). Hook use-mobile.ts generato automaticamente.
+- Task 2: Creato (auth)/layout.tsx — Server Component che legge la sessione, passa userRole e userName ai componenti di navigazione. Usa SidebarProvider con larghezze custom (220px/56px) e SidebarInset per il contenuto. Padding bottom-20 su mobile per BottomBar.
+- Task 3: Creato Sidebar.tsx con shadcn/ui Sidebar (collapsible="icon"). Nav items definiti in nav-items.ts condiviso. Voce attiva styled con #E8F0ED bg, #4A7C6F text, 3px left border. Filtraggio voci per ruolo. Footer con nome/ruolo utente e logout.
+- Task 4: Creato BottomBar.tsx — barra fissa in basso, 4 voci (Agenda, Clienti, Cani, Home), touch target 64px altezza, voce attiva #4A7C6F, inattive #94A3B8, md:hidden.
+- Task 5: Creato Header.tsx — titolo pagina dinamico da pathname, nome utente, SidebarTrigger. Spazio riservato per selettore sede (Epica 2).
 
 ### Change Log
 
@@ -299,3 +303,8 @@ Il layout `(auth)/layout.tsx` serve per la UI (sidebar, header) ma NON e' il pun
 - src/components/ui/skeleton.tsx (nuovo)
 - src/components/ui/scroll-area.tsx (nuovo)
 - src/hooks/use-mobile.ts (nuovo)
+- src/app/(auth)/layout.tsx (nuovo)
+- src/components/layout/Sidebar.tsx (nuovo)
+- src/components/layout/BottomBar.tsx (nuovo)
+- src/components/layout/Header.tsx (nuovo)
+- src/components/layout/nav-items.ts (nuovo)
