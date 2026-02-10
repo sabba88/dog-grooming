@@ -1,6 +1,6 @@
 # Story 1.2: Layout Applicazione e Controllo Accesso per Ruolo
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -280,7 +280,7 @@ Il layout `(auth)/layout.tsx` serve per la UI (sidebar, header) ma NON e' il pun
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6 (claude-opus-4-6)
 
 ### Debug Log References
 
@@ -296,6 +296,8 @@ Il layout `(auth)/layout.tsx` serve per la UI (sidebar, header) ma NON e' il pun
 - Task 8: Login page redirect aggiornato da '/' a '/agenda'. Middleware redirect da login (se autenticato) aggiornato a /agenda. Logout usa signOut({ callbackUrl: '/login' }) nella Sidebar.
 
 ### Change Log
+
+- 2026-02-10: Implementazione completa story 1.2 — Layout applicazione con Sidebar desktop, BottomBar mobile, Header, 8 pagine placeholder, RBAC su 2 livelli (middleware + server-side), redirect post-login a /agenda.
 
 ### File List
 

@@ -5,7 +5,7 @@ export default function ClientsPage() {
         Clienti
       </h2>
       <p style={{ color: '#64748B' }}>
-        L'anagrafica clienti sara' disponibile in Epica 3.
+        Anagrafica clienti disponibile in Epica 3.
       </p>
     </div>
   )

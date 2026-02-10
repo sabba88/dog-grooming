@@ -5,7 +5,7 @@ export default function AgendaPage() {
         Agenda
       </h2>
       <p style={{ color: '#64748B' }}>
-        La gestione degli appuntamenti sara' disponibile in Epica 4.
+        La gestione degli appuntamenti sarà disponibile in Epica 4.
       </p>
     </div>
   )

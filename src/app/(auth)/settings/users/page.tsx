@@ -13,7 +13,7 @@ export default async function UsersPage() {
         Gestione Utenze
       </h2>
       <p style={{ color: '#64748B' }}>
-        La gestione utenze sara' disponibile in Story 1.3.
+        La gestione utenze sarà disponibile in Story 1.3.
       </p>
     </div>
   )

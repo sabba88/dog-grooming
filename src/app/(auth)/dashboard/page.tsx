@@ -5,7 +5,7 @@ export default function DashboardPage() {
         Dashboard
       </h2>
       <p style={{ color: '#64748B' }}>
-        La dashboard riassuntiva sara' disponibile in Epica 5.
+        La dashboard riassuntiva sarà disponibile in Epica 5.
       </p>
     </div>
   )

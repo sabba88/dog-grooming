@@ -13,7 +13,7 @@ export default async function SettingsPage() {
         Impostazioni
       </h2>
       <p style={{ color: '#64748B' }}>
-        Gestisci le impostazioni dell'applicazione.
+        Gestisci le impostazioni del sistema.
       </p>
     </div>
   )

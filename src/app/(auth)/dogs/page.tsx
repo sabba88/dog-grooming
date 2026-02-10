@@ -5,7 +5,7 @@ export default function DogsPage() {
         Cani
       </h2>
       <p style={{ color: '#64748B' }}>
-        L'anagrafica cani sara' disponibile in Epica 3.
+        Anagrafica cani disponibile in Epica 3.
       </p>
     </div>
   )

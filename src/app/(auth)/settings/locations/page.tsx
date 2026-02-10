@@ -13,7 +13,7 @@ export default async function LocationsPage() {
         Gestione Sedi
       </h2>
       <p style={{ color: '#64748B' }}>
-        La gestione sedi e postazioni sara' disponibile in Epica 2.
+        La gestione sedi e postazioni sarà disponibile in Epica 2.
       </p>
     </div>
   )

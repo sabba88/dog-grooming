@@ -5,7 +5,7 @@ export default function ServicesPage() {
         Servizi
       </h2>
       <p style={{ color: '#64748B' }}>
-        La gestione del listino servizi sara' disponibile in Epica 2.
+        La gestione del listino servizi sarà disponibile in Epica 2.
       </p>
     </div>
   )
