@@ -5,7 +5,7 @@ export const createUserSchema = z.object({
   email: z.string().email('Inserisci un indirizzo email valido'),
   password: z.string().min(6, 'La password deve avere almeno 6 caratteri'),
   role: z.enum(['admin', 'collaborator'], {
-    required_error: 'Seleziona un ruolo',
+    message: 'Seleziona un ruolo',
   }),
 })
 
@@ -21,7 +21,7 @@ export const updateUserSchema = z.object({
     .optional()
     .or(z.literal('')),
   role: z.enum(['admin', 'collaborator'], {
-    required_error: 'Seleziona un ruolo',
+    message: 'Seleziona un ruolo',
   }),
 })
 
