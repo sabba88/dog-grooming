@@ -219,6 +219,15 @@
       <output>ℹ️ No sprint status file exists - story progress will be tracked in story file only</output>
       <action>Set {{current_sprint_status}} = "no-sprint-tracking"</action>
     </check>
+
+    <!-- Git branch creation before implementation starts -->
+    <critical>Create a git branch named after the story BEFORE starting any implementation</critical>
+    <action>Check if git repository exists in project root</action>
+    <check if="git repository exists">
+      <action>Create and checkout a new git branch named: {{story_key}} (e.g., "1-2-layout-applicazione-e-controllo-accesso-per-ruolo")</action>
+      <action>If branch already exists, just checkout the existing branch</action>
+      <output>🌿 Branch '{{story_key}}' created and checked out</output>
+    </check>
   </step>
 
   <step n="5" goal="Implement task following red-green-refactor cycle">
@@ -311,6 +320,15 @@
     </check>
 
     <action>Save the story file</action>
+
+    <!-- Git commit after each completed task -->
+    <critical>Commit all changes after completing each task — DO NOT push to remote</critical>
+    <check if="git repository exists">
+      <action>Stage all changed files relevant to the completed task (use git add for specific files, avoid git add -A)</action>
+      <action>Create a git commit with message: "story {{story_key}}: Task N — [brief task description]"</action>
+      <output>📦 Task committed to branch '{{story_key}}'</output>
+    </check>
+
     <action>Determine if more incomplete tasks remain</action>
     <action if="more tasks remain">
       <goto step="5">Next task</goto>
