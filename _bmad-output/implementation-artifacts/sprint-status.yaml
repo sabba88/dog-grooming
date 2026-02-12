@@ -48,8 +48,8 @@ development_status:
   epic-1-retrospective: optional
 
   # Epica 2: Configurazione del Salone
-  epic-2: backlog
-  2-1-gestione-listino-servizi: backlog
+  epic-2: in-progress
+  2-1-gestione-listino-servizi: in-progress
   2-2-gestione-sedi: backlog
   2-3-gestione-postazioni-con-servizi-abilitati-e-orari: backlog
   epic-2-retrospective: optional
