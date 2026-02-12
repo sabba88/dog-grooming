@@ -82,10 +82,10 @@ so that **possa conoscere l'offerta del salone durante il lavoro**.
   - [x] 6.5 Lista in tabella (desktop) o card impilate (mobile): nome, tariffa formattata EUR, durata formattata (es. "45 min")
   - [x] 6.6 Stato vuoto: "Nessun servizio configurato" con CTA "Aggiungi il primo servizio" (solo admin)
 
-- [ ] Task 7: Implementare eliminazione con Alert Dialog (AC: #5)
-  - [ ] 7.1 Riutilizzare AlertDialog shadcn/ui (gia' installato da Story 1.3)
-  - [ ] 7.2 Dialog di conferma: titolo "Eliminare il servizio [nome]?", descrizione "Il servizio verra' rimosso dal listino.", bottoni "Annulla" + "Elimina" (distruttivo)
-  - [ ] 7.3 Dopo conferma: chiamare `deleteService`, mostrare toast "Servizio eliminato", aggiornare lista con `router.refresh()`
+- [x] Task 7: Implementare eliminazione con Alert Dialog (AC: #5)
+  - [x] 7.1 Riutilizzare AlertDialog shadcn/ui (gia' installato da Story 1.3)
+  - [x] 7.2 Dialog di conferma: titolo "Eliminare il servizio [nome]?", descrizione "Il servizio verra' rimosso dal listino.", bottoni "Annulla" + "Elimina" (distruttivo)
+  - [x] 7.3 Dopo conferma: chiamare `deleteService`, mostrare toast "Servizio eliminato", aggiornare lista con `router.refresh()`
 
 ## Dev Notes
 
@@ -400,6 +400,7 @@ Claude Opus 4.6 (claude-opus-4-6)
 - Task 4: Creato `src/lib/queries/services.ts` con getServices(tenantId) e getServiceById(serviceId, tenantId). Query con select esplicito, filtro tenantId, ordinamento per nome asc.
 - Task 5: Creato `src/components/service/ServiceForm.tsx` — Client Component con React Hook Form + Zod resolver. Dialog (desktop)/Sheet (mobile) tramite useIsMobile(). Conversione EUR→centesimi nel register con setValueAs. Pre-compilazione in modifica con prezzo convertito da centesimi a EUR. Validazione inline, messaggi italiano.
 - Task 6: Creato `src/lib/utils/formatting.ts` con formatPrice (centesimi→EUR) e formatDuration (minuti→"XX min"/"Xh Ymin"). Creato `src/components/service/ServiceList.tsx` — Client Component con tabella desktop e card mobile. Admin vede header con "Nuovo Servizio", azioni Modifica/Elimina per riga. Collaboratore vede solo lista readonly. Stato vuoto con CTA (admin). Sostituito placeholder pagina `/services` con Server Component che carica servizi e ruolo dalla sessione.
+- Task 7: AlertDialog di eliminazione integrato in ServiceList.tsx durante Task 6. Titolo "Eliminare il servizio [nome]?", descrizione, bottoni Annulla/Elimina (distruttivo), toast "Servizio eliminato", router.refresh().
 
 ### File List
 
