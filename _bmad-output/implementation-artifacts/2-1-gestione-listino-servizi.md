@@ -66,13 +66,13 @@ so that **possa conoscere l'offerta del salone durante il lavoro**.
   - [x] 4.1 Creare `src/lib/queries/services.ts` — `getServices(tenantId)`: tutti i servizi del tenant, ordinati per nome
   - [x] 4.2 Creare `getServiceById(serviceId, tenantId)` — singolo servizio per form di modifica
 
-- [ ] Task 5: Creare componente ServiceForm (AC: #2, #3, #4)
-  - [ ] 5.1 Creare `src/components/service/ServiceForm.tsx` — Client Component con React Hook Form + Zod resolver
-  - [ ] 5.2 Campi: Nome (Input), Tariffa (Input type="number", in EUR con step 0.01 — conversione centesimi nel submit), Durata (Input type="number", in minuti)
-  - [ ] 5.3 Il form si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
-  - [ ] 5.4 Validazione inline al blur, messaggi in italiano
-  - [ ] 5.5 Bottone primario "Crea Servizio" (creazione) o "Salva Modifiche" (modifica)
-  - [ ] 5.6 In modalita' modifica: pre-compilare i campi con dati esistenti (prezzo convertito da centesimi a EUR per display)
+- [x] Task 5: Creare componente ServiceForm (AC: #2, #3, #4)
+  - [x] 5.1 Creare `src/components/service/ServiceForm.tsx` — Client Component con React Hook Form + Zod resolver
+  - [x] 5.2 Campi: Nome (Input), Tariffa (Input type="number", in EUR con step 0.01 — conversione centesimi nel submit), Durata (Input type="number", in minuti)
+  - [x] 5.3 Il form si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
+  - [x] 5.4 Validazione inline al blur, messaggi in italiano
+  - [x] 5.5 Bottone primario "Crea Servizio" (creazione) o "Salva Modifiche" (modifica)
+  - [x] 5.6 In modalita' modifica: pre-compilare i campi con dati esistenti (prezzo convertito da centesimi a EUR per display)
 
 - [ ] Task 6: Creare la pagina Servizi completa (AC: #1, #6)
   - [ ] 6.1 Sostituire il placeholder `src/app/(auth)/services/page.tsx` — Server Component che carica la lista servizi e il ruolo utente dalla sessione
@@ -398,6 +398,7 @@ Claude Opus 4.6 (claude-opus-4-6)
 - Task 2: Creato `src/lib/validations/services.ts` con createServiceSchema (name, price centesimi, duration minuti), updateServiceSchema (+ id), deleteServiceSchema (id). Tipi inferiti CreateServiceFormData, UpdateServiceFormData esportati.
 - Task 3: Creato `src/lib/actions/services.ts` con createService, updateService, deleteService. Tutte con authActionClient, checkRole admin, tenantId dal contesto. updateService aggiorna updatedAt manualmente. deleteService esegue hard delete.
 - Task 4: Creato `src/lib/queries/services.ts` con getServices(tenantId) e getServiceById(serviceId, tenantId). Query con select esplicito, filtro tenantId, ordinamento per nome asc.
+- Task 5: Creato `src/components/service/ServiceForm.tsx` — Client Component con React Hook Form + Zod resolver. Dialog (desktop)/Sheet (mobile) tramite useIsMobile(). Conversione EUR→centesimi nel register con setValueAs. Pre-compilazione in modifica con prezzo convertito da centesimi a EUR. Validazione inline, messaggi italiano.
 
 ### File List
 
@@ -405,3 +406,4 @@ Claude Opus 4.6 (claude-opus-4-6)
 - `src/lib/validations/services.ts` — Creato: schema Zod per validazione servizi
 - `src/lib/actions/services.ts` — Creato: Server Actions createService, updateService, deleteService
 - `src/lib/queries/services.ts` — Creato: Query functions getServices, getServiceById
+- `src/components/service/ServiceForm.tsx` — Creato: Form creazione/modifica servizio con Dialog/Sheet responsive
