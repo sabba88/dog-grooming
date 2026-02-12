@@ -1,6 +1,6 @@
 # Story 2.1: Gestione Listino Servizi
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -412,3 +412,7 @@ Claude Opus 4.6 (claude-opus-4-6)
 - `src/lib/utils/formatting.ts` — Creato: Utility formatPrice e formatDuration
 - `src/components/service/ServiceList.tsx` — Creato: Lista servizi con tabella/card responsive, azioni admin, readonly collab
 - `src/app/(auth)/services/page.tsx` — Modificato: sostituito placeholder con Server Component completo
+
+### Change Log
+
+- 2026-02-12: Implementazione completa story 2-1 — Gestione Listino Servizi. 7 task completati: schema DB, validazione Zod, Server Actions CRUD, query functions, componente ServiceForm (Dialog/Sheet responsive), pagina Servizi con ServiceList (tabella/card responsive), AlertDialog eliminazione. Build Next.js e TypeScript passano senza errori.
