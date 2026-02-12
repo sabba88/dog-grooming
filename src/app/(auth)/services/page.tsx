@@ -1,12 +1,20 @@
-export default function ServicesPage() {
+import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth/auth'
+import { getServices } from '@/lib/queries/services'
+import { ServiceList } from '@/components/service/ServiceList'
+
+export default async function ServicesPage() {
+  const session = await auth()
+  if (!session?.user?.tenantId) {
+    redirect('/login')
+  }
+
+  const servicesList = await getServices(session.user.tenantId)
+
   return (
-    <div className="flex flex-col items-center justify-center gap-4 py-12">
-      <h2 className="text-xl font-semibold" style={{ color: '#1A202C' }}>
-        Servizi
-      </h2>
-      <p style={{ color: '#64748B' }}>
-        La gestione del listino servizi sarà disponibile in Epica 2.
-      </p>
-    </div>
+    <ServiceList
+      services={servicesList}
+      role={session.user.role as 'admin' | 'collaborator'}
+    />
   )
 }

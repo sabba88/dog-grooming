@@ -74,13 +74,13 @@ so that **possa conoscere l'offerta del salone durante il lavoro**.
   - [x] 5.5 Bottone primario "Crea Servizio" (creazione) o "Salva Modifiche" (modifica)
   - [x] 5.6 In modalita' modifica: pre-compilare i campi con dati esistenti (prezzo convertito da centesimi a EUR per display)
 
-- [ ] Task 6: Creare la pagina Servizi completa (AC: #1, #6)
-  - [ ] 6.1 Sostituire il placeholder `src/app/(auth)/services/page.tsx` — Server Component che carica la lista servizi e il ruolo utente dalla sessione
-  - [ ] 6.2 Creare `src/components/service/ServiceList.tsx` — Client Component con lista servizi
-  - [ ] 6.3 Se ruolo admin: header con titolo "Servizi" e bottone "Nuovo Servizio", azioni per riga (Modifica, Elimina)
-  - [ ] 6.4 Se ruolo collaborator: header con solo titolo "Servizi", nessun bottone, nessuna azione — solo lettura
-  - [ ] 6.5 Lista in tabella (desktop) o card impilate (mobile): nome, tariffa formattata EUR, durata formattata (es. "45 min")
-  - [ ] 6.6 Stato vuoto: "Nessun servizio configurato" con CTA "Aggiungi il primo servizio" (solo admin)
+- [x] Task 6: Creare la pagina Servizi completa (AC: #1, #6)
+  - [x] 6.1 Sostituire il placeholder `src/app/(auth)/services/page.tsx` — Server Component che carica la lista servizi e il ruolo utente dalla sessione
+  - [x] 6.2 Creare `src/components/service/ServiceList.tsx` — Client Component con lista servizi
+  - [x] 6.3 Se ruolo admin: header con titolo "Servizi" e bottone "Nuovo Servizio", azioni per riga (Modifica, Elimina)
+  - [x] 6.4 Se ruolo collaborator: header con solo titolo "Servizi", nessun bottone, nessuna azione — solo lettura
+  - [x] 6.5 Lista in tabella (desktop) o card impilate (mobile): nome, tariffa formattata EUR, durata formattata (es. "45 min")
+  - [x] 6.6 Stato vuoto: "Nessun servizio configurato" con CTA "Aggiungi il primo servizio" (solo admin)
 
 - [ ] Task 7: Implementare eliminazione con Alert Dialog (AC: #5)
   - [ ] 7.1 Riutilizzare AlertDialog shadcn/ui (gia' installato da Story 1.3)
@@ -399,6 +399,7 @@ Claude Opus 4.6 (claude-opus-4-6)
 - Task 3: Creato `src/lib/actions/services.ts` con createService, updateService, deleteService. Tutte con authActionClient, checkRole admin, tenantId dal contesto. updateService aggiorna updatedAt manualmente. deleteService esegue hard delete.
 - Task 4: Creato `src/lib/queries/services.ts` con getServices(tenantId) e getServiceById(serviceId, tenantId). Query con select esplicito, filtro tenantId, ordinamento per nome asc.
 - Task 5: Creato `src/components/service/ServiceForm.tsx` — Client Component con React Hook Form + Zod resolver. Dialog (desktop)/Sheet (mobile) tramite useIsMobile(). Conversione EUR→centesimi nel register con setValueAs. Pre-compilazione in modifica con prezzo convertito da centesimi a EUR. Validazione inline, messaggi italiano.
+- Task 6: Creato `src/lib/utils/formatting.ts` con formatPrice (centesimi→EUR) e formatDuration (minuti→"XX min"/"Xh Ymin"). Creato `src/components/service/ServiceList.tsx` — Client Component con tabella desktop e card mobile. Admin vede header con "Nuovo Servizio", azioni Modifica/Elimina per riga. Collaboratore vede solo lista readonly. Stato vuoto con CTA (admin). Sostituito placeholder pagina `/services` con Server Component che carica servizi e ruolo dalla sessione.
 
 ### File List
 
@@ -407,3 +408,6 @@ Claude Opus 4.6 (claude-opus-4-6)
 - `src/lib/actions/services.ts` — Creato: Server Actions createService, updateService, deleteService
 - `src/lib/queries/services.ts` — Creato: Query functions getServices, getServiceById
 - `src/components/service/ServiceForm.tsx` — Creato: Form creazione/modifica servizio con Dialog/Sheet responsive
+- `src/lib/utils/formatting.ts` — Creato: Utility formatPrice e formatDuration
+- `src/components/service/ServiceList.tsx` — Creato: Lista servizi con tabella/card responsive, azioni admin, readonly collab
+- `src/app/(auth)/services/page.tsx` — Modificato: sostituito placeholder con Server Component completo
