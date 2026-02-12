@@ -62,9 +62,9 @@ so that **possa conoscere l'offerta del salone durante il lavoro**.
   - [x] 3.3 Implementare `updateService` — checkRole admin, aggiornamento selettivo, updatedAt manuale
   - [x] 3.4 Implementare `deleteService` — checkRole admin, eliminazione hard delete (non soft delete — i servizi non contengono dati personali GDPR)
 
-- [ ] Task 4: Creare query functions per lista servizi (AC: #1, #6)
-  - [ ] 4.1 Creare `src/lib/queries/services.ts` — `getServices(tenantId)`: tutti i servizi del tenant, ordinati per nome
-  - [ ] 4.2 Creare `getServiceById(serviceId, tenantId)` — singolo servizio per form di modifica
+- [x] Task 4: Creare query functions per lista servizi (AC: #1, #6)
+  - [x] 4.1 Creare `src/lib/queries/services.ts` — `getServices(tenantId)`: tutti i servizi del tenant, ordinati per nome
+  - [x] 4.2 Creare `getServiceById(serviceId, tenantId)` — singolo servizio per form di modifica
 
 - [ ] Task 5: Creare componente ServiceForm (AC: #2, #3, #4)
   - [ ] 5.1 Creare `src/components/service/ServiceForm.tsx` — Client Component con React Hook Form + Zod resolver
@@ -397,9 +397,11 @@ Claude Opus 4.6 (claude-opus-4-6)
 - Task 1: Aggiunta tabella `services` in schema.ts con campi id, name, price (centesimi), duration (minuti), tenantId, createdAt, updatedAt. Import `integer` aggiunto. Schema pushato al database con drizzle-kit push.
 - Task 2: Creato `src/lib/validations/services.ts` con createServiceSchema (name, price centesimi, duration minuti), updateServiceSchema (+ id), deleteServiceSchema (id). Tipi inferiti CreateServiceFormData, UpdateServiceFormData esportati.
 - Task 3: Creato `src/lib/actions/services.ts` con createService, updateService, deleteService. Tutte con authActionClient, checkRole admin, tenantId dal contesto. updateService aggiorna updatedAt manualmente. deleteService esegue hard delete.
+- Task 4: Creato `src/lib/queries/services.ts` con getServices(tenantId) e getServiceById(serviceId, tenantId). Query con select esplicito, filtro tenantId, ordinamento per nome asc.
 
 ### File List
 
 - `src/lib/db/schema.ts` — Modificato: aggiunta tabella `services`, import `integer`
 - `src/lib/validations/services.ts` — Creato: schema Zod per validazione servizi
 - `src/lib/actions/services.ts` — Creato: Server Actions createService, updateService, deleteService
+- `src/lib/queries/services.ts` — Creato: Query functions getServices, getServiceById
