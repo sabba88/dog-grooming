@@ -50,11 +50,11 @@ so that **possa conoscere l'offerta del salone durante il lavoro**.
   - [x] 1.1 Aggiungere tabella `services` in `src/lib/db/schema.ts` con campi: id (uuid PK), name (text, not null), price (integer, not null — centesimi), duration (integer, not null — minuti), tenantId (uuid, not null), createdAt, updatedAt
   - [x] 1.2 Eseguire `npx drizzle-kit push` per applicare lo schema al database di sviluppo
 
-- [ ] Task 2: Creare schema Zod per validazione servizi (AC: #2, #3, #4)
-  - [ ] 2.1 Creare `src/lib/validations/services.ts` — `createServiceSchema` con name (min 2 char), price (numero > 0, in EUR — convertito in centesimi prima del salvataggio), duration (intero > 0, minuti)
-  - [ ] 2.2 Creare `updateServiceSchema` — id (uuid) + stessi campi di create
-  - [ ] 2.3 Creare `deleteServiceSchema` — id (uuid)
-  - [ ] 2.4 Esportare tipi inferiti `CreateServiceFormData`, `UpdateServiceFormData`
+- [x] Task 2: Creare schema Zod per validazione servizi (AC: #2, #3, #4)
+  - [x] 2.1 Creare `src/lib/validations/services.ts` — `createServiceSchema` con name (min 2 char), price (numero > 0, in EUR — convertito in centesimi prima del salvataggio), duration (intero > 0, minuti)
+  - [x] 2.2 Creare `updateServiceSchema` — id (uuid) + stessi campi di create
+  - [x] 2.3 Creare `deleteServiceSchema` — id (uuid)
+  - [x] 2.4 Esportare tipi inferiti `CreateServiceFormData`, `UpdateServiceFormData`
 
 - [ ] Task 3: Creare Server Actions per gestione servizi (AC: #2, #3, #4, #5)
   - [ ] 3.1 Creare `src/lib/actions/services.ts` con `authActionClient`
@@ -395,7 +395,9 @@ Claude Opus 4.6 (claude-opus-4-6)
 ### Completion Notes List
 
 - Task 1: Aggiunta tabella `services` in schema.ts con campi id, name, price (centesimi), duration (minuti), tenantId, createdAt, updatedAt. Import `integer` aggiunto. Schema pushato al database con drizzle-kit push.
+- Task 2: Creato `src/lib/validations/services.ts` con createServiceSchema (name, price centesimi, duration minuti), updateServiceSchema (+ id), deleteServiceSchema (id). Tipi inferiti CreateServiceFormData, UpdateServiceFormData esportati.
 
 ### File List
 
 - `src/lib/db/schema.ts` — Modificato: aggiunta tabella `services`, import `integer`
+- `src/lib/validations/services.ts` — Creato: schema Zod per validazione servizi
