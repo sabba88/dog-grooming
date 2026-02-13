@@ -42,10 +42,10 @@ so that **possa organizzare l'attivita' per sede e i collaboratori possano saper
   - [x] 2.2 Creare `updateLocationSchema` — id (uuid) + stessi campi di create
   - [x] 2.3 Esportare tipi inferiti `CreateLocationFormData`, `UpdateLocationFormData`
 
-- [ ] Task 3: Creare Server Actions per gestione sedi (AC: #2, #3)
-  - [ ] 3.1 Creare `src/lib/actions/locations.ts` con `authActionClient`
-  - [ ] 3.2 Implementare `createLocation` — checkRole admin, insert con tenantId dal contesto
-  - [ ] 3.3 Implementare `updateLocation` — checkRole admin, aggiornamento selettivo, updatedAt manuale
+- [x] Task 3: Creare Server Actions per gestione sedi (AC: #2, #3)
+  - [x] 3.1 Creare `src/lib/actions/locations.ts` con `authActionClient`
+  - [x] 3.2 Implementare `createLocation` — checkRole admin, insert con tenantId dal contesto
+  - [x] 3.3 Implementare `updateLocation` — checkRole admin, aggiornamento selettivo, updatedAt manuale
 
 - [ ] Task 4: Creare query functions per lista sedi (AC: #1, #4)
   - [ ] 4.1 Creare `src/lib/queries/locations.ts` — `getLocations(tenantId)`: tutte le sedi del tenant, ordinate per nome
@@ -397,8 +397,10 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 
 - Task 1: Aggiunta tabella `locations` in schema.ts con campi id, name, address, tenantId, createdAt, updatedAt. Schema pushato al database con drizzle-kit push.
 - Task 2: Creato `src/lib/validations/locations.ts` con createLocationSchema (name min 2, address min 5), updateLocationSchema (+ id). Tipi inferiti CreateLocationFormData, UpdateLocationFormData esportati.
+- Task 3: Creato `src/lib/actions/locations.ts` con createLocation e updateLocation. Entrambe con authActionClient, checkRole admin, tenantId dal contesto. updateLocation aggiorna updatedAt manualmente.
 
 ### File List
 
 - `src/lib/db/schema.ts` — Modificato: aggiunta tabella `locations`
 - `src/lib/validations/locations.ts` — Creato: schema Zod per validazione sedi
+- `src/lib/actions/locations.ts` — Creato: Server Actions createLocation, updateLocation
