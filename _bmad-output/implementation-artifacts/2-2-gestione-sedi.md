@@ -59,13 +59,13 @@ so that **possa organizzare l'attivita' per sede e i collaboratori possano saper
   - [x] 5.5 Bottone primario "Crea Sede" (creazione) o "Salva Modifiche" (modifica)
   - [x] 5.6 In modalita' modifica: pre-compilare i campi con dati esistenti
 
-- [ ] Task 6: Creare la pagina Sedi completa (AC: #1)
-  - [ ] 6.1 Sostituire il placeholder `src/app/(auth)/settings/locations/page.tsx` — Server Component che carica la lista sedi dal database
-  - [ ] 6.2 Creare `src/components/location/LocationList.tsx` — Client Component con lista sedi
-  - [ ] 6.3 Header con titolo "Gestione Sedi" e bottone "Nuova Sede"
-  - [ ] 6.4 Lista in tabella (desktop) o card impilate (mobile): nome, indirizzo
-  - [ ] 6.5 Per ogni riga: azione "Modifica" (apre LocationForm in modalita' modifica)
-  - [ ] 6.6 Stato vuoto: "Nessuna sede configurata" con CTA "Aggiungi la prima sede"
+- [x] Task 6: Creare la pagina Sedi completa (AC: #1)
+  - [x] 6.1 Sostituire il placeholder `src/app/(auth)/settings/locations/page.tsx` — Server Component che carica la lista sedi dal database
+  - [x] 6.2 Creare `src/components/location/LocationList.tsx` — Client Component con lista sedi
+  - [x] 6.3 Header con titolo "Gestione Sedi" e bottone "Nuova Sede"
+  - [x] 6.4 Lista in tabella (desktop) o card impilate (mobile): nome, indirizzo
+  - [x] 6.5 Per ogni riga: azione "Modifica" (apre LocationForm in modalita' modifica)
+  - [x] 6.6 Stato vuoto: "Nessuna sede configurata" con CTA "Aggiungi la prima sede"
 
 - [ ] Task 7: Implementare selettore sede nell'Header (AC: #4)
   - [ ] 7.1 Creare `src/hooks/useLocationSelector.ts` — hook per gestire la sede selezionata con localStorage come persistenza
@@ -400,6 +400,7 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 - Task 3: Creato `src/lib/actions/locations.ts` con createLocation e updateLocation. Entrambe con authActionClient, checkRole admin, tenantId dal contesto. updateLocation aggiorna updatedAt manualmente.
 - Task 4: Creato `src/lib/queries/locations.ts` con getLocations(tenantId) e getLocationById(locationId, tenantId). Query con select esplicito, filtro tenantId, ordinamento per nome asc.
 - Task 5: Creato `src/components/location/LocationForm.tsx` — Client Component con Dialog (desktop) e Sheet (mobile). React Hook Form + Zod resolver, supporto creazione/modifica via prop `location?`. useAction hooks per createLocation/updateLocation con toast feedback.
+- Task 6: Sostituito placeholder in `page.tsx` con Server Component che carica sedi dal DB. Creato `LocationList.tsx` con tabella (desktop) e card (mobile), header con titolo e bottone "Nuova Sede", azione "Modifica" per riga, stato vuoto con CTA. Nessuna eliminazione (come da story).
 
 ### File List
 
@@ -408,3 +409,5 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 - `src/lib/actions/locations.ts` — Creato: Server Actions createLocation, updateLocation
 - `src/lib/queries/locations.ts` — Creato: Query functions getLocations, getLocationById
 - `src/components/location/LocationForm.tsx` — Creato: form creazione/modifica sede con Dialog/Sheet responsive
+- `src/components/location/LocationList.tsx` — Creato: lista sedi con tabella/card responsive e azioni admin
+- `src/app/(auth)/settings/locations/page.tsx` — Modificato: sostituito placeholder con pagina completa
