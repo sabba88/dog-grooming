@@ -51,13 +51,13 @@ so that **possa organizzare l'attivita' per sede e i collaboratori possano saper
   - [x] 4.1 Creare `src/lib/queries/locations.ts` — `getLocations(tenantId)`: tutte le sedi del tenant, ordinate per nome
   - [x] 4.2 Creare `getLocationById(locationId, tenantId)` — singola sede per form di modifica
 
-- [ ] Task 5: Creare componente LocationForm (AC: #2, #3)
-  - [ ] 5.1 Creare `src/components/location/LocationForm.tsx` — Client Component con React Hook Form + Zod resolver
-  - [ ] 5.2 Campi: Nome (Input), Indirizzo (Input)
-  - [ ] 5.3 Il form si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
-  - [ ] 5.4 Validazione inline al blur, messaggi in italiano
-  - [ ] 5.5 Bottone primario "Crea Sede" (creazione) o "Salva Modifiche" (modifica)
-  - [ ] 5.6 In modalita' modifica: pre-compilare i campi con dati esistenti
+- [x] Task 5: Creare componente LocationForm (AC: #2, #3)
+  - [x] 5.1 Creare `src/components/location/LocationForm.tsx` — Client Component con React Hook Form + Zod resolver
+  - [x] 5.2 Campi: Nome (Input), Indirizzo (Input)
+  - [x] 5.3 Il form si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
+  - [x] 5.4 Validazione inline al blur, messaggi in italiano
+  - [x] 5.5 Bottone primario "Crea Sede" (creazione) o "Salva Modifiche" (modifica)
+  - [x] 5.6 In modalita' modifica: pre-compilare i campi con dati esistenti
 
 - [ ] Task 6: Creare la pagina Sedi completa (AC: #1)
   - [ ] 6.1 Sostituire il placeholder `src/app/(auth)/settings/locations/page.tsx` — Server Component che carica la lista sedi dal database
@@ -399,6 +399,7 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 - Task 2: Creato `src/lib/validations/locations.ts` con createLocationSchema (name min 2, address min 5), updateLocationSchema (+ id). Tipi inferiti CreateLocationFormData, UpdateLocationFormData esportati.
 - Task 3: Creato `src/lib/actions/locations.ts` con createLocation e updateLocation. Entrambe con authActionClient, checkRole admin, tenantId dal contesto. updateLocation aggiorna updatedAt manualmente.
 - Task 4: Creato `src/lib/queries/locations.ts` con getLocations(tenantId) e getLocationById(locationId, tenantId). Query con select esplicito, filtro tenantId, ordinamento per nome asc.
+- Task 5: Creato `src/components/location/LocationForm.tsx` — Client Component con Dialog (desktop) e Sheet (mobile). React Hook Form + Zod resolver, supporto creazione/modifica via prop `location?`. useAction hooks per createLocation/updateLocation con toast feedback.
 
 ### File List
 
@@ -406,3 +407,4 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 - `src/lib/validations/locations.ts` — Creato: schema Zod per validazione sedi
 - `src/lib/actions/locations.ts` — Creato: Server Actions createLocation, updateLocation
 - `src/lib/queries/locations.ts` — Creato: Query functions getLocations, getLocationById
+- `src/components/location/LocationForm.tsx` — Creato: form creazione/modifica sede con Dialog/Sheet responsive
