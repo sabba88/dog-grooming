@@ -1,6 +1,6 @@
 # Story 2.2: Gestione Sedi
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -67,14 +67,14 @@ so that **possa organizzare l'attivita' per sede e i collaboratori possano saper
   - [x] 6.5 Per ogni riga: azione "Modifica" (apre LocationForm in modalita' modifica)
   - [x] 6.6 Stato vuoto: "Nessuna sede configurata" con CTA "Aggiungi la prima sede"
 
-- [ ] Task 7: Implementare selettore sede nell'Header (AC: #4)
-  - [ ] 7.1 Creare `src/hooks/useLocationSelector.ts` — hook per gestire la sede selezionata con localStorage come persistenza
-  - [ ] 7.2 Modificare `src/components/layout/Header.tsx` — aggiungere componente Select (shadcn/ui) nel placeholder gia' predisposto
-  - [ ] 7.3 Il selettore mostra tutte le sedi del tenant, la sede selezionata e' evidenziata
-  - [ ] 7.4 Se esiste una sola sede, il selettore mostra la sede selezionata automaticamente senza necessita' di scelta
-  - [ ] 7.5 La sede selezionata viene salvata in localStorage con chiave `selectedLocationId` e letta al caricamento
-  - [ ] 7.6 Se la sede salvata non esiste piu' (eliminata), selezionare automaticamente la prima sede disponibile
-  - [ ] 7.7 Il selettore e' visibile a tutti i ruoli (admin e collaborator)
+- [x] Task 7: Implementare selettore sede nell'Header (AC: #4)
+  - [x] 7.1 Creare `src/hooks/useLocationSelector.ts` — hook per gestire la sede selezionata con localStorage come persistenza
+  - [x] 7.2 Modificare `src/components/layout/Header.tsx` — aggiungere componente Select (shadcn/ui) nel placeholder gia' predisposto
+  - [x] 7.3 Il selettore mostra tutte le sedi del tenant, la sede selezionata e' evidenziata
+  - [x] 7.4 Se esiste una sola sede, il selettore mostra la sede selezionata automaticamente senza necessita' di scelta
+  - [x] 7.5 La sede selezionata viene salvata in localStorage con chiave `selectedLocationId` e letta al caricamento
+  - [x] 7.6 Se la sede salvata non esiste piu' (eliminata), selezionare automaticamente la prima sede disponibile
+  - [x] 7.7 Il selettore e' visibile a tutti i ruoli (admin e collaborator)
 
 ## Dev Notes
 
@@ -401,6 +401,7 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 - Task 4: Creato `src/lib/queries/locations.ts` con getLocations(tenantId) e getLocationById(locationId, tenantId). Query con select esplicito, filtro tenantId, ordinamento per nome asc.
 - Task 5: Creato `src/components/location/LocationForm.tsx` — Client Component con Dialog (desktop) e Sheet (mobile). React Hook Form + Zod resolver, supporto creazione/modifica via prop `location?`. useAction hooks per createLocation/updateLocation con toast feedback.
 - Task 6: Sostituito placeholder in `page.tsx` con Server Component che carica sedi dal DB. Creato `LocationList.tsx` con tabella (desktop) e card (mobile), header con titolo e bottone "Nuova Sede", azione "Modifica" per riga, stato vuoto con CTA. Nessuna eliminazione (come da story).
+- Task 7: Creato `useLocationSelector` hook con localStorage persistence (SSR-safe con useEffect). Modificato Header.tsx con Select shadcn/ui per selettore sede. Auto-select prima sede se stored non valido. Layout aggiornato per passare locations al Header. Visibile a tutti i ruoli.
 
 ### File List
 
@@ -411,3 +412,6 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 - `src/components/location/LocationForm.tsx` — Creato: form creazione/modifica sede con Dialog/Sheet responsive
 - `src/components/location/LocationList.tsx` — Creato: lista sedi con tabella/card responsive e azioni admin
 - `src/app/(auth)/settings/locations/page.tsx` — Modificato: sostituito placeholder con pagina completa
+- `src/hooks/useLocationSelector.ts` — Creato: hook gestione sede selezionata con localStorage
+- `src/components/layout/Header.tsx` — Modificato: aggiunto selettore sede con Select shadcn/ui
+- `src/app/(auth)/layout.tsx` — Modificato: fetch locations e passaggio a Header
