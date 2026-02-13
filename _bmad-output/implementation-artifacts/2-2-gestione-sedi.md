@@ -47,9 +47,9 @@ so that **possa organizzare l'attivita' per sede e i collaboratori possano saper
   - [x] 3.2 Implementare `createLocation` — checkRole admin, insert con tenantId dal contesto
   - [x] 3.3 Implementare `updateLocation` — checkRole admin, aggiornamento selettivo, updatedAt manuale
 
-- [ ] Task 4: Creare query functions per lista sedi (AC: #1, #4)
-  - [ ] 4.1 Creare `src/lib/queries/locations.ts` — `getLocations(tenantId)`: tutte le sedi del tenant, ordinate per nome
-  - [ ] 4.2 Creare `getLocationById(locationId, tenantId)` — singola sede per form di modifica
+- [x] Task 4: Creare query functions per lista sedi (AC: #1, #4)
+  - [x] 4.1 Creare `src/lib/queries/locations.ts` — `getLocations(tenantId)`: tutte le sedi del tenant, ordinate per nome
+  - [x] 4.2 Creare `getLocationById(locationId, tenantId)` — singola sede per form di modifica
 
 - [ ] Task 5: Creare componente LocationForm (AC: #2, #3)
   - [ ] 5.1 Creare `src/components/location/LocationForm.tsx` — Client Component con React Hook Form + Zod resolver
@@ -398,9 +398,11 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 - Task 1: Aggiunta tabella `locations` in schema.ts con campi id, name, address, tenantId, createdAt, updatedAt. Schema pushato al database con drizzle-kit push.
 - Task 2: Creato `src/lib/validations/locations.ts` con createLocationSchema (name min 2, address min 5), updateLocationSchema (+ id). Tipi inferiti CreateLocationFormData, UpdateLocationFormData esportati.
 - Task 3: Creato `src/lib/actions/locations.ts` con createLocation e updateLocation. Entrambe con authActionClient, checkRole admin, tenantId dal contesto. updateLocation aggiorna updatedAt manualmente.
+- Task 4: Creato `src/lib/queries/locations.ts` con getLocations(tenantId) e getLocationById(locationId, tenantId). Query con select esplicito, filtro tenantId, ordinamento per nome asc.
 
 ### File List
 
 - `src/lib/db/schema.ts` — Modificato: aggiunta tabella `locations`
 - `src/lib/validations/locations.ts` — Creato: schema Zod per validazione sedi
 - `src/lib/actions/locations.ts` — Creato: Server Actions createLocation, updateLocation
+- `src/lib/queries/locations.ts` — Creato: Query functions getLocations, getLocationById
