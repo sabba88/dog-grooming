@@ -75,11 +75,11 @@ so that **possa gestire la rubrica del salone e avere tutte le informazioni a po
   - [x] 5.3 Creare `getClientNotes(clientId, tenantId)` — note del cliente ordinate per createdAt DESC, con JOIN su users per ottenere il nome dell'autore
   - [x] 5.4 Creare `searchClients(query, tenantId)` — ricerca con ILIKE su firstName, lastName, phone; filtro deletedAt IS NULL; limit 10; restituire id, firstName, lastName, phone, email
 
-- [ ] Task 6: Creare API Route per ricerca incrementale clienti (AC: #6, #7)
-  - [ ] 6.1 Creare `src/app/api/clients/search/route.ts` — GET handler
-  - [ ] 6.2 Estrarre sessione con `auth()` per ottenere tenantId — ritornare 401 se non autenticato
-  - [ ] 6.3 Leggere parametro query `q` da searchParams — ritornare array vuoto se `q` ha meno di 2 caratteri
-  - [ ] 6.4 Invocare `searchClients(q, tenantId)` e restituire risultati come JSON: `{ clients: [...] }`
+- [x] Task 6: Creare API Route per ricerca incrementale clienti (AC: #6, #7)
+  - [x] 6.1 Creare `src/app/api/clients/search/route.ts` — GET handler
+  - [x] 6.2 Estrarre sessione con `auth()` per ottenere tenantId — ritornare 401 se non autenticato
+  - [x] 6.3 Leggere parametro query `q` da searchParams — ritornare array vuoto se `q` ha meno di 2 caratteri
+  - [x] 6.4 Invocare `searchClients(q, tenantId)` e restituire risultati come JSON: `{ clients: [...] }`
 
 - [ ] Task 7: Creare componente ClientForm con consenso GDPR (AC: #2, #4)
   - [ ] 7.1 Creare `src/components/client/ClientForm.tsx` — Client Component con React Hook Form + Zod resolver
