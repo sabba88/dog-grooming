@@ -91,14 +91,14 @@ so that **possa gestire la rubrica del salone e avere tutte le informazioni a po
   - [x] 7.7 In modalita' modifica: pre-compilare con dati esistenti
   - [x] 7.8 Installare componente `avatar` di shadcn/ui se non presente: `npx shadcn@latest add avatar`
 
-- [ ] Task 8: Creare componente ClientSearch con ricerca tipo-ahead (AC: #6, #7)
-  - [ ] 8.1 Creare `src/components/client/ClientSearch.tsx` — Client Component
-  - [ ] 8.2 Input ricerca con icona Search (lucide-react), placeholder "Cerca cliente..."
-  - [ ] 8.3 Debounce 300ms sull'input — usare `useQuery` di TanStack Query con `enabled: query.length >= 2`
-  - [ ] 8.4 Fetch verso `/api/clients/search?q=term`
-  - [ ] 8.5 Mostrare risultati sotto l'input: avatar con iniziali + nome completo + telefono
-  - [ ] 8.6 Stato "Nessun risultato" con opzione "Crea nuovo cliente" che apre ClientForm
-  - [ ] 8.7 Il componente espone `onSelect(client)` callback e `onCreateNew()` callback — riusabile in futuro per il form appuntamento (Epica 4)
+- [x] Task 8: Creare componente ClientSearch con ricerca tipo-ahead (AC: #6, #7)
+  - [x] 8.1 Creare `src/components/client/ClientSearch.tsx` — Client Component
+  - [x] 8.2 Input ricerca con icona Search (lucide-react), placeholder "Cerca cliente..."
+  - [x] 8.3 Debounce 300ms sull'input — usare `useQuery` di TanStack Query con `enabled: query.length >= 2`
+  - [x] 8.4 Fetch verso `/api/clients/search?q=term`
+  - [x] 8.5 Mostrare risultati sotto l'input: avatar con iniziali + nome completo + telefono
+  - [x] 8.6 Stato "Nessun risultato" con opzione "Crea nuovo cliente" che apre ClientForm
+  - [x] 8.7 Il componente espone `onSelect(client)` callback e `onCreateNew()` callback — riusabile in futuro per il form appuntamento (Epica 4)
 
 - [ ] Task 9: Creare pagina lista clienti con avatar e ricerca (AC: #1, #6, #7)
   - [ ] 9.1 Creare `src/app/(auth)/clients/page.tsx` — Server Component con `auth()` per tenantId + fetch `getClients(tenantId)`
