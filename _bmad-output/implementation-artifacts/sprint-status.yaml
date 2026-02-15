@@ -55,8 +55,8 @@ development_status:
   epic-2-retrospective: optional
 
   # Epica 3: Gestione Clienti e Cani
-  epic-3: backlog
-  3-1-anagrafica-clienti: backlog
+  epic-3: in-progress
+  3-1-anagrafica-clienti: in-progress
   3-2-anagrafica-cani: backlog
   3-3-privacy-e-conformita-gdpr: backlog
   epic-3-retrospective: optional

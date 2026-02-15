@@ -60,3 +60,26 @@ export const stationSchedules = pgTable('station_schedules', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
+
+export const clients = pgTable('clients', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  phone: text('phone').notNull(),
+  email: text('email'),
+  consentGivenAt: timestamp('consent_given_at').notNull(),
+  consentVersion: text('consent_version').notNull().default('1.0'),
+  deletedAt: timestamp('deleted_at'),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const clientNotes = pgTable('client_notes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clientId: uuid('client_id').notNull(),
+  content: text('content').notNull(),
+  authorId: uuid('author_id').notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
