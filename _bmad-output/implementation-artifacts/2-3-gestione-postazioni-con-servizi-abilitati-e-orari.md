@@ -76,13 +76,13 @@ so that **il salone sia completamente configurato e pronto per prendere appuntam
   - [x] 5.5 Bottone primario "Crea Postazione" (creazione) o "Salva Modifiche" (modifica)
   - [x] 5.6 In modalita' modifica: pre-compilare il nome con dati esistenti
 
-- [ ] Task 6: Creare componente StationServicesForm per assegnazione servizi (AC: #3, #5)
-  - [ ] 6.1 Creare `src/components/location/StationServicesForm.tsx` — Client Component
-  - [ ] 6.2 Lista checkbox di tutti i servizi disponibili (dal listino, Story 2.1) con nome, durata e prezzo formattati
-  - [ ] 6.3 Pre-selezionare i servizi gia' abilitati sulla postazione
-  - [ ] 6.4 Bottone "Salva Servizi" che invoca `updateStationServices` con gli ID selezionati
-  - [ ] 6.5 Toast "Servizi aggiornati" al salvataggio
-  - [ ] 6.6 Il form si apre in Dialog (desktop) o Sheet (mobile)
+- [x] Task 6: Creare componente StationServicesForm per assegnazione servizi (AC: #3, #5)
+  - [x] 6.1 Creare `src/components/location/StationServicesForm.tsx` — Client Component
+  - [x] 6.2 Lista checkbox di tutti i servizi disponibili (dal listino, Story 2.1) con nome, durata e prezzo formattati
+  - [x] 6.3 Pre-selezionare i servizi gia' abilitati sulla postazione
+  - [x] 6.4 Bottone "Salva Servizi" che invoca `updateStationServices` con gli ID selezionati
+  - [x] 6.5 Toast "Servizi aggiornati" al salvataggio
+  - [x] 6.6 Il form si apre in Dialog (desktop) o Sheet (mobile)
 
 - [ ] Task 7: Creare componente StationScheduleForm per orari settimanali (AC: #4, #5)
   - [ ] 7.1 Creare `src/components/location/StationScheduleForm.tsx` — Client Component
@@ -535,6 +535,7 @@ Claude Opus 4.6
 - ✅ Task 3: Server Actions create/update station, updateStationServices (replace strategy con transazione), updateStationSchedule (replace strategy con transazione). Verifiche IDOR su locationId, stationId e serviceIds.
 - ✅ Task 4: Query functions getStationsByLocation (con servicesCount/schedulesCount), getStationById, getStationServices (con JOIN su services), getStationSchedule.
 - ✅ Task 5: StationForm component — Dialog/Sheet responsive, create/edit mode, RHF + Zod, toast feedback. Installato checkbox shadcn/ui.
+- ✅ Task 6: StationServicesForm component — checkbox list di servizi con formatPrice/formatDuration, pre-selezione servizi abilitati, Dialog/Sheet responsive.
 
 ### File List
 
@@ -544,3 +545,4 @@ Claude Opus 4.6
 - `src/lib/queries/stations.ts` (new)
 - `src/components/location/StationForm.tsx` (new)
 - `src/components/ui/checkbox.tsx` (new — shadcn/ui)
+- `src/components/location/StationServicesForm.tsx` (new)
