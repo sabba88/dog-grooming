@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import { LocationForm } from '@/components/location/LocationForm'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, Settings2 } from 'lucide-react'
 
 interface Location {
   id: string
@@ -80,15 +80,26 @@ export function LocationList({ locations }: LocationListProps) {
                     <TableCell className="font-medium">{location.name}</TableCell>
                     <TableCell>{location.address}</TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(location)}
-                        aria-label={`Modifica ${location.name}`}
-                      >
-                        <Pencil className="h-4 w-4 mr-1" />
-                        Modifica
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(location)}
+                          aria-label={`Modifica ${location.name}`}
+                        >
+                          <Pencil className="h-4 w-4 mr-1" />
+                          Modifica
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/settings/locations/${location.id}`)}
+                          aria-label={`Gestisci postazioni di ${location.name}`}
+                        >
+                          <Settings2 className="h-4 w-4 mr-1" />
+                          Postazioni
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -116,6 +127,15 @@ export function LocationList({ locations }: LocationListProps) {
                   >
                     <Pencil className="h-4 w-4 mr-1" />
                     Modifica
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/settings/locations/${location.id}`)}
+                    className="flex-1"
+                  >
+                    <Settings2 className="h-4 w-4 mr-1" />
+                    Postazioni
                   </Button>
                 </div>
               </div>

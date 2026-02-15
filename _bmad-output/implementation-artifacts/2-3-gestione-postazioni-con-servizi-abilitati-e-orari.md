@@ -94,14 +94,14 @@ so that **il salone sia completamente configurato e pronto per prendere appuntam
   - [x] 7.7 Toast "Orari aggiornati" al salvataggio
   - [x] 7.8 Il form si apre in Dialog (desktop) o Sheet (mobile)
 
-- [ ] Task 8: Creare pagina dettaglio sede con lista postazioni (AC: #1)
-  - [ ] 8.1 Creare `src/app/(auth)/settings/locations/[id]/page.tsx` — Server Component che carica sede + postazioni + servizi dal database
-  - [ ] 8.2 Creare `src/components/location/StationList.tsx` — Client Component con lista postazioni
-  - [ ] 8.3 Header con titolo "Postazioni di [nome sede]" e bottone "Nuova Postazione"
-  - [ ] 8.4 Per ogni postazione: mostrare nome, badge con numero servizi abilitati, riepilogo orari
-  - [ ] 8.5 Per ogni postazione: azioni "Modifica", "Servizi", "Orari" — ciascuna apre il rispettivo form
-  - [ ] 8.6 Stato vuoto: "Nessuna postazione configurata" con CTA "Aggiungi la prima postazione"
-  - [ ] 8.7 Aggiungere bottone "Gestisci Postazioni" nella lista sedi (LocationList.tsx) per navigare a questa pagina
+- [x] Task 8: Creare pagina dettaglio sede con lista postazioni (AC: #1)
+  - [x] 8.1 Creare `src/app/(auth)/settings/locations/[id]/page.tsx` — Server Component che carica sede + postazioni + servizi dal database
+  - [x] 8.2 Creare `src/components/location/StationList.tsx` — Client Component con lista postazioni
+  - [x] 8.3 Header con titolo "Postazioni di [nome sede]" e bottone "Nuova Postazione"
+  - [x] 8.4 Per ogni postazione: mostrare nome, badge con numero servizi abilitati, riepilogo orari
+  - [x] 8.5 Per ogni postazione: azioni "Modifica", "Servizi", "Orari" — ciascuna apre il rispettivo form
+  - [x] 8.6 Stato vuoto: "Nessuna postazione configurata" con CTA "Aggiungi la prima postazione"
+  - [x] 8.7 Aggiungere bottone "Gestisci Postazioni" nella lista sedi (LocationList.tsx) per navigare a questa pagina
 
 - [ ] Task 9: Aggiungere indicatore "postazione incompleta" per AC #6
   - [ ] 9.1 Se una postazione non ha servizi abilitati O non ha orari definiti, mostrare un badge di avviso "Configurazione incompleta" in arancione
@@ -537,6 +537,7 @@ Claude Opus 4.6
 - ✅ Task 5: StationForm component — Dialog/Sheet responsive, create/edit mode, RHF + Zod, toast feedback. Installato checkbox shadcn/ui.
 - ✅ Task 6: StationServicesForm component — checkbox list di servizi con formatPrice/formatDuration, pre-selezione servizi abilitati, Dialog/Sheet responsive.
 - ✅ Task 7: StationScheduleForm component — griglia 7 giorni con checkbox abilita/disabilita, input time apertura/chiusura, validazione client-side, Dialog/Sheet responsive.
+- ✅ Task 8: Pagina dettaglio sede [id] (Server Component), StationList (Client Component) con tabella/card responsive, badge servizi, riepilogo orari, azioni modifica/servizi/orari. Bottone "Postazioni" aggiunto in LocationList.
 
 ### File List
 
@@ -548,3 +549,6 @@ Claude Opus 4.6
 - `src/components/ui/checkbox.tsx` (new — shadcn/ui)
 - `src/components/location/StationServicesForm.tsx` (new)
 - `src/components/location/StationScheduleForm.tsx` (new)
+- `src/components/location/StationList.tsx` (new)
+- `src/app/(auth)/settings/locations/[id]/page.tsx` (new)
+- `src/components/location/LocationList.tsx` (modified)
