@@ -68,13 +68,13 @@ so that **il salone sia completamente configurato e pronto per prendere appuntam
   - [x] 4.3 Creare `getStationServices(stationId, tenantId)` — lista serviceId abilitati per una postazione
   - [x] 4.4 Creare `getStationSchedule(stationId, tenantId)` — orari settimanali di una postazione
 
-- [ ] Task 5: Creare componente StationForm per creazione/modifica postazione (AC: #2, #5)
-  - [ ] 5.1 Creare `src/components/location/StationForm.tsx` — Client Component con React Hook Form + Zod resolver
-  - [ ] 5.2 Campo: Nome postazione (Input)
-  - [ ] 5.3 Il form si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
-  - [ ] 5.4 Validazione inline al blur, messaggi in italiano
-  - [ ] 5.5 Bottone primario "Crea Postazione" (creazione) o "Salva Modifiche" (modifica)
-  - [ ] 5.6 In modalita' modifica: pre-compilare il nome con dati esistenti
+- [x] Task 5: Creare componente StationForm per creazione/modifica postazione (AC: #2, #5)
+  - [x] 5.1 Creare `src/components/location/StationForm.tsx` — Client Component con React Hook Form + Zod resolver
+  - [x] 5.2 Campo: Nome postazione (Input)
+  - [x] 5.3 Il form si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
+  - [x] 5.4 Validazione inline al blur, messaggi in italiano
+  - [x] 5.5 Bottone primario "Crea Postazione" (creazione) o "Salva Modifiche" (modifica)
+  - [x] 5.6 In modalita' modifica: pre-compilare il nome con dati esistenti
 
 - [ ] Task 6: Creare componente StationServicesForm per assegnazione servizi (AC: #3, #5)
   - [ ] 6.1 Creare `src/components/location/StationServicesForm.tsx` — Client Component
@@ -534,6 +534,7 @@ Claude Opus 4.6
 - ✅ Task 2: Creati schemi Zod con validazione (createStation, updateStation, updateStationServices, updateStationSchedule). Include costante DAYS_OF_WEEK, regex HH:mm, refine closeTime > openTime.
 - ✅ Task 3: Server Actions create/update station, updateStationServices (replace strategy con transazione), updateStationSchedule (replace strategy con transazione). Verifiche IDOR su locationId, stationId e serviceIds.
 - ✅ Task 4: Query functions getStationsByLocation (con servicesCount/schedulesCount), getStationById, getStationServices (con JOIN su services), getStationSchedule.
+- ✅ Task 5: StationForm component — Dialog/Sheet responsive, create/edit mode, RHF + Zod, toast feedback. Installato checkbox shadcn/ui.
 
 ### File List
 
@@ -541,3 +542,5 @@ Claude Opus 4.6
 - `src/lib/validations/stations.ts` (new)
 - `src/lib/actions/stations.ts` (new)
 - `src/lib/queries/stations.ts` (new)
+- `src/components/location/StationForm.tsx` (new)
+- `src/components/ui/checkbox.tsx` (new — shadcn/ui)
