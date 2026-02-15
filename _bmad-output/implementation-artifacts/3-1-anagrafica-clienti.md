@@ -81,15 +81,15 @@ so that **possa gestire la rubrica del salone e avere tutte le informazioni a po
   - [x] 6.3 Leggere parametro query `q` da searchParams — ritornare array vuoto se `q` ha meno di 2 caratteri
   - [x] 6.4 Invocare `searchClients(q, tenantId)` e restituire risultati come JSON: `{ clients: [...] }`
 
-- [ ] Task 7: Creare componente ClientForm con consenso GDPR (AC: #2, #4)
-  - [ ] 7.1 Creare `src/components/client/ClientForm.tsx` — Client Component con React Hook Form + Zod resolver
-  - [ ] 7.2 Campi: Nome (Input), Cognome (Input), Telefono (Input), Email (Input, opzionale)
-  - [ ] 7.3 Checkbox consenso trattamento dati — obbligatorio in creazione, con label "Acconsento al trattamento dei dati personali"; nascosto in modalita' modifica
-  - [ ] 7.4 Il form si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
-  - [ ] 7.5 Validazione inline al blur, messaggi in italiano
-  - [ ] 7.6 Bottone primario "Crea Cliente" (creazione) o "Salva Modifiche" (modifica)
-  - [ ] 7.7 In modalita' modifica: pre-compilare con dati esistenti
-  - [ ] 7.8 Installare componente `avatar` di shadcn/ui se non presente: `npx shadcn@latest add avatar`
+- [x] Task 7: Creare componente ClientForm con consenso GDPR (AC: #2, #4)
+  - [x] 7.1 Creare `src/components/client/ClientForm.tsx` — Client Component con React Hook Form + Zod resolver
+  - [x] 7.2 Campi: Nome (Input), Cognome (Input), Telefono (Input), Email (Input, opzionale)
+  - [x] 7.3 Checkbox consenso trattamento dati — obbligatorio in creazione, con label "Acconsento al trattamento dei dati personali"; nascosto in modalita' modifica
+  - [x] 7.4 Il form si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
+  - [x] 7.5 Validazione inline al blur, messaggi in italiano
+  - [x] 7.6 Bottone primario "Crea Cliente" (creazione) o "Salva Modifiche" (modifica)
+  - [x] 7.7 In modalita' modifica: pre-compilare con dati esistenti
+  - [x] 7.8 Installare componente `avatar` di shadcn/ui se non presente: `npx shadcn@latest add avatar`
 
 - [ ] Task 8: Creare componente ClientSearch con ricerca tipo-ahead (AC: #6, #7)
   - [ ] 8.1 Creare `src/components/client/ClientSearch.tsx` — Client Component
