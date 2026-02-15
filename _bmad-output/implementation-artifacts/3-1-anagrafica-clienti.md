@@ -57,11 +57,11 @@ so that **possa gestire la rubrica del salone e avere tutte le informazioni a po
   - [x] 2.2 Aggiungere tabella `client_notes` con campi: id (uuid PK), clientId (uuid, not null), content (text, not null), authorId (uuid, not null), tenantId (uuid, not null), createdAt (timestamp, defaultNow, not null)
   - [x] 2.3 Eseguire `npx drizzle-kit push` per applicare lo schema al database di sviluppo
 
-- [ ] Task 3: Creare schemi Zod per validazione clienti e note (AC: #2, #4, #5)
-  - [ ] 3.1 Creare `src/lib/validations/clients.ts` — `createClientSchema` con firstName (min 2 char), lastName (min 2 char), phone (min 6 char), email (optional, email format se fornito), consent (boolean, refine must be true)
-  - [ ] 3.2 Creare `updateClientSchema` — id (uuid) + firstName (min 2), lastName (min 2), phone (min 6), email (optional)
-  - [ ] 3.3 Creare `addClientNoteSchema` — clientId (uuid), content (min 1 char, "Inserisci il testo della nota")
-  - [ ] 3.4 Esportare tipi inferiti: `CreateClientFormData`, `UpdateClientFormData`, `AddClientNoteFormData`
+- [x] Task 3: Creare schemi Zod per validazione clienti e note (AC: #2, #4, #5)
+  - [x] 3.1 Creare `src/lib/validations/clients.ts` — `createClientSchema` con firstName (min 2 char), lastName (min 2 char), phone (min 6 char), email (optional, email format se fornito), consent (boolean, refine must be true)
+  - [x] 3.2 Creare `updateClientSchema` — id (uuid) + firstName (min 2), lastName (min 2), phone (min 6), email (optional)
+  - [x] 3.3 Creare `addClientNoteSchema` — clientId (uuid), content (min 1 char, "Inserisci il testo della nota")
+  - [x] 3.4 Esportare tipi inferiti: `CreateClientFormData`, `UpdateClientFormData`, `AddClientNoteFormData`
 
 - [ ] Task 4: Creare Server Actions per gestione clienti (AC: #2, #4, #5)
   - [ ] 4.1 Creare `src/lib/actions/clients.ts` con `authActionClient`
