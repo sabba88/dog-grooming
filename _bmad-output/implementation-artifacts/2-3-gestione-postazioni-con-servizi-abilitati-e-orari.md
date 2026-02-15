@@ -55,12 +55,12 @@ so that **il salone sia completamente configurato e pronto per prendere appuntam
   - [x] 2.4 Creare `updateStationScheduleSchema` — stationId (uuid), schedules (array di oggetti {dayOfWeek 0-6, openTime "HH:mm", closeTime "HH:mm"})
   - [x] 2.5 Esportare tipi inferiti per tutti gli schemi
 
-- [ ] Task 3: Creare Server Actions per gestione postazioni (AC: #2, #3, #4, #5)
-  - [ ] 3.1 Creare `src/lib/actions/stations.ts` con `authActionClient`
-  - [ ] 3.2 Implementare `createStation` — checkRole admin, insert con tenantId e locationId dal contesto/input
-  - [ ] 3.3 Implementare `updateStation` — checkRole admin, aggiornamento nome, updatedAt manuale
-  - [ ] 3.4 Implementare `updateStationServices` — checkRole admin, delete+insert bulk per la junction table (replace strategy)
-  - [ ] 3.5 Implementare `updateStationSchedule` — checkRole admin, delete+insert bulk per gli orari settimanali (replace strategy)
+- [x] Task 3: Creare Server Actions per gestione postazioni (AC: #2, #3, #4, #5)
+  - [x] 3.1 Creare `src/lib/actions/stations.ts` con `authActionClient`
+  - [x] 3.2 Implementare `createStation` — checkRole admin, insert con tenantId e locationId dal contesto/input
+  - [x] 3.3 Implementare `updateStation` — checkRole admin, aggiornamento nome, updatedAt manuale
+  - [x] 3.4 Implementare `updateStationServices` — checkRole admin, delete+insert bulk per la junction table (replace strategy)
+  - [x] 3.5 Implementare `updateStationSchedule` — checkRole admin, delete+insert bulk per gli orari settimanali (replace strategy)
 
 - [ ] Task 4: Creare query functions per postazioni (AC: #1, #3, #4, #6)
   - [ ] 4.1 Creare `src/lib/queries/stations.ts` — `getStationsByLocation(locationId, tenantId)`: tutte le postazioni di una sede con servizi abilitati e orari
@@ -532,8 +532,10 @@ Claude Opus 4.6
 
 - ✅ Task 1: Aggiunte tabelle `stations`, `station_services`, `station_schedules` allo schema Drizzle. Push al DB completato.
 - ✅ Task 2: Creati schemi Zod con validazione (createStation, updateStation, updateStationServices, updateStationSchedule). Include costante DAYS_OF_WEEK, regex HH:mm, refine closeTime > openTime.
+- ✅ Task 3: Server Actions create/update station, updateStationServices (replace strategy con transazione), updateStationSchedule (replace strategy con transazione). Verifiche IDOR su locationId, stationId e serviceIds.
 
 ### File List
 
 - `src/lib/db/schema.ts` (modified)
 - `src/lib/validations/stations.ts` (new)
+- `src/lib/actions/stations.ts` (new)
