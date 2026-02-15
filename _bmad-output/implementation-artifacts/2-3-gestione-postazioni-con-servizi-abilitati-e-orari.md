@@ -62,11 +62,11 @@ so that **il salone sia completamente configurato e pronto per prendere appuntam
   - [x] 3.4 Implementare `updateStationServices` — checkRole admin, delete+insert bulk per la junction table (replace strategy)
   - [x] 3.5 Implementare `updateStationSchedule` — checkRole admin, delete+insert bulk per gli orari settimanali (replace strategy)
 
-- [ ] Task 4: Creare query functions per postazioni (AC: #1, #3, #4, #6)
-  - [ ] 4.1 Creare `src/lib/queries/stations.ts` — `getStationsByLocation(locationId, tenantId)`: tutte le postazioni di una sede con servizi abilitati e orari
-  - [ ] 4.2 Creare `getStationById(stationId, tenantId)` — singola postazione con servizi e orari per form di configurazione
-  - [ ] 4.3 Creare `getStationServices(stationId, tenantId)` — lista serviceId abilitati per una postazione
-  - [ ] 4.4 Creare `getStationSchedule(stationId, tenantId)` — orari settimanali di una postazione
+- [x] Task 4: Creare query functions per postazioni (AC: #1, #3, #4, #6)
+  - [x] 4.1 Creare `src/lib/queries/stations.ts` — `getStationsByLocation(locationId, tenantId)`: tutte le postazioni di una sede con servizi abilitati e orari
+  - [x] 4.2 Creare `getStationById(stationId, tenantId)` — singola postazione con servizi e orari per form di configurazione
+  - [x] 4.3 Creare `getStationServices(stationId, tenantId)` — lista serviceId abilitati per una postazione
+  - [x] 4.4 Creare `getStationSchedule(stationId, tenantId)` — orari settimanali di una postazione
 
 - [ ] Task 5: Creare componente StationForm per creazione/modifica postazione (AC: #2, #5)
   - [ ] 5.1 Creare `src/components/location/StationForm.tsx` — Client Component con React Hook Form + Zod resolver
@@ -533,9 +533,11 @@ Claude Opus 4.6
 - ✅ Task 1: Aggiunte tabelle `stations`, `station_services`, `station_schedules` allo schema Drizzle. Push al DB completato.
 - ✅ Task 2: Creati schemi Zod con validazione (createStation, updateStation, updateStationServices, updateStationSchedule). Include costante DAYS_OF_WEEK, regex HH:mm, refine closeTime > openTime.
 - ✅ Task 3: Server Actions create/update station, updateStationServices (replace strategy con transazione), updateStationSchedule (replace strategy con transazione). Verifiche IDOR su locationId, stationId e serviceIds.
+- ✅ Task 4: Query functions getStationsByLocation (con servicesCount/schedulesCount), getStationById, getStationServices (con JOIN su services), getStationSchedule.
 
 ### File List
 
 - `src/lib/db/schema.ts` (modified)
 - `src/lib/validations/stations.ts` (new)
 - `src/lib/actions/stations.ts` (new)
+- `src/lib/queries/stations.ts` (new)
