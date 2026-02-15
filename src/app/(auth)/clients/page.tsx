@@ -1,12 +1,15 @@
-export default function ClientsPage() {
-  return (
-    <div className="flex flex-col items-center justify-center gap-4 py-12">
-      <h2 className="text-xl font-semibold" style={{ color: '#1A202C' }}>
-        Clienti
-      </h2>
-      <p style={{ color: '#64748B' }}>
-        Anagrafica clienti disponibile in Epica 3.
-      </p>
-    </div>
-  )
+import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth/auth'
+import { getClients } from '@/lib/queries/clients'
+import { ClientList } from '@/components/client/ClientList'
+
+export default async function ClientsPage() {
+  const session = await auth()
+  if (!session?.user?.tenantId) {
+    redirect('/login')
+  }
+
+  const clientsList = await getClients(session.user.tenantId)
+
+  return <ClientList clients={clientsList} />
 }

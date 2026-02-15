@@ -100,17 +100,17 @@ so that **possa gestire la rubrica del salone e avere tutte le informazioni a po
   - [x] 8.6 Stato "Nessun risultato" con opzione "Crea nuovo cliente" che apre ClientForm
   - [x] 8.7 Il componente espone `onSelect(client)` callback e `onCreateNew()` callback — riusabile in futuro per il form appuntamento (Epica 4)
 
-- [ ] Task 9: Creare pagina lista clienti con avatar e ricerca (AC: #1, #6, #7)
-  - [ ] 9.1 Creare `src/app/(auth)/clients/page.tsx` — Server Component con `auth()` per tenantId + fetch `getClients(tenantId)`
-  - [ ] 9.2 Creare `src/components/client/ClientList.tsx` — Client Component
-  - [ ] 9.3 Header con titolo "Clienti" e bottone "Nuovo Cliente" (icona Plus)
-  - [ ] 9.4 Barra ricerca ClientSearch integrata sotto l'header — la ricerca sostituisce la lista con i risultati del server
-  - [ ] 9.5 Desktop (hidden md:block): tabella con colonne Avatar, Nome Completo, Telefono, Email, Azioni
-  - [ ] 9.6 Mobile (md:hidden): card con avatar iniziali + nome + telefono
-  - [ ] 9.7 Avatar con iniziali: prima lettera nome + prima lettera cognome, sfondo primary-light
-  - [ ] 9.8 Click su riga/card → navigazione a `/clients/[id]` con `useRouter().push()` o `<Link>`
-  - [ ] 9.9 Stato vuoto: "Nessun cliente registrato" con CTA "Aggiungi il primo cliente"
-  - [ ] 9.10 Nota: il conteggio cani sara' sempre 0 fino a Story 3.2 — mostrare "0" o omettere la colonna; aggiornare la query in Story 3.2 con JOIN sulla tabella dogs
+- [x] Task 9: Creare pagina lista clienti con avatar e ricerca (AC: #1, #6, #7)
+  - [x] 9.1 Creare `src/app/(auth)/clients/page.tsx` — Server Component con `auth()` per tenantId + fetch `getClients(tenantId)`
+  - [x] 9.2 Creare `src/components/client/ClientList.tsx` — Client Component
+  - [x] 9.3 Header con titolo "Clienti" e bottone "Nuovo Cliente" (icona Plus)
+  - [x] 9.4 Barra ricerca ClientSearch integrata sotto l'header — la ricerca sostituisce la lista con i risultati del server
+  - [x] 9.5 Desktop (hidden md:block): tabella con colonne Avatar, Nome Completo, Telefono, Email, Azioni
+  - [x] 9.6 Mobile (md:hidden): card con avatar iniziali + nome + telefono
+  - [x] 9.7 Avatar con iniziali: prima lettera nome + prima lettera cognome, sfondo primary-light
+  - [x] 9.8 Click su riga/card → navigazione a `/clients/[id]` con `useRouter().push()` o `<Link>`
+  - [x] 9.9 Stato vuoto: "Nessun cliente registrato" con CTA "Aggiungi il primo cliente"
+  - [x] 9.10 Nota: il conteggio cani sara' sempre 0 fino a Story 3.2 — mostrare "0" o omettere la colonna; aggiornare la query in Story 3.2 con JOIN sulla tabella dogs
 
 - [ ] Task 10: Creare pagina dettaglio cliente con note (AC: #3, #4, #5)
   - [ ] 10.1 Creare `src/app/(auth)/clients/[id]/page.tsx` — Server Component con fetch cliente + note
