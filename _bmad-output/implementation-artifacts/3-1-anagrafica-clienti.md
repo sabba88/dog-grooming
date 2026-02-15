@@ -112,17 +112,17 @@ so that **possa gestire la rubrica del salone e avere tutte le informazioni a po
   - [x] 9.9 Stato vuoto: "Nessun cliente registrato" con CTA "Aggiungi il primo cliente"
   - [x] 9.10 Nota: il conteggio cani sara' sempre 0 fino a Story 3.2 — mostrare "0" o omettere la colonna; aggiornare la query in Story 3.2 con JOIN sulla tabella dogs
 
-- [ ] Task 10: Creare pagina dettaglio cliente con note (AC: #3, #4, #5)
-  - [ ] 10.1 Creare `src/app/(auth)/clients/[id]/page.tsx` — Server Component con fetch cliente + note
-  - [ ] 10.2 Creare `src/components/client/ClientDetail.tsx` — Client Component con sezioni
-  - [ ] 10.3 Breadcrumb "Clienti > [Nome Cognome]" e bottone Indietro
-  - [ ] 10.4 Sezione Dati Anagrafici: nome, cognome, telefono, email, data registrazione + bottone "Modifica" che apre ClientForm in modalita' modifica
-  - [ ] 10.5 Sezione Cani Associati: stato vuoto "Nessun cane associato" con testo "I cani verranno gestiti nella prossima funzionalita'" — sezione placeholder per Story 3.2
-  - [ ] 10.6 Creare `src/components/client/ClientNotes.tsx` — componente per lista note + form aggiunta nota
-  - [ ] 10.7 Lista note: ogni nota mostra contenuto, nome autore, data formattata in italiano — ordine cronologico inverso
-  - [ ] 10.8 Form aggiunta nota: Textarea + bottone "Aggiungi Nota" — inline nella sezione, non in modale
-  - [ ] 10.9 Sezione Storico Appuntamenti: stato vuoto "Nessun appuntamento registrato" — sezione placeholder per Epica 4
-  - [ ] 10.10 Redirect a `/clients` se il cliente non esiste o e' soft-deleted
+- [x] Task 10: Creare pagina dettaglio cliente con note (AC: #3, #4, #5)
+  - [x] 10.1 Creare `src/app/(auth)/clients/[id]/page.tsx` — Server Component con fetch cliente + note
+  - [x] 10.2 Creare `src/components/client/ClientDetail.tsx` — Client Component con sezioni
+  - [x] 10.3 Breadcrumb "Clienti > [Nome Cognome]" e bottone Indietro
+  - [x] 10.4 Sezione Dati Anagrafici: nome, cognome, telefono, email, data registrazione + bottone "Modifica" che apre ClientForm in modalita' modifica
+  - [x] 10.5 Sezione Cani Associati: stato vuoto "Nessun cane associato" con testo "I cani verranno gestiti nella prossima funzionalita'" — sezione placeholder per Story 3.2
+  - [x] 10.6 Creare `src/components/client/ClientNotes.tsx` — componente per lista note + form aggiunta nota
+  - [x] 10.7 Lista note: ogni nota mostra contenuto, nome autore, data formattata in italiano — ordine cronologico inverso
+  - [x] 10.8 Form aggiunta nota: Textarea + bottone "Aggiungi Nota" — inline nella sezione, non in modale
+  - [x] 10.9 Sezione Storico Appuntamenti: stato vuoto "Nessun appuntamento registrato" — sezione placeholder per Epica 4
+  - [x] 10.10 Redirect a `/clients` se il cliente non esiste o e' soft-deleted
 
 ## Dev Notes
 
