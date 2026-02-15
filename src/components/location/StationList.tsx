@@ -15,6 +15,12 @@ import {
 import { StationForm } from '@/components/location/StationForm'
 import { StationServicesForm } from '@/components/location/StationServicesForm'
 import { StationScheduleForm } from '@/components/location/StationScheduleForm'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { DAYS_OF_WEEK } from '@/lib/validations/stations'
 import { Plus, Pencil, ListChecks, Clock } from 'lucide-react'
 
@@ -153,9 +159,18 @@ export function StationList({
                     </TableCell>
                     <TableCell>
                       {isIncomplete(station) && (
-                        <Badge className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-50">
-                          Incompleta
-                        </Badge>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-50">
+                                Incompleta
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Aggiungi servizi e orari per rendere la postazione prenotabile
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -205,9 +220,12 @@ export function StationList({
                 <div className="flex items-start justify-between mb-2">
                   <p className="font-medium text-foreground">{station.name}</p>
                   {isIncomplete(station) && (
-                    <Badge className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-50 text-xs">
-                      Incompleta
-                    </Badge>
+                    <div className="flex flex-col items-end gap-0.5">
+                      <Badge className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-50 text-xs">
+                        Incompleta
+                      </Badge>
+                      <span className="text-[10px] text-amber-600">Aggiungi servizi e orari</span>
+                    </div>
                   )}
                 </div>
                 <div className="flex gap-2 mb-3">

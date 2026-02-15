@@ -103,9 +103,9 @@ so that **il salone sia completamente configurato e pronto per prendere appuntam
   - [x] 8.6 Stato vuoto: "Nessuna postazione configurata" con CTA "Aggiungi la prima postazione"
   - [x] 8.7 Aggiungere bottone "Gestisci Postazioni" nella lista sedi (LocationList.tsx) per navigare a questa pagina
 
-- [ ] Task 9: Aggiungere indicatore "postazione incompleta" per AC #6
-  - [ ] 9.1 Se una postazione non ha servizi abilitati O non ha orari definiti, mostrare un badge di avviso "Configurazione incompleta" in arancione
-  - [ ] 9.2 Tooltip o testo sotto il badge: "Aggiungi servizi e orari per rendere la postazione prenotabile"
+- [x] Task 9: Aggiungere indicatore "postazione incompleta" per AC #6
+  - [x] 9.1 Se una postazione non ha servizi abilitati O non ha orari definiti, mostrare un badge di avviso "Configurazione incompleta" in arancione
+  - [x] 9.2 Tooltip o testo sotto il badge: "Aggiungi servizi e orari per rendere la postazione prenotabile"
 
 ## Dev Notes
 
@@ -538,6 +538,7 @@ Claude Opus 4.6
 - ✅ Task 6: StationServicesForm component — checkbox list di servizi con formatPrice/formatDuration, pre-selezione servizi abilitati, Dialog/Sheet responsive.
 - ✅ Task 7: StationScheduleForm component — griglia 7 giorni con checkbox abilita/disabilita, input time apertura/chiusura, validazione client-side, Dialog/Sheet responsive.
 - ✅ Task 8: Pagina dettaglio sede [id] (Server Component), StationList (Client Component) con tabella/card responsive, badge servizi, riepilogo orari, azioni modifica/servizi/orari. Bottone "Postazioni" aggiunto in LocationList.
+- ✅ Task 9: Badge "Incompleta" arancione con Tooltip (desktop) e testo (mobile) per postazioni senza servizi o orari.
 
 ### File List
 
