@@ -84,15 +84,15 @@ so that **il salone sia completamente configurato e pronto per prendere appuntam
   - [x] 6.5 Toast "Servizi aggiornati" al salvataggio
   - [x] 6.6 Il form si apre in Dialog (desktop) o Sheet (mobile)
 
-- [ ] Task 7: Creare componente StationScheduleForm per orari settimanali (AC: #4, #5)
-  - [ ] 7.1 Creare `src/components/location/StationScheduleForm.tsx` — Client Component
-  - [ ] 7.2 Griglia con 7 righe (Lunedi' → Domenica), ciascuna con campi Apertura (HH:mm) e Chiusura (HH:mm)
-  - [ ] 7.3 Possibilita' di lasciare un giorno senza orari (giorno chiuso) — non inserire riga per quel giorno
-  - [ ] 7.4 Pre-compilare con orari esistenti se la postazione ha gia' un schedule
-  - [ ] 7.5 Validazione: orario chiusura deve essere dopo apertura, formato HH:mm valido
-  - [ ] 7.6 Bottone "Salva Orari" che invoca `updateStationSchedule`
-  - [ ] 7.7 Toast "Orari aggiornati" al salvataggio
-  - [ ] 7.8 Il form si apre in Dialog (desktop) o Sheet (mobile)
+- [x] Task 7: Creare componente StationScheduleForm per orari settimanali (AC: #4, #5)
+  - [x] 7.1 Creare `src/components/location/StationScheduleForm.tsx` — Client Component
+  - [x] 7.2 Griglia con 7 righe (Lunedi' → Domenica), ciascuna con campi Apertura (HH:mm) e Chiusura (HH:mm)
+  - [x] 7.3 Possibilita' di lasciare un giorno senza orari (giorno chiuso) — non inserire riga per quel giorno
+  - [x] 7.4 Pre-compilare con orari esistenti se la postazione ha gia' un schedule
+  - [x] 7.5 Validazione: orario chiusura deve essere dopo apertura, formato HH:mm valido
+  - [x] 7.6 Bottone "Salva Orari" che invoca `updateStationSchedule`
+  - [x] 7.7 Toast "Orari aggiornati" al salvataggio
+  - [x] 7.8 Il form si apre in Dialog (desktop) o Sheet (mobile)
 
 - [ ] Task 8: Creare pagina dettaglio sede con lista postazioni (AC: #1)
   - [ ] 8.1 Creare `src/app/(auth)/settings/locations/[id]/page.tsx` — Server Component che carica sede + postazioni + servizi dal database
@@ -536,6 +536,7 @@ Claude Opus 4.6
 - ✅ Task 4: Query functions getStationsByLocation (con servicesCount/schedulesCount), getStationById, getStationServices (con JOIN su services), getStationSchedule.
 - ✅ Task 5: StationForm component — Dialog/Sheet responsive, create/edit mode, RHF + Zod, toast feedback. Installato checkbox shadcn/ui.
 - ✅ Task 6: StationServicesForm component — checkbox list di servizi con formatPrice/formatDuration, pre-selezione servizi abilitati, Dialog/Sheet responsive.
+- ✅ Task 7: StationScheduleForm component — griglia 7 giorni con checkbox abilita/disabilita, input time apertura/chiusura, validazione client-side, Dialog/Sheet responsive.
 
 ### File List
 
@@ -546,3 +547,4 @@ Claude Opus 4.6
 - `src/components/location/StationForm.tsx` (new)
 - `src/components/ui/checkbox.tsx` (new — shadcn/ui)
 - `src/components/location/StationServicesForm.tsx` (new)
+- `src/components/location/StationScheduleForm.tsx` (new)
