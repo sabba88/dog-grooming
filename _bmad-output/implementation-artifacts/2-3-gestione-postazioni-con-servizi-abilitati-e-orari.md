@@ -48,12 +48,12 @@ so that **il salone sia completamente configurato e pronto per prendere appuntam
   - [x] 1.3 Aggiungere tabella `station_schedules` con campi: id (uuid PK), stationId (uuid, not null), dayOfWeek (integer 0-6, not null), openTime (text "HH:mm", not null), closeTime (text "HH:mm", not null), tenantId (uuid, not null), createdAt, updatedAt
   - [x] 1.4 Eseguire `npx drizzle-kit push` per applicare lo schema al database di sviluppo
 
-- [ ] Task 2: Creare schemi Zod per validazione postazioni, servizi abilitati e orari (AC: #2, #3, #4, #5)
-  - [ ] 2.1 Creare `src/lib/validations/stations.ts` — `createStationSchema` con name (min 2 char), locationId (uuid)
-  - [ ] 2.2 Creare `updateStationSchema` — id (uuid) + name (min 2 char)
-  - [ ] 2.3 Creare `updateStationServicesSchema` — stationId (uuid), serviceIds (array di uuid)
-  - [ ] 2.4 Creare `updateStationScheduleSchema` — stationId (uuid), schedules (array di oggetti {dayOfWeek 0-6, openTime "HH:mm", closeTime "HH:mm"})
-  - [ ] 2.5 Esportare tipi inferiti per tutti gli schemi
+- [x] Task 2: Creare schemi Zod per validazione postazioni, servizi abilitati e orari (AC: #2, #3, #4, #5)
+  - [x] 2.1 Creare `src/lib/validations/stations.ts` — `createStationSchema` con name (min 2 char), locationId (uuid)
+  - [x] 2.2 Creare `updateStationSchema` — id (uuid) + name (min 2 char)
+  - [x] 2.3 Creare `updateStationServicesSchema` — stationId (uuid), serviceIds (array di uuid)
+  - [x] 2.4 Creare `updateStationScheduleSchema` — stationId (uuid), schedules (array di oggetti {dayOfWeek 0-6, openTime "HH:mm", closeTime "HH:mm"})
+  - [x] 2.5 Esportare tipi inferiti per tutti gli schemi
 
 - [ ] Task 3: Creare Server Actions per gestione postazioni (AC: #2, #3, #4, #5)
   - [ ] 3.1 Creare `src/lib/actions/stations.ts` con `authActionClient`
@@ -531,7 +531,9 @@ Claude Opus 4.6
 ### Completion Notes List
 
 - ✅ Task 1: Aggiunte tabelle `stations`, `station_services`, `station_schedules` allo schema Drizzle. Push al DB completato.
+- ✅ Task 2: Creati schemi Zod con validazione (createStation, updateStation, updateStationServices, updateStationSchedule). Include costante DAYS_OF_WEEK, regex HH:mm, refine closeTime > openTime.
 
 ### File List
 
 - `src/lib/db/schema.ts` (modified)
+- `src/lib/validations/stations.ts` (new)
