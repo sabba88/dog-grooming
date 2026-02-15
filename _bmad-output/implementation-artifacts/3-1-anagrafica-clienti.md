@@ -63,11 +63,11 @@ so that **possa gestire la rubrica del salone e avere tutte le informazioni a po
   - [x] 3.3 Creare `addClientNoteSchema` — clientId (uuid), content (min 1 char, "Inserisci il testo della nota")
   - [x] 3.4 Esportare tipi inferiti: `CreateClientFormData`, `UpdateClientFormData`, `AddClientNoteFormData`
 
-- [ ] Task 4: Creare Server Actions per gestione clienti (AC: #2, #4, #5)
-  - [ ] 4.1 Creare `src/lib/actions/clients.ts` con `authActionClient`
-  - [ ] 4.2 Implementare `createClient` — NO checkRole (admin + collaborator possono creare), insert con tenantId da ctx, consentGivenAt = new Date(), consentVersion = "1.0", verificare che deletedAt non sia impostato (nuovo cliente)
-  - [ ] 4.3 Implementare `updateClient` — NO checkRole, update con filtro id + tenantId + deletedAt IS NULL, updatedAt = new Date()
-  - [ ] 4.4 Implementare `addClientNote` — NO checkRole, insert con clientId, content, authorId = ctx.userId, tenantId da ctx; verificare che il cliente esista e non sia soft-deleted
+- [x] Task 4: Creare Server Actions per gestione clienti (AC: #2, #4, #5)
+  - [x] 4.1 Creare `src/lib/actions/clients.ts` con `authActionClient`
+  - [x] 4.2 Implementare `createClient` — NO checkRole (admin + collaborator possono creare), insert con tenantId da ctx, consentGivenAt = new Date(), consentVersion = "1.0", verificare che deletedAt non sia impostato (nuovo cliente)
+  - [x] 4.3 Implementare `updateClient` — NO checkRole, update con filtro id + tenantId + deletedAt IS NULL, updatedAt = new Date()
+  - [x] 4.4 Implementare `addClientNote` — NO checkRole, insert con clientId, content, authorId = ctx.userId, tenantId da ctx; verificare che il cliente esista e non sia soft-deleted
 
 - [ ] Task 5: Creare query functions per clienti (AC: #1, #3, #5, #6)
   - [ ] 5.1 Creare `src/lib/queries/clients.ts` — `getClients(tenantId)`: tutti i clienti con filtro `deletedAt IS NULL`, ordinati per lastName ASC poi firstName ASC
