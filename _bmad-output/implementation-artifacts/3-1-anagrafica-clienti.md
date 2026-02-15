@@ -69,11 +69,11 @@ so that **possa gestire la rubrica del salone e avere tutte le informazioni a po
   - [x] 4.3 Implementare `updateClient` — NO checkRole, update con filtro id + tenantId + deletedAt IS NULL, updatedAt = new Date()
   - [x] 4.4 Implementare `addClientNote` — NO checkRole, insert con clientId, content, authorId = ctx.userId, tenantId da ctx; verificare che il cliente esista e non sia soft-deleted
 
-- [ ] Task 5: Creare query functions per clienti (AC: #1, #3, #5, #6)
-  - [ ] 5.1 Creare `src/lib/queries/clients.ts` — `getClients(tenantId)`: tutti i clienti con filtro `deletedAt IS NULL`, ordinati per lastName ASC poi firstName ASC
-  - [ ] 5.2 Creare `getClientById(clientId, tenantId)` — singolo cliente con filtro deletedAt IS NULL; restituire null se non trovato
-  - [ ] 5.3 Creare `getClientNotes(clientId, tenantId)` — note del cliente ordinate per createdAt DESC, con JOIN su users per ottenere il nome dell'autore
-  - [ ] 5.4 Creare `searchClients(query, tenantId)` — ricerca con ILIKE su firstName, lastName, phone; filtro deletedAt IS NULL; limit 10; restituire id, firstName, lastName, phone, email
+- [x] Task 5: Creare query functions per clienti (AC: #1, #3, #5, #6)
+  - [x] 5.1 Creare `src/lib/queries/clients.ts` — `getClients(tenantId)`: tutti i clienti con filtro `deletedAt IS NULL`, ordinati per lastName ASC poi firstName ASC
+  - [x] 5.2 Creare `getClientById(clientId, tenantId)` — singolo cliente con filtro deletedAt IS NULL; restituire null se non trovato
+  - [x] 5.3 Creare `getClientNotes(clientId, tenantId)` — note del cliente ordinate per createdAt DESC, con JOIN su users per ottenere il nome dell'autore
+  - [x] 5.4 Creare `searchClients(query, tenantId)` — ricerca con ILIKE su firstName, lastName, phone; filtro deletedAt IS NULL; limit 10; restituire id, firstName, lastName, phone, email
 
 - [ ] Task 6: Creare API Route per ricerca incrementale clienti (AC: #6, #7)
   - [ ] 6.1 Creare `src/app/api/clients/search/route.ts` — GET handler
