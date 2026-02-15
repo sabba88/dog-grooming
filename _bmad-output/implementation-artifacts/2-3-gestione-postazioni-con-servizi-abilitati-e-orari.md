@@ -1,6 +1,6 @@
 # Story 2.3: Gestione Postazioni con Servizi Abilitati e Orari
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -553,3 +553,7 @@ Claude Opus 4.6
 - `src/components/location/StationList.tsx` (new)
 - `src/app/(auth)/settings/locations/[id]/page.tsx` (new)
 - `src/components/location/LocationList.tsx` (modified)
+
+### Change Log
+
+- 2026-02-15: Implementazione completa Story 2.3 — Gestione Postazioni con Servizi Abilitati e Orari. 9 task completati: schema DB (3 tabelle), validazione Zod, Server Actions con transazioni, query functions, 4 componenti React (StationForm, StationServicesForm, StationScheduleForm, StationList), pagina dettaglio sede, navigazione da lista sedi, indicatore postazione incompleta.

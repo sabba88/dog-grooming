@@ -51,7 +51,7 @@ development_status:
   epic-2: in-progress
   2-1-gestione-listino-servizi: review
   2-2-gestione-sedi: review
-  2-3-gestione-postazioni-con-servizi-abilitati-e-orari: in-progress
+  2-3-gestione-postazioni-con-servizi-abilitati-e-orari: review
   epic-2-retrospective: optional
 
   # Epica 3: Gestione Clienti e Cani
