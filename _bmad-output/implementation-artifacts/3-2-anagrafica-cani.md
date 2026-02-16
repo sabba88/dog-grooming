@@ -1,6 +1,6 @@
 # Story 3.2: Anagrafica Cani
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -46,10 +46,10 @@ so that **possa conoscere ogni cane e offrire un servizio personalizzato basato 
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Aggiungere tabelle `dogs` e `dog_notes` nello schema Drizzle (AC: #1, #2, #3, #5)
-  - [ ] 1.1 Aggiungere tabella `dogs` in `src/lib/db/schema.ts` con campi: id (uuid PK), name (text, not null), breed (text, nullable), size (text, nullable), age (text, nullable), clientId (uuid, not null), tenantId (uuid, not null), createdAt, updatedAt
-  - [ ] 1.2 Aggiungere tabella `dog_notes` con campi: id (uuid PK), dogId (uuid, not null), content (text, not null), authorId (uuid, not null), tenantId (uuid, not null), createdAt (timestamp, defaultNow, not null)
-  - [ ] 1.3 Eseguire `npx drizzle-kit push` per applicare lo schema al database di sviluppo
+- [x] Task 1: Aggiungere tabelle `dogs` e `dog_notes` nello schema Drizzle (AC: #1, #2, #3, #5)
+  - [x] 1.1 Aggiungere tabella `dogs` in `src/lib/db/schema.ts` con campi: id (uuid PK), name (text, not null), breed (text, nullable), size (text, nullable), age (text, nullable), clientId (uuid, not null), tenantId (uuid, not null), createdAt, updatedAt
+  - [x] 1.2 Aggiungere tabella `dog_notes` con campi: id (uuid PK), dogId (uuid, not null), content (text, not null), authorId (uuid, not null), tenantId (uuid, not null), createdAt (timestamp, defaultNow, not null)
+  - [x] 1.3 Eseguire `npx drizzle-kit push` per applicare lo schema al database di sviluppo
 
 - [ ] Task 2: Creare schemi Zod per validazione cani e note (AC: #1, #4, #5)
   - [ ] 2.1 Creare `src/lib/validations/dogs.ts` — `createDogSchema` con name (min 2 char), breed (optional), size (optional, enum: "piccola" | "media" | "grande"), age (optional), clientId (uuid)
@@ -476,10 +476,14 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- ✅ Task 1: Aggiunte tabelle `dogs` e `dog_notes` a `src/lib/db/schema.ts` seguendo pattern esistente (uuid PK, tenantId, timestamps). Schema pushato al DB con `drizzle-kit push`.
+
 ### File List
+
+- `src/lib/db/schema.ts` — MODIFICATO: aggiunte tabelle `dogs` e `dogNotes`

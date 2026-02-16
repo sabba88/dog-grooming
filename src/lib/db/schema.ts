@@ -83,3 +83,24 @@ export const clientNotes = pgTable('client_notes', {
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
+
+export const dogs = pgTable('dogs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  breed: text('breed'),
+  size: text('size'),
+  age: text('age'),
+  clientId: uuid('client_id').notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const dogNotes = pgTable('dog_notes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  dogId: uuid('dog_id').notNull(),
+  content: text('content').notNull(),
+  authorId: uuid('author_id').notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+})
