@@ -63,12 +63,12 @@ so that **possa prenotare velocemente anche durante una telefonata con le mani o
   - [x] 2.6 INSERT nella tabella appointments con tutti i campi + tenantId dal contesto
   - [x] 2.7 Restituire l'appuntamento creato con i dati per l'optimistic update
 
-- [ ] Task 3: Creare API Route `/api/clients/search` per ricerca incrementale (AC: #2)
-  - [ ] 3.1 Creare `src/app/api/clients/search/route.ts` — GET con query param `q` (minimo 2 caratteri)
-  - [ ] 3.2 Usare la funzione `searchClients(query, tenantId)` gia' esistente in `src/lib/queries/clients.ts`
-  - [ ] 3.3 Autenticazione: estrarre sessione con `auth()`, restituire 401 se non autenticato
-  - [ ] 3.4 Per ogni cliente trovato, caricare il count dei cani associati con `getDogsByClient`
-  - [ ] 3.5 Formato risposta: `{ success: true, data: [{ id, firstName, lastName, phone, dogsCount }] }`
+- [x] Task 3: Creare API Route `/api/clients/search` per ricerca incrementale (AC: #2)
+  - [x] 3.1 Creare `src/app/api/clients/search/route.ts` — GET con query param `q` (minimo 2 caratteri)
+  - [x] 3.2 Usare la funzione `searchClients(query, tenantId)` gia' esistente in `src/lib/queries/clients.ts`
+  - [x] 3.3 Autenticazione: estrarre sessione con `auth()`, restituire 401 se non autenticato
+  - [x] 3.4 Per ogni cliente trovato, caricare il count dei cani associati con `getDogsByClient`
+  - [x] 3.5 Formato risposta: `{ success: true, data: [{ id, firstName, lastName, phone, dogsCount }] }`
 
 - [ ] Task 4: Creare componente `ClientSearch` con ricerca type-ahead (AC: #2, #3)
   - [ ] 4.1 Creare `src/components/appointment/ClientSearch.tsx` — Client Component
