@@ -25,3 +25,12 @@ export const deleteAppointmentSchema = z.object({
 })
 
 export type DeleteAppointmentInput = z.infer<typeof deleteAppointmentSchema>
+
+export const rescheduleAppointmentSchema = z.object({
+  appointmentId: z.string().uuid(),
+  stationId: z.string().uuid(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().regex(/^\d{2}:\d{2}$/),
+})
+
+export type RescheduleAppointmentInput = z.infer<typeof rescheduleAppointmentSchema>

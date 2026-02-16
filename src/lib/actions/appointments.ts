@@ -1,7 +1,7 @@
 'use server'
 
 import { authActionClient } from '@/lib/actions/client'
-import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema } from '@/lib/validations/appointments'
+import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, rescheduleAppointmentSchema } from '@/lib/validations/appointments'
 import { getAppointmentsByDateAndLocation } from '@/lib/queries/appointments'
 import { getStationsWithScheduleForDay } from '@/lib/queries/appointments'
 import { getDogsByClient } from '@/lib/queries/dogs'
@@ -228,4 +228,110 @@ export const deleteAppointment = authActionClient
     }
 
     return { success: true }
+  })
+
+export const rescheduleAppointment = authActionClient
+  .schema(rescheduleAppointmentSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { appointmentId, stationId, date, time } = parsedInput
+
+    // 2.3 Caricare appuntamento esistente per ottenere la durata
+    const [existing] = await db
+      .select({
+        id: appointments.id,
+        startTime: appointments.startTime,
+        endTime: appointments.endTime,
+      })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.id, appointmentId),
+          eq(appointments.tenantId, ctx.tenantId)
+        )
+      )
+      .limit(1)
+
+    if (!existing) {
+      throw new Error('Appuntamento non trovato')
+    }
+
+    // 2.4 Calcolare nuovo startTime e endTime dalla durata originale
+    const durationMs = existing.endTime.getTime() - existing.startTime.getTime()
+    const durationMinutes = Math.round(durationMs / 60000)
+    const newStartTime = new Date(`${date}T${time}:00.000Z`)
+    const newEndTime = new Date(newStartTime.getTime() + durationMs)
+
+    // 2.5 Validare non-sovrapposizione (escludendo l'appuntamento stesso)
+    const conflictsResult = await db
+      .select({ id: appointments.id })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.stationId, stationId),
+          eq(appointments.tenantId, ctx.tenantId),
+          lt(appointments.startTime, newEndTime),
+          gt(appointments.endTime, newStartTime)
+        )
+      )
+
+    const hasConflict = conflictsResult.some((c) => c.id !== appointmentId)
+
+    if (hasConflict) {
+      const alternatives = await findAlternativeSlots(stationId, date, durationMinutes, ctx.tenantId)
+      return {
+        error: {
+          code: 'SLOT_OCCUPIED' as const,
+          message: "Lo slot non e' piu' disponibile",
+          alternatives,
+        },
+      }
+    }
+
+    // 2.6 Validare orario chiusura
+    const dayOfWeek = toDayOfWeek(getDay(new Date(date + 'T00:00:00.000Z')))
+    const [schedule] = await db
+      .select({ closeTime: stationSchedules.closeTime })
+      .from(stationSchedules)
+      .where(
+        and(
+          eq(stationSchedules.stationId, stationId),
+          eq(stationSchedules.dayOfWeek, dayOfWeek),
+          eq(stationSchedules.tenantId, ctx.tenantId)
+        )
+      )
+      .limit(1)
+
+    if (schedule) {
+      const closeMinutes = timeToMinutes(schedule.closeTime)
+      const endMinutes = newEndTime.getUTCHours() * 60 + newEndTime.getUTCMinutes()
+      if (endMinutes > closeMinutes) {
+        return {
+          error: {
+            code: 'EXCEEDS_CLOSING_TIME' as const,
+            message: "L'appuntamento supera l'orario di chiusura",
+            closingTime: schedule.closeTime,
+          },
+        }
+      }
+    }
+
+    // 2.7 UPDATE
+    const [updated] = await db
+      .update(appointments)
+      .set({
+        startTime: newStartTime,
+        endTime: newEndTime,
+        stationId,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(appointments.id, appointmentId),
+          eq(appointments.tenantId, ctx.tenantId)
+        )
+      )
+      .returning()
+
+    // 2.8 Restituire appuntamento aggiornato
+    return { appointment: updated }
   })

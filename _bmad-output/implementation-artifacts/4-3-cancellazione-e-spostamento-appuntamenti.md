@@ -53,15 +53,15 @@ so that **possa riorganizzare l'agenda senza pasticci, come cancellature su un q
   - [x] 1.4 Eseguire DELETE dalla tabella appointments (hard delete — nessun campo status/deletedAt sugli appuntamenti)
   - [x] 1.5 Restituire `{ success: true }` oppure throw Error se appuntamento non trovato
 
-- [ ] Task 2: Creare Server Action `rescheduleAppointment` con validazione sovrapposizione (AC: #4, #5)
-  - [ ] 2.1 Aggiungere schema `rescheduleAppointmentSchema` in `src/lib/validations/appointments.ts` — campi: appointmentId (uuid), stationId (uuid), date (string YYYY-MM-DD), time (string HH:MM)
-  - [ ] 2.2 Creare action `rescheduleAppointment` in `src/lib/actions/appointments.ts` usando `authActionClient.schema(rescheduleAppointmentSchema).action()`
-  - [ ] 2.3 Caricare l'appuntamento esistente per ottenere la durata (endTime - startTime)
-  - [ ] 2.4 Calcolare il nuovo `startTime` e `endTime` dalla nuova data + ora + durata originale
-  - [ ] 2.5 Validare non-sovrapposizione sulla nuova postazione (escludendo l'appuntamento stesso dalla query conflitti) — se conflitto, restituire errore con `code: 'SLOT_OCCUPIED'` e suggerire slot alternativi usando `findAlternativeSlots` (gia' esistente)
-  - [ ] 2.6 Validare che il nuovo slot non ecceda l'orario di chiusura della postazione
-  - [ ] 2.7 UPDATE nella tabella appointments: startTime, endTime, stationId (se cambiata), updatedAt = new Date()
-  - [ ] 2.8 Restituire l'appuntamento aggiornato
+- [x] Task 2: Creare Server Action `rescheduleAppointment` con validazione sovrapposizione (AC: #4, #5)
+  - [x] 2.1 Aggiungere schema `rescheduleAppointmentSchema` in `src/lib/validations/appointments.ts` — campi: appointmentId (uuid), stationId (uuid), date (string YYYY-MM-DD), time (string HH:MM)
+  - [x] 2.2 Creare action `rescheduleAppointment` in `src/lib/actions/appointments.ts` usando `authActionClient.schema(rescheduleAppointmentSchema).action()`
+  - [x] 2.3 Caricare l'appuntamento esistente per ottenere la durata (endTime - startTime)
+  - [x] 2.4 Calcolare il nuovo `startTime` e `endTime` dalla nuova data + ora + durata originale
+  - [x] 2.5 Validare non-sovrapposizione sulla nuova postazione (escludendo l'appuntamento stesso dalla query conflitti) — se conflitto, restituire errore con `code: 'SLOT_OCCUPIED'` e suggerire slot alternativi usando `findAlternativeSlots` (gia' esistente)
+  - [x] 2.6 Validare che il nuovo slot non ecceda l'orario di chiusura della postazione
+  - [x] 2.7 UPDATE nella tabella appointments: startTime, endTime, stationId (se cambiata), updatedAt = new Date()
+  - [x] 2.8 Restituire l'appuntamento aggiornato
 
 - [ ] Task 3: Creare componente `AppointmentDetail` per dettaglio appuntamento (AC: #1)
   - [ ] 3.1 Creare `src/components/appointment/AppointmentDetail.tsx` — Client Component
@@ -586,6 +586,7 @@ Claude Opus 4.6
 ### Completion Notes List
 
 - Task 1: Aggiunto `deleteAppointmentSchema` (Zod) e action `deleteAppointment` con hard DELETE + verifica tenant. TypeScript OK.
+- Task 2: Aggiunto `rescheduleAppointmentSchema` (Zod) e action `rescheduleAppointment` con validazione sovrapposizione (esclusione self), validazione orario chiusura, findAlternativeSlots per SLOT_OCCUPIED, e UPDATE con updatedAt. TypeScript OK.
 
 ### File List
 
