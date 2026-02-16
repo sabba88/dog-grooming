@@ -74,12 +74,12 @@ so that **possa avere il controllo completo della giornata a colpo d'occhio**.
   - [x] 5.5 Popover con Calendar (shadcn/ui) per selezionare data specifica
   - [x] 5.6 Installare componente `calendar` e `popover` di shadcn/ui se non presenti
 
-- [ ] Task 6: Creare componente DateStrip per mobile (AC: #2, #6)
-  - [ ] 6.1 Creare `src/components/schedule/DateStrip.tsx` — Client Component
-  - [ ] 6.2 Barra scorrevole orizzontale con giorni (nome abbreviato + numero, es. "Lun 17")
-  - [ ] 6.3 Giorno selezionato con sfondo primary
-  - [ ] 6.4 Giorno corrente con dot indicator
-  - [ ] 6.5 Mostrare 7 giorni centrati sulla data corrente, aggiornabili con scroll
+- [x] Task 6: Creare componente DateStrip per mobile (AC: #2, #6)
+  - [x] 6.1 Creare `src/components/schedule/DateStrip.tsx` — Client Component
+  - [x] 6.2 Barra scorrevole orizzontale con giorni (nome abbreviato + numero, es. "Lun 17")
+  - [x] 6.3 Giorno selezionato con sfondo primary
+  - [x] 6.4 Giorno corrente con dot indicator
+  - [x] 6.5 Mostrare 7 giorni centrati sulla data corrente, aggiornabili con scroll
 
 - [ ] Task 7: Creare componente AppointmentBlock (AC: #4)
   - [ ] 7.1 Creare `src/components/schedule/AppointmentBlock.tsx` — Client Component
@@ -660,3 +660,4 @@ Claude Opus 4.6
 - `src/components/ui/calendar.tsx` — CREATED (shadcn/ui)
 - `src/components/ui/popover.tsx` — CREATED (shadcn/ui)
 - `src/components/ui/tabs.tsx` — CREATED (shadcn/ui)
+- `src/components/schedule/DateStrip.tsx` — CREATED: strip giorni scorrevole per mobile
