@@ -108,12 +108,12 @@ so that **possa avere il controllo completo della giornata a colpo d'occhio**.
   - [x] 9.7 Linee orizzontali grigie (#E2E8F0) per separare le fasce orarie
   - [x] 9.8 Indicatore "ora corrente" (linea rossa orizzontale) se il giorno visualizzato e' oggi
 
-- [ ] Task 10: Creare componente ScheduleTimeline per mobile (AC: #2, #4, #5)
-  - [ ] 10.1 Creare `src/components/schedule/ScheduleTimeline.tsx` — Client Component
-  - [ ] 10.2 Tab per filtrare per postazione (Tabs shadcn/ui) + tab "Tutte"
-  - [ ] 10.3 Lista verticale con label orario a sinistra e AppointmentBlock/EmptySlot a destra
-  - [ ] 10.4 Scroll verticale per tutta la giornata
-  - [ ] 10.5 Slot vuoti con bordo tratteggiato e testo "+ Slot libero"
+- [x] Task 10: Creare componente ScheduleTimeline per mobile (AC: #2, #4, #5)
+  - [x] 10.1 Creare `src/components/schedule/ScheduleTimeline.tsx` — Client Component
+  - [x] 10.2 Tab per filtrare per postazione (Tabs shadcn/ui) + tab "Tutte"
+  - [x] 10.3 Lista verticale con label orario a sinistra e AppointmentBlock/EmptySlot a destra
+  - [x] 10.4 Scroll verticale per tutta la giornata
+  - [x] 10.5 Slot vuoti con bordo tratteggiato e testo "+ Slot libero"
 
 - [ ] Task 11: Aggiornare pagina Agenda con orchestrazione completa (AC: #1, #2, #3, #6, #7)
   - [ ] 11.1 Aggiornare `src/app/(auth)/agenda/page.tsx` — Server Component che fetcha locations, stations con schedule, e appuntamenti per la data corrente e sede selezionata
@@ -664,3 +664,4 @@ Claude Opus 4.6
 - `src/components/schedule/AppointmentBlock.tsx` — CREATED: blocco appuntamento con varianti grid/timeline, colori servizio, hover shadow
 - `src/components/schedule/EmptySlot.tsx` — CREATED: slot vuoto con pattern diagonali (grid) e bordo tratteggiato (timeline)
 - `src/components/schedule/ScheduleGrid.tsx` — CREATED: griglia desktop CSS Grid con colonne postazioni, AppointmentBlock posizionati, EmptySlot, current time indicator
+- `src/components/schedule/ScheduleTimeline.tsx` — CREATED: timeline mobile con tab postazioni, layout orario-blocco verticale
