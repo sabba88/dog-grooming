@@ -54,14 +54,14 @@ so that **possa prenotare velocemente anche durante una telefonata con le mani o
   - [x] 1.2 Esportare tipo inferito `CreateAppointmentInput`
   - [x] 1.3 Creare `getServicesForStation(stationId, tenantId)` in `src/lib/queries/stations.ts` — restituisce i servizi abilitati su una postazione con JOIN su station_services e services (id, name, price, duration)
 
-- [ ] Task 2: Creare Server Action `createAppointment` con validazione sovrapposizione (AC: #5, #6, #7)
-  - [ ] 2.1 Creare action `createAppointment` in `src/lib/actions/appointments.ts` usando `authActionClient.schema(createAppointmentSchema).action()`
-  - [ ] 2.2 Calcolare `startTime` e `endTime` da date + time + duration (come timestamp UTC)
-  - [ ] 2.3 Validare che il servizio sia abilitato sulla postazione (query station_services)
-  - [ ] 2.4 Validare non-sovrapposizione: query appuntamenti esistenti sulla stessa postazione con `(startTime < newEndTime AND endTime > newStartTime)` — se conflitto, restituire errore con `code: 'SLOT_OCCUPIED'` e suggerire slot alternativi piu' vicini
-  - [ ] 2.5 Validare che l'appuntamento non ecceda l'orario di chiusura della postazione per il giorno selezionato — se eccede, restituire errore con `code: 'EXCEEDS_CLOSING_TIME'`
-  - [ ] 2.6 INSERT nella tabella appointments con tutti i campi + tenantId dal contesto
-  - [ ] 2.7 Restituire l'appuntamento creato con i dati per l'optimistic update
+- [x] Task 2: Creare Server Action `createAppointment` con validazione sovrapposizione (AC: #5, #6, #7)
+  - [x] 2.1 Creare action `createAppointment` in `src/lib/actions/appointments.ts` usando `authActionClient.schema(createAppointmentSchema).action()`
+  - [x] 2.2 Calcolare `startTime` e `endTime` da date + time + duration (come timestamp UTC)
+  - [x] 2.3 Validare che il servizio sia abilitato sulla postazione (query station_services)
+  - [x] 2.4 Validare non-sovrapposizione: query appuntamenti esistenti sulla stessa postazione con `(startTime < newEndTime AND endTime > newStartTime)` — se conflitto, restituire errore con `code: 'SLOT_OCCUPIED'` e suggerire slot alternativi piu' vicini
+  - [x] 2.5 Validare che l'appuntamento non ecceda l'orario di chiusura della postazione per il giorno selezionato — se eccede, restituire errore con `code: 'EXCEEDS_CLOSING_TIME'`
+  - [x] 2.6 INSERT nella tabella appointments con tutti i campi + tenantId dal contesto
+  - [x] 2.7 Restituire l'appuntamento creato con i dati per l'optimistic update
 
 - [ ] Task 3: Creare API Route `/api/clients/search` per ricerca incrementale (AC: #2)
   - [ ] 3.1 Creare `src/app/api/clients/search/route.ts` — GET con query param `q` (minimo 2 caratteri)
