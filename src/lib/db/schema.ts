@@ -106,3 +106,18 @@ export const dogNotes = pgTable('dog_notes', {
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
+
+export const appointments = pgTable('appointments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clientId: uuid('client_id').notNull(),
+  dogId: uuid('dog_id').notNull(),
+  serviceId: uuid('service_id').notNull(),
+  stationId: uuid('station_id').notNull(),
+  startTime: timestamp('start_time').notNull(),
+  endTime: timestamp('end_time').notNull(),
+  price: integer('price').notNull(),
+  notes: text('notes'),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
