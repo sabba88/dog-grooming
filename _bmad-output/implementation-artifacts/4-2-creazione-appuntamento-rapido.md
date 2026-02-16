@@ -102,14 +102,14 @@ so that **possa prenotare velocemente anche durante una telefonata con le mani o
   - [x] 6.11 Gestione errore `EXCEEDS_CLOSING_TIME`: mostrare messaggio + permettere modifica durata
   - [x] 6.12 Loading state sul bottone durante il salvataggio
 
-- [ ] Task 7: Integrare form nell'AgendaView con Dialog/Sheet e optimistic update (AC: #1, #5)
-  - [ ] 7.1 Aggiornare `src/components/schedule/AgendaView.tsx` — aggiungere stato per Dialog/Sheet aperto con dati slot
-  - [ ] 7.2 Collegare `onEmptySlotClick` in ScheduleGrid e ScheduleTimeline per aprire il form con dati pre-compilati
-  - [ ] 7.3 Wrapper responsive: `Dialog` (desktop >= 768px) / `Sheet` (mobile < 768px) contenente `AppointmentForm`
-  - [ ] 7.4 Al successo creazione: chiudere Dialog/Sheet + invalidare query TanStack `['appointments', locationId, dateString]` per aggiornare la griglia
-  - [ ] 7.5 Optimistic update con TanStack Query `useMutation` + `onMutate` per mostrare il blocco immediatamente nella griglia prima della risposta server
-  - [ ] 7.6 Toast "Appuntamento salvato" tramite Sonner (gia' configurato)
-  - [ ] 7.7 Rollback automatico in caso di errore server (gestito da TanStack Query)
+- [x] Task 7: Integrare form nell'AgendaView con Dialog/Sheet e optimistic update (AC: #1, #5)
+  - [x] 7.1 Aggiornare `src/components/schedule/AgendaView.tsx` — aggiungere stato per Dialog/Sheet aperto con dati slot
+  - [x] 7.2 Collegare `onEmptySlotClick` in ScheduleGrid e ScheduleTimeline per aprire il form con dati pre-compilati
+  - [x] 7.3 Wrapper responsive: `Dialog` (desktop >= 768px) / `Sheet` (mobile < 768px) contenente `AppointmentForm`
+  - [x] 7.4 Al successo creazione: chiudere Dialog/Sheet + invalidare query TanStack `['appointments', locationId, dateString]` per aggiornare la griglia
+  - [x] 7.5 Optimistic update con TanStack Query `useMutation` + `onMutate` per mostrare il blocco immediatamente nella griglia prima della risposta server
+  - [x] 7.6 Toast "Appuntamento salvato" tramite Sonner (gia' configurato)
+  - [x] 7.7 Rollback automatico in caso di errore server (gestito da TanStack Query)
 
 ## Dev Notes
 

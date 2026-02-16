@@ -2,14 +2,17 @@
 
 import { useState } from 'react'
 import { format, getDay } from 'date-fns'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useLocationSelector } from '@/hooks/useLocationSelector'
 import { DateNavigation } from './DateNavigation'
 import { DateStrip } from './DateStrip'
 import { ScheduleGrid } from './ScheduleGrid'
 import { ScheduleTimeline } from './ScheduleTimeline'
+import { AppointmentForm } from '@/components/appointment/AppointmentForm'
 import { getAgendaData } from '@/lib/actions/appointments'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Settings } from 'lucide-react'
 import Link from 'next/link'
 
@@ -25,7 +28,14 @@ interface AgendaViewProps {
 
 export function AgendaView({ locations }: AgendaViewProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date())
+  const [appointmentSlot, setAppointmentSlot] = useState<{
+    stationId: string
+    stationName: string
+    date: string
+    time: string
+  } | null>(null)
   const isMobile = useIsMobile()
+  const queryClient = useQueryClient()
   const { selectedLocationId, isHydrated } = useLocationSelector(locations)
 
   const dateString = format(selectedDate, 'yyyy-MM-dd')
@@ -54,6 +64,19 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
   const appointments = data?.appointments ?? []
   const stations = data?.stations ?? []
+
+  const handleEmptySlotClick = (slotData: { stationId: string; date: string; time: string }) => {
+    const station = stations.find((s) => s.id === slotData.stationId)
+    setAppointmentSlot({
+      ...slotData,
+      stationName: station?.name ?? '',
+    })
+  }
+
+  const handleAppointmentCreated = () => {
+    setAppointmentSlot(null)
+    queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
+  }
 
   // No stations configured
   if (isHydrated && selectedLocationId && data && stations.length === 0) {
@@ -93,6 +116,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
           stations={stations}
           appointments={appointments}
           dateString={dateString}
+          onEmptySlotClick={handleEmptySlotClick}
         />
       ) : (
         <ScheduleGrid
@@ -100,7 +124,41 @@ export function AgendaView({ locations }: AgendaViewProps) {
           appointments={appointments}
           selectedDate={selectedDate}
           dateString={dateString}
+          onEmptySlotClick={handleEmptySlotClick}
         />
+      )}
+
+      {/* Form appuntamento — Dialog desktop / Sheet mobile */}
+      {isMobile ? (
+        <Sheet open={!!appointmentSlot} onOpenChange={() => setAppointmentSlot(null)}>
+          <SheetContent side="bottom" className="h-[90vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Nuovo Appuntamento</SheetTitle>
+            </SheetHeader>
+            {appointmentSlot && (
+              <AppointmentForm
+                prefilledSlot={appointmentSlot}
+                onSuccess={handleAppointmentCreated}
+                onCancel={() => setAppointmentSlot(null)}
+              />
+            )}
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={!!appointmentSlot} onOpenChange={() => setAppointmentSlot(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Nuovo Appuntamento</DialogTitle>
+            </DialogHeader>
+            {appointmentSlot && (
+              <AppointmentForm
+                prefilledSlot={appointmentSlot}
+                onSuccess={handleAppointmentCreated}
+                onCancel={() => setAppointmentSlot(null)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   )
