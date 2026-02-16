@@ -98,15 +98,15 @@ so that **possa avere il controllo completo della giornata a colpo d'occhio**.
   - [x] 8.4 Hover: evidenziazione bordo primary. Cursore pointer.
   - [x] 8.5 onClick handler con dati slot (stationId, date, time) — predisposto per Story 4.2
 
-- [ ] Task 9: Creare componente ScheduleGrid per desktop (AC: #1, #4, #5)
-  - [ ] 9.1 Creare `src/components/schedule/ScheduleGrid.tsx` — Client Component
-  - [ ] 9.2 Layout CSS Grid: prima colonna per etichette orario, colonne successive per postazioni
-  - [ ] 9.3 Header con nomi postazioni come intestazione colonne
-  - [ ] 9.4 Righe a intervalli di 30 minuti tra orario minimo di apertura e massimo di chiusura globale
-  - [ ] 9.5 Posizionamento AppointmentBlock con `position: absolute` dentro celle relative, top/height calcolati dalla durata
-  - [ ] 9.6 EmptySlot per gli intervalli senza appuntamenti
-  - [ ] 9.7 Linee orizzontali grigie (#E2E8F0) per separare le fasce orarie
-  - [ ] 9.8 Indicatore "ora corrente" (linea rossa orizzontale) se il giorno visualizzato e' oggi
+- [x] Task 9: Creare componente ScheduleGrid per desktop (AC: #1, #4, #5)
+  - [x] 9.1 Creare `src/components/schedule/ScheduleGrid.tsx` — Client Component
+  - [x] 9.2 Layout CSS Grid: prima colonna per etichette orario, colonne successive per postazioni
+  - [x] 9.3 Header con nomi postazioni come intestazione colonne
+  - [x] 9.4 Righe a intervalli di 30 minuti tra orario minimo di apertura e massimo di chiusura globale
+  - [x] 9.5 Posizionamento AppointmentBlock con `position: absolute` dentro celle relative, top/height calcolati dalla durata
+  - [x] 9.6 EmptySlot per gli intervalli senza appuntamenti
+  - [x] 9.7 Linee orizzontali grigie (#E2E8F0) per separare le fasce orarie
+  - [x] 9.8 Indicatore "ora corrente" (linea rossa orizzontale) se il giorno visualizzato e' oggi
 
 - [ ] Task 10: Creare componente ScheduleTimeline per mobile (AC: #2, #4, #5)
   - [ ] 10.1 Creare `src/components/schedule/ScheduleTimeline.tsx` — Client Component
@@ -663,3 +663,4 @@ Claude Opus 4.6
 - `src/components/schedule/DateStrip.tsx` — CREATED: strip giorni scorrevole per mobile
 - `src/components/schedule/AppointmentBlock.tsx` — CREATED: blocco appuntamento con varianti grid/timeline, colori servizio, hover shadow
 - `src/components/schedule/EmptySlot.tsx` — CREATED: slot vuoto con pattern diagonali (grid) e bordo tratteggiato (timeline)
+- `src/components/schedule/ScheduleGrid.tsx` — CREATED: griglia desktop CSS Grid con colonne postazioni, AppointmentBlock posizionati, EmptySlot, current time indicator
