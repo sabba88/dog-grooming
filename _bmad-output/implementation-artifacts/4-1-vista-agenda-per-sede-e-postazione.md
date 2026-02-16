@@ -66,13 +66,13 @@ so that **possa avere il controllo completo della giornata a colpo d'occhio**.
   - [x] 4.4 `getAppointmentPosition(appointment, dayStart)`: calcola top e altezza del blocco in base a startTime/endTime relativi all'inizio della giornata
   - [x] 4.5 `SERVICE_COLORS`: palette colori pastello per i servizi (5 colori ciclici) con `getServiceColor(serviceId, allServiceIds)` per assegnazione deterministica
 
-- [ ] Task 5: Creare componente DateNavigation per desktop (AC: #6, #7)
-  - [ ] 5.1 Creare `src/components/schedule/DateNavigation.tsx` — Client Component
-  - [ ] 5.2 Frecce sinistra/destra per giorno precedente/successivo
-  - [ ] 5.3 Display data corrente formattata in italiano (es. "Lunedi' 17 Febbraio 2026")
-  - [ ] 5.4 Bottone "Oggi" per tornare alla data corrente
-  - [ ] 5.5 Popover con Calendar (shadcn/ui) per selezionare data specifica
-  - [ ] 5.6 Installare componente `calendar` e `popover` di shadcn/ui se non presenti
+- [x] Task 5: Creare componente DateNavigation per desktop (AC: #6, #7)
+  - [x] 5.1 Creare `src/components/schedule/DateNavigation.tsx` — Client Component
+  - [x] 5.2 Frecce sinistra/destra per giorno precedente/successivo
+  - [x] 5.3 Display data corrente formattata in italiano (es. "Lunedi' 17 Febbraio 2026")
+  - [x] 5.4 Bottone "Oggi" per tornare alla data corrente
+  - [x] 5.5 Popover con Calendar (shadcn/ui) per selezionare data specifica
+  - [x] 5.6 Installare componente `calendar` e `popover` di shadcn/ui se non presenti
 
 - [ ] Task 6: Creare componente DateStrip per mobile (AC: #2, #6)
   - [ ] 6.1 Creare `src/components/schedule/DateStrip.tsx` — Client Component
@@ -656,3 +656,7 @@ Claude Opus 4.6
 - `src/lib/validations/appointments.ts` — CREATED: schema Zod getAppointmentsQuerySchema + tipo GetAppointmentsQuery
 - `src/lib/queries/appointments.ts` — CREATED: getAppointmentsByDateAndLocation, getStationsWithScheduleForDay
 - `src/lib/utils/schedule.ts` — CREATED: generateTimeSlots, getGlobalTimeRange, isSlotOccupied, getAppointmentPosition, SERVICE_COLORS, getServiceColor, toDayOfWeek, timeToMinutes
+- `src/components/schedule/DateNavigation.tsx` — CREATED: navigazione data desktop con frecce, bottone Oggi, Popover Calendar
+- `src/components/ui/calendar.tsx` — CREATED (shadcn/ui)
+- `src/components/ui/popover.tsx` — CREATED (shadcn/ui)
+- `src/components/ui/tabs.tsx` — CREATED (shadcn/ui)
