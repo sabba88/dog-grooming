@@ -80,13 +80,13 @@ so that **possa prenotare velocemente anche durante una telefonata con le mani o
   - [x] 4.7 Auto-focus sull'input al mount
   - [x] 4.8 Stato "Nessun risultato" con messaggio e CTA creazione
 
-- [ ] Task 5: Creare sotto-form `QuickClientForm` per creazione al volo (AC: #3)
-  - [ ] 5.1 Creare `src/components/appointment/QuickClientForm.tsx` — Client Component
-  - [ ] 5.2 Dialog secondario (sopra il Dialog/Sheet del form principale) con form compatto: nome, cognome, telefono, checkbox consenso
-  - [ ] 5.3 Usare `createClientSchema` da `src/lib/validations/clients.ts` (riutilizzare lo schema esistente)
-  - [ ] 5.4 Usare `createClient` action da `src/lib/actions/clients.ts` (riutilizzare l'action esistente)
-  - [ ] 5.5 Al successo: `onCreated(client)` callback con i dati del nuovo cliente — NON chiudere il form principale
-  - [ ] 5.6 Toast "Cliente creato"
+- [x] Task 5: Creare sotto-form `QuickClientForm` per creazione al volo (AC: #3)
+  - [x] 5.1 Creare `src/components/appointment/QuickClientForm.tsx` — Client Component
+  - [x] 5.2 Dialog secondario (sopra il Dialog/Sheet del form principale) con form compatto: nome, cognome, telefono, checkbox consenso
+  - [x] 5.3 Usare `createClientSchema` da `src/lib/validations/clients.ts` (riutilizzare lo schema esistente)
+  - [x] 5.4 Usare `createClient` action da `src/lib/actions/clients.ts` (riutilizzare l'action esistente)
+  - [x] 5.5 Al successo: `onCreated(client)` callback con i dati del nuovo cliente — NON chiudere il form principale
+  - [x] 5.6 Toast "Cliente creato"
 
 - [ ] Task 6: Creare componente `AppointmentForm` completo (AC: #1, #2, #3, #4, #5, #6, #7)
   - [ ] 6.1 Creare `src/components/appointment/AppointmentForm.tsx` — Client Component
