@@ -59,12 +59,12 @@ so that **possa avere il controllo completo della giornata a colpo d'occhio**.
   - [x] 3.1 Creare `src/lib/queries/appointments.ts` — `getAppointmentsByDateAndLocation(locationId, date, tenantId)`: fetch appuntamenti del giorno con JOIN su clients (firstName, lastName), dogs (name), services (name, duration) e stations (name, id) — filtro per stationId in stations della location
   - [x] 3.2 Creare `getStationsWithScheduleForDay(locationId, dayOfWeek, tenantId)`: restituisce le postazioni della sede con i loro orari di apertura/chiusura per il giorno specificato
 
-- [ ] Task 4: Creare utility functions per gestione orari e colori agenda (AC: #1, #2, #4, #5)
-  - [ ] 4.1 Creare `src/lib/utils/schedule.ts` — `generateTimeSlots(openTime, closeTime, intervalMinutes)`: genera array di slot orari (HH:mm) tra apertura e chiusura con intervallo di 30 minuti
-  - [ ] 4.2 `getGlobalTimeRange(stations)`: calcola l'orario minimo di apertura e massimo di chiusura tra tutte le postazioni, per definire le righe della griglia
-  - [ ] 4.3 `isSlotOccupied(slot, appointments)`: verifica se uno slot e' occupato da un appuntamento
-  - [ ] 4.4 `getAppointmentPosition(appointment, dayStart)`: calcola top e altezza del blocco in base a startTime/endTime relativi all'inizio della giornata
-  - [ ] 4.5 `SERVICE_COLORS`: palette colori pastello per i servizi (5 colori ciclici) con `getServiceColor(serviceId, allServiceIds)` per assegnazione deterministica
+- [x] Task 4: Creare utility functions per gestione orari e colori agenda (AC: #1, #2, #4, #5)
+  - [x] 4.1 Creare `src/lib/utils/schedule.ts` — `generateTimeSlots(openTime, closeTime, intervalMinutes)`: genera array di slot orari (HH:mm) tra apertura e chiusura con intervallo di 30 minuti
+  - [x] 4.2 `getGlobalTimeRange(stations)`: calcola l'orario minimo di apertura e massimo di chiusura tra tutte le postazioni, per definire le righe della griglia
+  - [x] 4.3 `isSlotOccupied(slot, appointments)`: verifica se uno slot e' occupato da un appuntamento
+  - [x] 4.4 `getAppointmentPosition(appointment, dayStart)`: calcola top e altezza del blocco in base a startTime/endTime relativi all'inizio della giornata
+  - [x] 4.5 `SERVICE_COLORS`: palette colori pastello per i servizi (5 colori ciclici) con `getServiceColor(serviceId, allServiceIds)` per assegnazione deterministica
 
 - [ ] Task 5: Creare componente DateNavigation per desktop (AC: #6, #7)
   - [ ] 5.1 Creare `src/components/schedule/DateNavigation.tsx` — Client Component
@@ -655,3 +655,4 @@ Claude Opus 4.6
 - `src/lib/db/schema.ts` — MODIFIED: aggiunta tabella appointments
 - `src/lib/validations/appointments.ts` — CREATED: schema Zod getAppointmentsQuerySchema + tipo GetAppointmentsQuery
 - `src/lib/queries/appointments.ts` — CREATED: getAppointmentsByDateAndLocation, getStationsWithScheduleForDay
+- `src/lib/utils/schedule.ts` — CREATED: generateTimeSlots, getGlobalTimeRange, isSlotOccupied, getAppointmentPosition, SERVICE_COLORS, getServiceColor, toDayOfWeek, timeToMinutes
