@@ -44,6 +44,16 @@ so that **possa conoscere ogni cane e offrire un servizio personalizzato basato 
    **When** la pagina viene renderizzata
    **Then** ogni cliente mostra il numero di cani associati (conteggio reale dalla tabella dogs)
 
+8. **Given** un utente apre il form cane (creazione o modifica)
+   **When** il form viene renderizzato
+   **Then** i campi disponibili sono: nome, razza, taglia, data di nascita, sesso, sterilizzato
+   **And** il campo "eta'" non e' piu' presente
+
+9. **Given** un utente clicca su "Cani" nel menu laterale
+   **When** la pagina viene renderizzata
+   **Then** viene mostrata una lista con tutti i cani del tenant, con nome, razza, taglia, sesso e proprietario
+   **And** cliccando su un cane si naviga al dettaglio `/dogs/[id]`
+
 ## Tasks / Subtasks
 
 - [x] Task 1: Aggiungere tabelle `dogs` e `dog_notes` nello schema Drizzle (AC: #1, #2, #3, #5)
@@ -96,8 +106,42 @@ so that **possa conoscere ogni cane e offrire un servizio personalizzato basato 
   - [x] 7.5 Creare `src/components/dog/DogNotes.tsx` — componente per lista note + form aggiunta nota (stesso pattern di ClientNotes)
   - [x] 7.6 Lista note: ogni nota mostra contenuto, nome autore, data formattata in italiano — ordine cronologico inverso
   - [x] 7.7 Form aggiunta nota: Textarea + bottone "Aggiungi Nota" — inline nella sezione, non in modale
+  - [x] 7.8 Sezione Storico Note Prestazione: stato vuoto placeholder per Epica 4
+  - [x] 7.9 Redirect a `/clients` se il cane non esiste
+  - [x] 7.1 Creare `src/app/(auth)/dogs/[id]/page.tsx` — Server Component con fetch cane + note
+  - [x] 7.2 Creare `src/components/dog/DogDetail.tsx` — Client Component con sezioni
+  - [x] 7.3 Breadcrumb "Clienti > [Nome Cognome Cliente] > [Nome Cane]" con link al cliente
+  - [x] 7.4 Sezione Dati Cane: nome, razza, taglia, eta' + bottone "Modifica" che apre DogForm in modalita' modifica
+  - [x] 7.5 Creare `src/components/dog/DogNotes.tsx` — componente per lista note + form aggiunta nota (stesso pattern di ClientNotes)
+  - [x] 7.6 Lista note: ogni nota mostra contenuto, nome autore, data formattata in italiano — ordine cronologico inverso
+  - [x] 7.7 Form aggiunta nota: Textarea + bottone "Aggiungi Nota" — inline nella sezione, non in modale
   - [x] 7.8 Sezione Storico Note Prestazione: stato vuoto "Nessuna nota prestazione registrata — Le note verranno aggiunte durante gli appuntamenti" — sezione placeholder per Epica 4
   - [x] 7.9 Redirect a `/clients` se il cane non esiste
+
+- [x] Task 8: Aggiornare schema DB — rimuovere `age`, aggiungere `dateOfBirth`, `sex`, `sterilized` (AC: #8)
+  - [x] 8.1 Rimuovere `age: text('age')` dalla tabella `dogs`
+  - [x] 8.2 Aggiungere `dateOfBirth: timestamp('date_of_birth')` (nullable)
+  - [x] 8.3 Aggiungere `sex: text('sex')` (nullable — "maschio" | "femmina")
+  - [x] 8.4 Aggiungere `sterilized: boolean('sterilized').notNull().default(false)`
+  - [x] 8.5 Applicare schema al database
+
+- [x] Task 9: Aggiornare validazioni, actions, query con i nuovi campi + nuova query `getAllDogs` (AC: #8, #9)
+  - [x] 9.1 Aggiornare `createDogSchema` e `updateDogSchema`: rimuovere `age`, aggiungere `dateOfBirth`, `sex`, `sterilized`
+  - [x] 9.2 Aggiornare `createDog` e `updateDog` actions con i nuovi campi
+  - [x] 9.3 Aggiornare `getDogsByClient` e `getDogById` con i nuovi campi
+  - [x] 9.4 Creare `getAllDogs(tenantId)` — tutti i cani del tenant con nome cliente, ordinati per nome
+
+- [x] Task 10: Aggiornare DogForm, DogDetail, DogList con i nuovi campi (AC: #8)
+  - [x] 10.1 DogForm: sostituire campo Eta con Data di Nascita (input type="date"), aggiungere Sesso (Select), Sterilizzato (Checkbox)
+  - [x] 10.2 DogDetail: sostituire Eta con Data di Nascita (formattata in italiano), aggiungere Sesso e Sterilizzato
+  - [x] 10.3 DogList: aggiornare interfaccia Dog con i nuovi campi
+  - [x] 10.4 ClientDetail: aggiornare interfaccia Dog con i nuovi campi
+
+- [x] Task 11: Creare pagina lista cani `/dogs` con componente `DogsPage` (AC: #9)
+  - [x] 11.1 Creare `src/components/dog/DogsPage.tsx` — Client Component con tabella (desktop) e card (mobile)
+  - [x] 11.2 Colonne: Nome, Razza, Taglia, Sesso, Proprietario — click naviga a `/dogs/[id]`
+  - [x] 11.3 Stato vuoto con messaggio
+  - [x] 11.4 Aggiornare `src/app/(auth)/dogs/page.tsx` — Server Component che chiama `getAllDogs`
 
 ## Dev Notes
 
@@ -489,6 +533,10 @@ Claude Opus 4.6
 - ✅ Task 5: Creato `DogForm.tsx` con Dialog/Sheet responsive, React Hook Form + Zod, Select per taglia, gestisce sia creazione che modifica. Componente `select` shadcn/ui già presente.
 - ✅ Task 6: Creato `DogList.tsx` con stato vuoto + CTA. Aggiornati `ClientDetail.tsx` (placeholder → DogList reale), `ClientList.tsx` (dogsCount in tabella/card), `clients/[id]/page.tsx` (fetch dogs in parallelo con notes).
 - ✅ Task 7: Creata pagina dettaglio cane `/dogs/[id]` con Server Component + DogDetail (breadcrumb, dati cane, modifica via DogForm, DogNotes inline con form aggiunta nota, placeholder storico note prestazione). Redirect a `/clients` se cane non trovato.
+- ✅ Task 8: Aggiornato schema DB: rimosso `age`, aggiunto `dateOfBirth` (timestamp nullable), `sex` (text nullable), `sterilized` (boolean default false). Schema pushato al DB.
+- ✅ Task 9: Aggiornate validazioni Zod, server actions e query con nuovi campi. Creata query `getAllDogs(tenantId)` per lista cani con nome proprietario.
+- ✅ Task 10: Aggiornato DogForm (Data di Nascita con input date, Sesso con Select, Sterilizzato con Checkbox), DogDetail (nuovi campi nella griglia), DogList e ClientDetail (interfacce aggiornate).
+- ✅ Task 11: Creata pagina lista cani `/dogs` con DogsPage (tabella desktop + card mobile) e Server Component che chiama `getAllDogs`.
 
 ### File List
 
@@ -505,3 +553,5 @@ Claude Opus 4.6
 - `src/app/(auth)/dogs/[id]/page.tsx` — CREATO: Server Component pagina dettaglio cane
 - `src/components/dog/DogDetail.tsx` — CREATO: dettaglio cane con breadcrumb, dati, note, placeholder storico
 - `src/components/dog/DogNotes.tsx` — CREATO: lista note + form aggiunta nota inline
+- `src/components/dog/DogsPage.tsx` — CREATO: pagina lista cani con tabella/card responsive
+- `src/app/(auth)/dogs/page.tsx` — MODIFICATO: placeholder sostituito con Server Component che chiama getAllDogs

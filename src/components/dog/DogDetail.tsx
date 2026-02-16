@@ -13,7 +13,9 @@ interface Dog {
   name: string
   breed: string | null
   size: string | null
-  age: string | null
+  dateOfBirth: Date | null
+  sex: string | null
+  sterilized: boolean
   clientId: string
   createdAt: Date | null
   updatedAt: Date | null
@@ -33,6 +35,8 @@ interface DogDetailProps {
   notes: Note[]
 }
 
+const dateFormatter = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' })
+
 export function DogDetail({ dog, notes }: DogDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
@@ -45,6 +49,11 @@ export function DogDetail({ dog, notes }: DogDetailProps) {
     piccola: 'Piccola',
     media: 'Media',
     grande: 'Grande',
+  }
+
+  const sexLabel: Record<string, string> = {
+    maschio: 'Maschio',
+    femmina: 'Femmina',
   }
 
   return (
@@ -93,8 +102,22 @@ export function DogDetail({ dog, notes }: DogDetailProps) {
             </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Eta</p>
-            <p className="text-sm text-foreground">{dog.age || '—'}</p>
+            <p className="text-xs text-muted-foreground mb-1">Data di Nascita</p>
+            <p className="text-sm text-foreground">
+              {dog.dateOfBirth ? dateFormatter.format(dog.dateOfBirth) : '—'}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Sesso</p>
+            <p className="text-sm text-foreground">
+              {dog.sex ? sexLabel[dog.sex] || dog.sex : '—'}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Sterilizzato</p>
+            <p className="text-sm text-foreground">
+              {dog.sterilized ? 'Si' : 'No'}
+            </p>
           </div>
         </div>
       </div>

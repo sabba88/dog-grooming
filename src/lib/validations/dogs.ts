@@ -4,7 +4,9 @@ export const createDogSchema = z.object({
   name: z.string().min(2, 'Il nome deve avere almeno 2 caratteri'),
   breed: z.string().optional().or(z.literal('')),
   size: z.enum(['piccola', 'media', 'grande']).optional().or(z.literal('')),
-  age: z.string().optional().or(z.literal('')),
+  dateOfBirth: z.string().optional().or(z.literal('')),
+  sex: z.enum(['maschio', 'femmina']).optional().or(z.literal('')),
+  sterilized: z.boolean(),
   clientId: z.string().uuid(),
 })
 
@@ -15,7 +17,9 @@ export const updateDogSchema = z.object({
   name: z.string().min(2, 'Il nome deve avere almeno 2 caratteri'),
   breed: z.string().optional().or(z.literal('')),
   size: z.enum(['piccola', 'media', 'grande']).optional().or(z.literal('')),
-  age: z.string().optional().or(z.literal('')),
+  dateOfBirth: z.string().optional().or(z.literal('')),
+  sex: z.enum(['maschio', 'femmina']).optional().or(z.literal('')),
+  sterilized: z.boolean(),
 })
 
 export type UpdateDogFormData = z.infer<typeof updateDogSchema>

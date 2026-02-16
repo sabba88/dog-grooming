@@ -36,7 +36,9 @@ export const createDog = authActionClient
         name: parsedInput.name,
         breed: parsedInput.breed || null,
         size: parsedInput.size || null,
-        age: parsedInput.age || null,
+        dateOfBirth: parsedInput.dateOfBirth ? new Date(parsedInput.dateOfBirth) : null,
+        sex: parsedInput.sex || null,
+        sterilized: parsedInput.sterilized,
         clientId: parsedInput.clientId,
         tenantId: ctx.tenantId,
       })
@@ -54,7 +56,9 @@ export const updateDog = authActionClient
         name: parsedInput.name,
         breed: parsedInput.breed || null,
         size: parsedInput.size || null,
-        age: parsedInput.age || null,
+        dateOfBirth: parsedInput.dateOfBirth ? new Date(parsedInput.dateOfBirth) : null,
+        sex: parsedInput.sex || null,
+        sterilized: parsedInput.sterilized,
         updatedAt: new Date(),
       })
       .where(and(eq(dogs.id, parsedInput.id), eq(dogs.tenantId, ctx.tenantId)))

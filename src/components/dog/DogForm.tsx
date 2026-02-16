@@ -13,6 +13,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -45,8 +46,15 @@ interface DogFormProps {
     name: string
     breed: string | null
     size: string | null
-    age: string | null
+    dateOfBirth: Date | null
+    sex: string | null
+    sterilized: boolean
   } | null
+}
+
+function formatDateForInput(date: Date | null): string {
+  if (!date) return ''
+  return date.toISOString().split('T')[0]
 }
 
 export function DogForm({ open, onOpenChange, onSuccess, clientId, dog }: DogFormProps) {
@@ -61,9 +69,11 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, dog }: DogFor
           name: dog.name,
           breed: dog.breed || '',
           size: (dog.size as 'piccola' | 'media' | 'grande') || '',
-          age: dog.age || '',
+          dateOfBirth: formatDateForInput(dog.dateOfBirth),
+          sex: (dog.sex as 'maschio' | 'femmina') || '',
+          sterilized: dog.sterilized,
         }
-      : { name: '', breed: '', size: '', age: '', clientId },
+      : { name: '', breed: '', size: '', dateOfBirth: '', sex: '', sterilized: false, clientId },
   })
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createDog, {
@@ -161,18 +171,49 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, dog }: DogFor
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="age">Eta (opzionale)</Label>
+        <Label htmlFor="dateOfBirth">Data di Nascita (opzionale)</Label>
         <Input
-          id="age"
-          placeholder="Es. 3 anni, cucciolo"
-          {...form.register('age')}
-          aria-invalid={!!form.formState.errors.age}
+          id="dateOfBirth"
+          type="date"
+          {...form.register('dateOfBirth')}
         />
-        {form.formState.errors.age && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.age.message}
-          </p>
-        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="sex">Sesso (opzionale)</Label>
+        <Controller
+          name="sex"
+          control={form.control}
+          render={({ field }) => (
+            <Select
+              value={field.value || ''}
+              onValueChange={(value) => field.onChange(value)}
+            >
+              <SelectTrigger id="sex">
+                <SelectValue placeholder="Seleziona sesso" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="maschio">Maschio</SelectItem>
+                <SelectItem value="femmina">Femmina</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Controller
+          name="sterilized"
+          control={form.control}
+          render={({ field }) => (
+            <Checkbox
+              id="sterilized"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked === true)}
+            />
+          )}
+        />
+        <Label htmlFor="sterilized" className="cursor-pointer">Sterilizzato</Label>
       </div>
 
       {!isEditing && <input type="hidden" {...form.register('clientId')} />}

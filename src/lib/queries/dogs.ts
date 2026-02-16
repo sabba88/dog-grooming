@@ -9,7 +9,9 @@ export async function getDogsByClient(clientId: string, tenantId: string) {
       name: dogs.name,
       breed: dogs.breed,
       size: dogs.size,
-      age: dogs.age,
+      dateOfBirth: dogs.dateOfBirth,
+      sex: dogs.sex,
+      sterilized: dogs.sterilized,
       createdAt: dogs.createdAt,
     })
     .from(dogs)
@@ -28,7 +30,9 @@ export async function getDogById(dogId: string, tenantId: string) {
       name: dogs.name,
       breed: dogs.breed,
       size: dogs.size,
-      age: dogs.age,
+      dateOfBirth: dogs.dateOfBirth,
+      sex: dogs.sex,
+      sterilized: dogs.sterilized,
       clientId: dogs.clientId,
       createdAt: dogs.createdAt,
       updatedAt: dogs.updatedAt,
@@ -60,4 +64,25 @@ export async function getDogNotes(dogId: string, tenantId: string) {
       and(eq(dogNotes.dogId, dogId), eq(dogNotes.tenantId, tenantId))
     )
     .orderBy(desc(dogNotes.createdAt))
+}
+
+export async function getAllDogs(tenantId: string) {
+  return db
+    .select({
+      id: dogs.id,
+      name: dogs.name,
+      breed: dogs.breed,
+      size: dogs.size,
+      sex: dogs.sex,
+      clientFirstName: clients.firstName,
+      clientLastName: clients.lastName,
+      clientId: dogs.clientId,
+    })
+    .from(dogs)
+    .innerJoin(
+      clients,
+      and(eq(dogs.clientId, clients.id), isNull(clients.deletedAt))
+    )
+    .where(eq(dogs.tenantId, tenantId))
+    .orderBy(asc(dogs.name))
 }

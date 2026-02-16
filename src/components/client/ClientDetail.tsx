@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ClientForm } from '@/components/client/ClientForm'
 import { ClientNotes } from '@/components/client/ClientNotes'
+import { DogList } from '@/components/dog/DogList'
 import { ArrowLeft, Pencil } from 'lucide-react'
 
 const dateFormatter = new Intl.DateTimeFormat('it-IT', {
@@ -28,12 +29,24 @@ interface Note {
   authorName: string
 }
 
+interface Dog {
+  id: string
+  name: string
+  breed: string | null
+  size: string | null
+  dateOfBirth: Date | null
+  sex: string | null
+  sterilized: boolean
+  createdAt: Date | null
+}
+
 interface ClientDetailProps {
   client: Client
   notes: Note[]
+  dogs: Dog[]
 }
 
-export function ClientDetail({ client, notes }: ClientDetailProps) {
+export function ClientDetail({ client, notes, dogs }: ClientDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
 
@@ -90,13 +103,8 @@ export function ClientDetail({ client, notes }: ClientDetailProps) {
         </div>
       </div>
 
-      {/* Cani Associati — placeholder per Story 3.2 */}
-      <div className="rounded-lg border border-border bg-card p-6 mb-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">Cani Associati</h2>
-        <p className="text-sm text-muted-foreground">
-          Nessun cane associato — I cani verranno gestiti nella prossima funzionalità
-        </p>
-      </div>
+      {/* Cani Associati */}
+      <DogList clientId={client.id} dogs={dogs} />
 
       <Separator className="my-6" />
 

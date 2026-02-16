@@ -1,12 +1,15 @@
-export default function DogsPage() {
-  return (
-    <div className="flex flex-col items-center justify-center gap-4 py-12">
-      <h2 className="text-xl font-semibold" style={{ color: '#1A202C' }}>
-        Cani
-      </h2>
-      <p style={{ color: '#64748B' }}>
-        Anagrafica cani disponibile in Epica 3.
-      </p>
-    </div>
-  )
+import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth/auth'
+import { getAllDogs } from '@/lib/queries/dogs'
+import { DogsPage } from '@/components/dog/DogsPage'
+
+export default async function DogsListPage() {
+  const session = await auth()
+  if (!session?.user?.tenantId) {
+    redirect('/login')
+  }
+
+  const dogs = await getAllDogs(session.user.tenantId)
+
+  return <DogsPage dogs={dogs} />
 }
