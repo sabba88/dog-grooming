@@ -55,9 +55,9 @@ so that **possa avere il controllo completo della giornata a colpo d'occhio**.
   - [x] 2.1 Creare `src/lib/validations/appointments.ts` — `getAppointmentsQuerySchema` con locationId (uuid), date (string ISO date YYYY-MM-DD)
   - [x] 2.2 Esportare tipi inferiti: `GetAppointmentsQuery`
 
-- [ ] Task 3: Creare query functions per agenda (AC: #1, #3, #4)
-  - [ ] 3.1 Creare `src/lib/queries/appointments.ts` — `getAppointmentsByDateAndLocation(locationId, date, tenantId)`: fetch appuntamenti del giorno con JOIN su clients (firstName, lastName), dogs (name), services (name, duration) e stations (name, id) — filtro per stationId in stations della location
-  - [ ] 3.2 Creare `getStationsWithScheduleForDay(locationId, dayOfWeek, tenantId)`: restituisce le postazioni della sede con i loro orari di apertura/chiusura per il giorno specificato
+- [x] Task 3: Creare query functions per agenda (AC: #1, #3, #4)
+  - [x] 3.1 Creare `src/lib/queries/appointments.ts` — `getAppointmentsByDateAndLocation(locationId, date, tenantId)`: fetch appuntamenti del giorno con JOIN su clients (firstName, lastName), dogs (name), services (name, duration) e stations (name, id) — filtro per stationId in stations della location
+  - [x] 3.2 Creare `getStationsWithScheduleForDay(locationId, dayOfWeek, tenantId)`: restituisce le postazioni della sede con i loro orari di apertura/chiusura per il giorno specificato
 
 - [ ] Task 4: Creare utility functions per gestione orari e colori agenda (AC: #1, #2, #4, #5)
   - [ ] 4.1 Creare `src/lib/utils/schedule.ts` — `generateTimeSlots(openTime, closeTime, intervalMinutes)`: genera array di slot orari (HH:mm) tra apertura e chiusura con intervallo di 30 minuti
@@ -654,3 +654,4 @@ Claude Opus 4.6
 
 - `src/lib/db/schema.ts` — MODIFIED: aggiunta tabella appointments
 - `src/lib/validations/appointments.ts` — CREATED: schema Zod getAppointmentsQuerySchema + tipo GetAppointmentsQuery
+- `src/lib/queries/appointments.ts` — CREATED: getAppointmentsByDateAndLocation, getStationsWithScheduleForDay
