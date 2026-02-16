@@ -1,7 +1,7 @@
 'use server'
 
 import { authActionClient } from '@/lib/actions/client'
-import { getAppointmentsQuerySchema, createAppointmentSchema } from '@/lib/validations/appointments'
+import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema } from '@/lib/validations/appointments'
 import { getAppointmentsByDateAndLocation } from '@/lib/queries/appointments'
 import { getStationsWithScheduleForDay } from '@/lib/queries/appointments'
 import { getDogsByClient } from '@/lib/queries/dogs'
@@ -206,4 +206,26 @@ export const createAppointment = authActionClient
       .returning()
 
     return { appointment: created }
+  })
+
+export const deleteAppointment = authActionClient
+  .schema(deleteAppointmentSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { appointmentId } = parsedInput
+
+    const deleted = await db
+      .delete(appointments)
+      .where(
+        and(
+          eq(appointments.id, appointmentId),
+          eq(appointments.tenantId, ctx.tenantId)
+        )
+      )
+      .returning({ id: appointments.id })
+
+    if (deleted.length === 0) {
+      throw new Error('Appuntamento non trovato')
+    }
+
+    return { success: true }
   })
