@@ -1,6 +1,6 @@
 # Story 3.1: Anagrafica Clienti
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -653,10 +653,49 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6
 
 ### Debug Log References
 
+Nessun errore critico durante l'implementazione.
+
 ### Completion Notes List
 
+- Task 1: TanStack Query era già installato e configurato (@tanstack/react-query ^5.90.20, providers.tsx, layout.tsx). Nessuna modifica necessaria.
+- Task 2: Aggiunte tabelle `clients` (con campi GDPR: consentGivenAt, consentVersion, deletedAt) e `client_notes` in schema.ts. Schema pushato con drizzle-kit.
+- Task 3: Creati schemi Zod — `createClientSchema` con consenso obbligatorio (refine), `updateClientSchema` senza consenso, `addClientNoteSchema`. Tipi inferiti esportati.
+- Task 4: Server Actions con `authActionClient`, NO checkRole. `createClient` con consentGivenAt/consentVersion. `updateClient` con filtro deletedAt IS NULL. `addClientNote` con verifica esistenza cliente.
+- Task 5: Query functions con filtro deletedAt IS NULL. `getClientNotes` con JOIN su users per nome autore. `searchClients` con ILIKE e limit 10.
+- Task 6: API Route GET `/api/clients/search` con auth, validazione query minimo 2 caratteri.
+- Task 7: ClientForm con Dialog (desktop) / Sheet (mobile), checkbox consenso GDPR in creazione, nascosto in modifica. Componenti avatar e textarea di shadcn installati.
+- Task 8: ClientSearch con debounce 300ms, TanStack Query, risultati con avatar iniziali, stato "Nessun risultato" + "Crea nuovo cliente". Callback onSelect/onCreateNew riusabili.
+- Task 9: Pagina lista clienti — Server Component con auth + getClients. ClientList con tabella desktop / card mobile, avatar iniziali, ClientSearch integrata, stato vuoto con CTA. Conteggio cani omesso (Story 3.2).
+- Task 10: Pagina dettaglio cliente — breadcrumb, dati anagrafici con modifica, sezione note inline con Textarea, placeholder cani e appuntamenti, redirect se cliente non esiste/soft-deleted.
+
+### Implementation Notes
+
+- Pattern coerente con le story precedenti (locations, stations): authActionClient, useAction, react-hook-form+zodResolver, Dialog/Sheet responsive
+- GDPR: consentGivenAt e consentVersion salvati alla creazione, deletedAt predisposto per soft delete (Story 3.3)
+- Nessun framework di test configurato — testing manuale come da Dev Notes
+- Nessuna modifica a permissions.ts, middleware.ts, Sidebar.tsx — la route /clients è già accessibile a tutti i ruoli
+
 ### File List
+
+- src/lib/db/schema.ts (modificato — aggiunte tabelle clients, clientNotes)
+- src/lib/validations/clients.ts (nuovo)
+- src/lib/actions/clients.ts (nuovo)
+- src/lib/queries/clients.ts (nuovo)
+- src/app/api/clients/search/route.ts (nuovo)
+- src/components/client/ClientForm.tsx (nuovo)
+- src/components/client/ClientSearch.tsx (nuovo)
+- src/components/client/ClientList.tsx (nuovo)
+- src/components/client/ClientDetail.tsx (nuovo)
+- src/components/client/ClientNotes.tsx (nuovo)
+- src/app/(auth)/clients/page.tsx (modificato — da placeholder a Server Component)
+- src/app/(auth)/clients/[id]/page.tsx (nuovo)
+- src/components/ui/avatar.tsx (nuovo — installato con shadcn)
+- src/components/ui/textarea.tsx (nuovo — installato con shadcn)
+
+## Change Log
+
+- 2026-02-16: Implementazione completa Story 3.1 Anagrafica Clienti — CRUD clienti con consenso GDPR, note con autore, ricerca incrementale con TanStack Query, pagina lista e dettaglio responsive
