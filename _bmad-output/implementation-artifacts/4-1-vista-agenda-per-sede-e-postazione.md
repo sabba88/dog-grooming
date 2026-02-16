@@ -1,6 +1,6 @@
 # Story 4.1: Vista Agenda per Sede e Postazione
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
