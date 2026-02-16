@@ -69,15 +69,15 @@ so that **possa conoscere ogni cane e offrire un servizio personalizzato basato 
   - [x] 4.3 Creare `getDogNotes(dogId, tenantId)` — note del cane ordinate per createdAt DESC, con JOIN su users per ottenere il nome dell'autore
   - [x] 4.4 Aggiornare `getClients` in `src/lib/queries/clients.ts` — aggiungere LEFT JOIN con `dogs` e `count(dogs.id)` come `dogsCount`; aggiungere `groupBy(clients.id)`
 
-- [ ] Task 5: Creare componente DogForm per aggiunta/modifica cane (AC: #1, #4)
-  - [ ] 5.1 Creare `src/components/dog/DogForm.tsx` — Client Component con React Hook Form + Zod resolver
-  - [ ] 5.2 Campi: Nome (Input, obbligatorio), Razza (Input, opzionale), Taglia (Select: Piccola/Media/Grande, opzionale), Eta' (Input, opzionale)
-  - [ ] 5.3 In creazione: campo `clientId` nascosto, passato come prop
-  - [ ] 5.4 In modifica: pre-compilare con dati esistenti
-  - [ ] 5.5 Il form si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
-  - [ ] 5.6 Validazione inline al blur, messaggi in italiano
-  - [ ] 5.7 Bottone primario "Aggiungi Cane" (creazione) o "Salva Modifiche" (modifica)
-  - [ ] 5.8 Installare componente `select` di shadcn/ui se non presente: `npx shadcn@latest add select`
+- [x] Task 5: Creare componente DogForm per aggiunta/modifica cane (AC: #1, #4)
+  - [x] 5.1 Creare `src/components/dog/DogForm.tsx` — Client Component con React Hook Form + Zod resolver
+  - [x] 5.2 Campi: Nome (Input, obbligatorio), Razza (Input, opzionale), Taglia (Select: Piccola/Media/Grande, opzionale), Eta' (Input, opzionale)
+  - [x] 5.3 In creazione: campo `clientId` nascosto, passato come prop
+  - [x] 5.4 In modifica: pre-compilare con dati esistenti
+  - [x] 5.5 Il form si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
+  - [x] 5.6 Validazione inline al blur, messaggi in italiano
+  - [x] 5.7 Bottone primario "Aggiungi Cane" (creazione) o "Salva Modifiche" (modifica)
+  - [x] 5.8 Installare componente `select` di shadcn/ui se non presente: `npx shadcn@latest add select`
 
 - [ ] Task 6: Aggiornare pagina dettaglio cliente con lista cani reale (AC: #2, #7)
   - [ ] 6.1 Creare `src/components/dog/DogList.tsx` — Client Component che mostra la lista dei cani del cliente
@@ -486,6 +486,7 @@ Claude Opus 4.6
 - ✅ Task 2: Creati schemi Zod `createDogSchema`, `updateDogSchema`, `addDogNoteSchema` con tipi inferiti in `src/lib/validations/dogs.ts`. Segue pattern di `clients.ts`.
 - ✅ Task 3: Create Server Actions `createDog`, `updateDog`, `addDogNote` in `src/lib/actions/dogs.ts`. Verifica client/dog ownership + tenantId. NO checkRole. Pattern identico a `clients.ts`.
 - ✅ Task 4: Create query functions `getDogsByClient`, `getDogById`, `getDogNotes` in `src/lib/queries/dogs.ts`. Aggiornata `getClients` con LEFT JOIN + count per `dogsCount`.
+- ✅ Task 5: Creato `DogForm.tsx` con Dialog/Sheet responsive, React Hook Form + Zod, Select per taglia, gestisce sia creazione che modifica. Componente `select` shadcn/ui già presente.
 
 ### File List
 
@@ -494,3 +495,4 @@ Claude Opus 4.6
 - `src/lib/actions/dogs.ts` — CREATO: Server Actions createDog, updateDog, addDogNote
 - `src/lib/queries/dogs.ts` — CREATO: query getDogsByClient, getDogById, getDogNotes
 - `src/lib/queries/clients.ts` — MODIFICATO: getClients con LEFT JOIN dogs + dogsCount
+- `src/components/dog/DogForm.tsx` — CREATO: form creazione/modifica cane con Dialog/Sheet responsive
