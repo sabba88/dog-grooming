@@ -63,16 +63,16 @@ so that **possa riorganizzare l'agenda senza pasticci, come cancellature su un q
   - [x] 2.7 UPDATE nella tabella appointments: startTime, endTime, stationId (se cambiata), updatedAt = new Date()
   - [x] 2.8 Restituire l'appuntamento aggiornato
 
-- [ ] Task 3: Creare componente `AppointmentDetail` per dettaglio appuntamento (AC: #1)
-  - [ ] 3.1 Creare `src/components/appointment/AppointmentDetail.tsx` — Client Component
-  - [ ] 3.2 Props: `appointment: { id, clientFirstName, clientLastName, dogName, serviceName, serviceId, startTime, endTime, price, stationId, notes }`, `stationName: string`, `onClose()`, `onDelete()`, `onReschedule()`
-  - [ ] 3.3 Mostrare header con nome cliente e nome cane
-  - [ ] 3.4 Mostrare dettagli: postazione, data formattata in italiano, ora inizio-fine, servizio, durata calcolata, prezzo formattato con `formatPrice()`
-  - [ ] 3.5 Mostrare note se presenti (campo `notes`)
-  - [ ] 3.6 Due bottoni azione: "Sposta" (variant outline) e "Cancella" (variant destructive)
-  - [ ] 3.7 Al click "Cancella": aprire AlertDialog di conferma con testo "Cancellare l'appuntamento di [nome cliente] ([nome cane])?" — bottoni "Annulla" + "Cancella" (destructive)
-  - [ ] 3.8 Al click conferma cancellazione: chiamare `deleteAppointment` action, toast "Appuntamento cancellato", callback `onDelete()`
-  - [ ] 3.9 Al click "Sposta": callback `onReschedule()` — delegare la logica di spostamento ad AgendaView
+- [x] Task 3: Creare componente `AppointmentDetail` per dettaglio appuntamento (AC: #1)
+  - [x] 3.1 Creare `src/components/appointment/AppointmentDetail.tsx` — Client Component
+  - [x] 3.2 Props: `appointment: { id, clientFirstName, clientLastName, dogName, serviceName, serviceId, startTime, endTime, price, stationId, notes }`, `stationName: string`, `onClose()`, `onDelete()`, `onReschedule()`
+  - [x] 3.3 Mostrare header con nome cliente e nome cane
+  - [x] 3.4 Mostrare dettagli: postazione, data formattata in italiano, ora inizio-fine, servizio, durata calcolata, prezzo formattato con `formatPrice()`
+  - [x] 3.5 Mostrare note se presenti (campo `notes`)
+  - [x] 3.6 Due bottoni azione: "Sposta" (variant outline) e "Cancella" (variant destructive)
+  - [x] 3.7 Al click "Cancella": aprire AlertDialog di conferma con testo "Cancellare l'appuntamento di [nome cliente] ([nome cane])?" — bottoni "Annulla" + "Cancella" (destructive)
+  - [x] 3.8 Al click conferma cancellazione: chiamare `deleteAppointment` action, toast "Appuntamento cancellato", callback `onDelete()`
+  - [x] 3.9 Al click "Sposta": callback `onReschedule()` — delegare la logica di spostamento ad AgendaView
 
 - [ ] Task 4: Integrare AppointmentDetail nell'AgendaView con Dialog/Sheet (AC: #1, #2)
   - [ ] 4.1 Aggiungere stato `selectedAppointment` in AgendaView per l'appuntamento selezionato (dati completi dall'array appointments gia' in memoria)
@@ -587,8 +587,10 @@ Claude Opus 4.6
 
 - Task 1: Aggiunto `deleteAppointmentSchema` (Zod) e action `deleteAppointment` con hard DELETE + verifica tenant. TypeScript OK.
 - Task 2: Aggiunto `rescheduleAppointmentSchema` (Zod) e action `rescheduleAppointment` con validazione sovrapposizione (esclusione self), validazione orario chiusura, findAlternativeSlots per SLOT_OCCUPIED, e UPDATE con updatedAt. TypeScript OK.
+- Task 3: Creato `AppointmentDetail.tsx` — Client Component con dettaglio completo (postazione, data IT, ora, servizio, durata, prezzo, note), bottoni Sposta/Cancella, AlertDialog conferma cancellazione con `deleteAppointment` action e toast. TypeScript OK.
 
 ### File List
 
 - src/lib/validations/appointments.ts (modified)
 - src/lib/actions/appointments.ts (modified)
+- src/components/appointment/AppointmentDetail.tsx (created)
