@@ -51,9 +51,9 @@ so that **possa avere il controllo completo della giornata a colpo d'occhio**.
   - [x] 1.1 Aggiungere tabella `appointments` in `src/lib/db/schema.ts` con campi: id (uuid PK), clientId (uuid, not null), dogId (uuid, not null), serviceId (uuid, not null), stationId (uuid, not null), startTime (timestamp, not null), endTime (timestamp, not null), price (integer, not null — centesimi), notes (text, nullable — placeholder per Story 4.4), tenantId (uuid, not null), createdAt, updatedAt
   - [x] 1.2 Eseguire `npx drizzle-kit push` per applicare lo schema al database di sviluppo
 
-- [ ] Task 2: Creare schemi Zod per parametri query agenda (AC: #1, #3, #6, #7)
-  - [ ] 2.1 Creare `src/lib/validations/appointments.ts` — `getAppointmentsQuerySchema` con locationId (uuid), date (string ISO date YYYY-MM-DD)
-  - [ ] 2.2 Esportare tipi inferiti: `GetAppointmentsQuery`
+- [x] Task 2: Creare schemi Zod per parametri query agenda (AC: #1, #3, #6, #7)
+  - [x] 2.1 Creare `src/lib/validations/appointments.ts` — `getAppointmentsQuerySchema` con locationId (uuid), date (string ISO date YYYY-MM-DD)
+  - [x] 2.2 Esportare tipi inferiti: `GetAppointmentsQuery`
 
 - [ ] Task 3: Creare query functions per agenda (AC: #1, #3, #4)
   - [ ] 3.1 Creare `src/lib/queries/appointments.ts` — `getAppointmentsByDateAndLocation(locationId, date, tenantId)`: fetch appuntamenti del giorno con JOIN su clients (firstName, lastName), dogs (name), services (name, duration) e stations (name, id) — filtro per stationId in stations della location
@@ -653,3 +653,4 @@ Claude Opus 4.6
 ### File List
 
 - `src/lib/db/schema.ts` — MODIFIED: aggiunta tabella appointments
+- `src/lib/validations/appointments.ts` — CREATED: schema Zod getAppointmentsQuerySchema + tipo GetAppointmentsQuery
