@@ -79,25 +79,25 @@ so that **possa conoscere ogni cane e offrire un servizio personalizzato basato 
   - [x] 5.7 Bottone primario "Aggiungi Cane" (creazione) o "Salva Modifiche" (modifica)
   - [x] 5.8 Installare componente `select` di shadcn/ui se non presente: `npx shadcn@latest add select`
 
-- [ ] Task 6: Aggiornare pagina dettaglio cliente con lista cani reale (AC: #2, #7)
-  - [ ] 6.1 Creare `src/components/dog/DogList.tsx` — Client Component che mostra la lista dei cani del cliente
-  - [ ] 6.2 Ogni cane mostra: nome, razza, taglia — con click per navigare a `/dogs/[id]`
-  - [ ] 6.3 Stato vuoto: "Nessun cane associato" con CTA "Aggiungi il primo cane"
-  - [ ] 6.4 Bottone "Aggiungi Cane" che apre DogForm con clientId
-  - [ ] 6.5 Aggiornare `src/app/(auth)/clients/[id]/page.tsx` — fetch `getDogsByClient` e passare al componente
-  - [ ] 6.6 Aggiornare `src/components/client/ClientDetail.tsx` — sostituire la sezione placeholder "Cani Associati" con il componente DogList reale
-  - [ ] 6.7 Aggiornare `src/components/client/ClientList.tsx` — mostrare il conteggio cani reale nella tabella/card (dato da `dogsCount`)
+- [x] Task 6: Aggiornare pagina dettaglio cliente con lista cani reale (AC: #2, #7)
+  - [x] 6.1 Creare `src/components/dog/DogList.tsx` — Client Component che mostra la lista dei cani del cliente
+  - [x] 6.2 Ogni cane mostra: nome, razza, taglia — con click per navigare a `/dogs/[id]`
+  - [x] 6.3 Stato vuoto: "Nessun cane associato" con CTA "Aggiungi il primo cane"
+  - [x] 6.4 Bottone "Aggiungi Cane" che apre DogForm con clientId
+  - [x] 6.5 Aggiornare `src/app/(auth)/clients/[id]/page.tsx` — fetch `getDogsByClient` e passare al componente
+  - [x] 6.6 Aggiornare `src/components/client/ClientDetail.tsx` — sostituire la sezione placeholder "Cani Associati" con il componente DogList reale
+  - [x] 6.7 Aggiornare `src/components/client/ClientList.tsx` — mostrare il conteggio cani reale nella tabella/card (dato da `dogsCount`)
 
-- [ ] Task 7: Creare pagina dettaglio cane con note (AC: #3, #4, #5, #6)
-  - [ ] 7.1 Creare `src/app/(auth)/dogs/[id]/page.tsx` — Server Component con fetch cane + note
-  - [ ] 7.2 Creare `src/components/dog/DogDetail.tsx` — Client Component con sezioni
-  - [ ] 7.3 Breadcrumb "Clienti > [Nome Cognome Cliente] > [Nome Cane]" con link al cliente
-  - [ ] 7.4 Sezione Dati Cane: nome, razza, taglia, eta' + bottone "Modifica" che apre DogForm in modalita' modifica
-  - [ ] 7.5 Creare `src/components/dog/DogNotes.tsx` — componente per lista note + form aggiunta nota (stesso pattern di ClientNotes)
-  - [ ] 7.6 Lista note: ogni nota mostra contenuto, nome autore, data formattata in italiano — ordine cronologico inverso
-  - [ ] 7.7 Form aggiunta nota: Textarea + bottone "Aggiungi Nota" — inline nella sezione, non in modale
-  - [ ] 7.8 Sezione Storico Note Prestazione: stato vuoto "Nessuna nota prestazione registrata — Le note verranno aggiunte durante gli appuntamenti" — sezione placeholder per Epica 4
-  - [ ] 7.9 Redirect a `/clients` se il cane non esiste
+- [x] Task 7: Creare pagina dettaglio cane con note (AC: #3, #4, #5, #6)
+  - [x] 7.1 Creare `src/app/(auth)/dogs/[id]/page.tsx` — Server Component con fetch cane + note
+  - [x] 7.2 Creare `src/components/dog/DogDetail.tsx` — Client Component con sezioni
+  - [x] 7.3 Breadcrumb "Clienti > [Nome Cognome Cliente] > [Nome Cane]" con link al cliente
+  - [x] 7.4 Sezione Dati Cane: nome, razza, taglia, eta' + bottone "Modifica" che apre DogForm in modalita' modifica
+  - [x] 7.5 Creare `src/components/dog/DogNotes.tsx` — componente per lista note + form aggiunta nota (stesso pattern di ClientNotes)
+  - [x] 7.6 Lista note: ogni nota mostra contenuto, nome autore, data formattata in italiano — ordine cronologico inverso
+  - [x] 7.7 Form aggiunta nota: Textarea + bottone "Aggiungi Nota" — inline nella sezione, non in modale
+  - [x] 7.8 Sezione Storico Note Prestazione: stato vuoto "Nessuna nota prestazione registrata — Le note verranno aggiunte durante gli appuntamenti" — sezione placeholder per Epica 4
+  - [x] 7.9 Redirect a `/clients` se il cane non esiste
 
 ## Dev Notes
 
@@ -487,6 +487,8 @@ Claude Opus 4.6
 - ✅ Task 3: Create Server Actions `createDog`, `updateDog`, `addDogNote` in `src/lib/actions/dogs.ts`. Verifica client/dog ownership + tenantId. NO checkRole. Pattern identico a `clients.ts`.
 - ✅ Task 4: Create query functions `getDogsByClient`, `getDogById`, `getDogNotes` in `src/lib/queries/dogs.ts`. Aggiornata `getClients` con LEFT JOIN + count per `dogsCount`.
 - ✅ Task 5: Creato `DogForm.tsx` con Dialog/Sheet responsive, React Hook Form + Zod, Select per taglia, gestisce sia creazione che modifica. Componente `select` shadcn/ui già presente.
+- ✅ Task 6: Creato `DogList.tsx` con stato vuoto + CTA. Aggiornati `ClientDetail.tsx` (placeholder → DogList reale), `ClientList.tsx` (dogsCount in tabella/card), `clients/[id]/page.tsx` (fetch dogs in parallelo con notes).
+- ✅ Task 7: Creata pagina dettaglio cane `/dogs/[id]` con Server Component + DogDetail (breadcrumb, dati cane, modifica via DogForm, DogNotes inline con form aggiunta nota, placeholder storico note prestazione). Redirect a `/clients` se cane non trovato.
 
 ### File List
 
@@ -496,3 +498,10 @@ Claude Opus 4.6
 - `src/lib/queries/dogs.ts` — CREATO: query getDogsByClient, getDogById, getDogNotes
 - `src/lib/queries/clients.ts` — MODIFICATO: getClients con LEFT JOIN dogs + dogsCount
 - `src/components/dog/DogForm.tsx` — CREATO: form creazione/modifica cane con Dialog/Sheet responsive
+- `src/components/dog/DogList.tsx` — CREATO: lista cani nel dettaglio cliente con stato vuoto e CTA
+- `src/app/(auth)/clients/[id]/page.tsx` — MODIFICATO: fetch dogs in parallelo con notes
+- `src/components/client/ClientDetail.tsx` — MODIFICATO: placeholder cani sostituito con DogList
+- `src/components/client/ClientList.tsx` — MODIFICATO: dogsCount in tabella e card
+- `src/app/(auth)/dogs/[id]/page.tsx` — CREATO: Server Component pagina dettaglio cane
+- `src/components/dog/DogDetail.tsx` — CREATO: dettaglio cane con breadcrumb, dati, note, placeholder storico
+- `src/components/dog/DogNotes.tsx` — CREATO: lista note + form aggiunta nota inline
