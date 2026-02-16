@@ -57,7 +57,7 @@ development_status:
   # Epica 3: Gestione Clienti e Cani
   epic-3: in-progress
   3-1-anagrafica-clienti: review
-  3-2-anagrafica-cani: backlog
+  3-2-anagrafica-cani: ready-for-dev
   3-3-privacy-e-conformita-gdpr: backlog
   epic-3-retrospective: optional
 
