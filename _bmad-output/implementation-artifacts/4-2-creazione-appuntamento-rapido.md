@@ -1,6 +1,6 @@
 # Story 4.2: Creazione Appuntamento Rapido
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -775,10 +775,34 @@ Nessun framework di test automatico e' configurato nel progetto. Il testing si l
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Opus 4.6
 
 ### Debug Log References
 
+Nessun problema critico durante l'implementazione. Unico errore TypeScript pre-esistente (Story 3-2) ignorato.
+
 ### Completion Notes List
 
+- Task 1: Schema Zod `createAppointmentSchema` con validazione campi (uuid, date regex, time regex, min duration 15, min price 0). Tipo inferito `CreateAppointmentInput`. Query `getServicesForStation` con JOIN su station_services e services.
+- Task 2: Server Action `createAppointment` con validazione servizio abilitato, non-sovrapposizione (errore SLOT_OCCUPIED con slot alternativi), verifica orario chiusura (errore EXCEEDS_CLOSING_TIME). Helper `findAlternativeSlots` per suggerire i primi 3 slot liberi.
+- Task 3: API Route `/api/clients/search` aggiornata con conteggio cani per cliente (getDogsByClient) e formato risposta `{ success, data }`.
+- Task 4: Componente `ClientSearch` con ricerca type-ahead, debounce 300ms, dropdown con avatar iniziali/nome/telefono/badge cani, opzione "Crea nuovo cliente", keyboard navigation (frecce/Enter/Escape), auto-focus.
+- Task 5: Componente `QuickClientForm` come Dialog secondario (non chiude il form principale). Riutilizza `createClientSchema` e `createClient` action. Form compatto con nome, cognome, telefono, consenso GDPR.
+- Task 6: Componente `AppointmentForm` con rivelazione progressiva (cliente -> cane -> servizio -> durata/prezzo -> conferma). Gestione errori business SLOT_OCCUPIED (con slot alternativi cliccabili) e EXCEEDS_CLOSING_TIME. Server actions `fetchDogsForClient` e `fetchServicesForStation` per data fetching. Auto-selezione cane se unico.
+- Task 7: Integrazione AgendaView con stato Dialog/Sheet, handler `onEmptySlotClick` passato a ScheduleGrid e ScheduleTimeline. Dialog desktop / Sheet bottom mobile. Query invalidation su successo creazione.
+- Approccio optimistic update: Implementata l'Opzione 1 (invalidation dopo mutazione) come raccomandato nelle Dev Notes per semplicita'. La query TanStack viene invalidata dopo il successo, causando un refetch automatico. Con Vercel serverless e 5 utenti, il tempo di risposta e' trascurabile.
+
 ### File List
+
+- `src/lib/validations/appointments.ts` — MODIFICATO: aggiunto createAppointmentSchema e tipo CreateAppointmentInput
+- `src/lib/queries/stations.ts` — MODIFICATO: aggiunto getServicesForStation con JOIN su services
+- `src/lib/actions/appointments.ts` — MODIFICATO: aggiunto createAppointment action, fetchDogsForClient, fetchServicesForStation, findAlternativeSlots helper
+- `src/app/api/clients/search/route.ts` — MODIFICATO: aggiunto conteggio cani, formato risposta { success, data }
+- `src/components/appointment/ClientSearch.tsx` — NUOVO: componente ricerca incrementale clienti
+- `src/components/appointment/QuickClientForm.tsx` — NUOVO: sotto-form creazione cliente al volo
+- `src/components/appointment/AppointmentForm.tsx` — NUOVO: form completo creazione appuntamento
+- `src/components/schedule/AgendaView.tsx` — MODIFICATO: integrazione Dialog/Sheet, stato appointmentSlot, handler onEmptySlotClick, query invalidation
+
+## Change Log
+
+- 2026-02-16: Implementazione completa Story 4.2 — Creazione Appuntamento Rapido. Tutti i 7 task completati con schema Zod, server action con validazione sovrapposizione/orario, API ricerca clienti, componenti ClientSearch, QuickClientForm, AppointmentForm con rivelazione progressiva, integrazione AgendaView con Dialog/Sheet responsive.

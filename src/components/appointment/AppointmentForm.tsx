@@ -47,7 +47,7 @@ interface StationService {
   duration: number
 }
 
-export function AppointmentForm({ prefilledSlot, onSuccess, onCancel }: AppointmentFormProps) {
+export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormProps) {
   const [selectedClient, setSelectedClient] = useState<SelectedClient | null>(null)
   const [showQuickClient, setShowQuickClient] = useState(false)
   const [dogs, setDogs] = useState<Dog[]>([])

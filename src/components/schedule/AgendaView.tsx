@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { format, getDay } from 'date-fns'
+import { format } from 'date-fns'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useLocationSelector } from '@/hooks/useLocationSelector'
