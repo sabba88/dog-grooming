@@ -57,11 +57,11 @@ so that **possa conoscere ogni cane e offrire un servizio personalizzato basato 
   - [x] 2.3 Creare `addDogNoteSchema` — dogId (uuid), content (min 1 char, "Inserisci il testo della nota")
   - [x] 2.4 Esportare tipi inferiti: `CreateDogFormData`, `UpdateDogFormData`, `AddDogNoteFormData`
 
-- [ ] Task 3: Creare Server Actions per gestione cani (AC: #1, #4, #5)
-  - [ ] 3.1 Creare `src/lib/actions/dogs.ts` con `authActionClient`
-  - [ ] 3.2 Implementare `createDog` — NO checkRole, verificare che il clientId appartenga al tenantId e che il cliente non sia soft-deleted (isNull deletedAt), insert con tenantId da ctx
-  - [ ] 3.3 Implementare `updateDog` — NO checkRole, update con filtro id + tenantId, updatedAt = new Date()
-  - [ ] 3.4 Implementare `addDogNote` — NO checkRole, verificare che il cane esista e appartenga al tenantId, insert con authorId = ctx.userId
+- [x] Task 3: Creare Server Actions per gestione cani (AC: #1, #4, #5)
+  - [x] 3.1 Creare `src/lib/actions/dogs.ts` con `authActionClient`
+  - [x] 3.2 Implementare `createDog` — NO checkRole, verificare che il clientId appartenga al tenantId e che il cliente non sia soft-deleted (isNull deletedAt), insert con tenantId da ctx
+  - [x] 3.3 Implementare `updateDog` — NO checkRole, update con filtro id + tenantId, updatedAt = new Date()
+  - [x] 3.4 Implementare `addDogNote` — NO checkRole, verificare che il cane esista e appartenga al tenantId, insert con authorId = ctx.userId
 
 - [ ] Task 4: Creare query functions per cani (AC: #1, #2, #3, #5, #7)
   - [ ] 4.1 Creare `src/lib/queries/dogs.ts` — `getDogsByClient(clientId, tenantId)`: tutti i cani del cliente, ordinati per name ASC
@@ -484,8 +484,10 @@ Claude Opus 4.6
 
 - ✅ Task 1: Aggiunte tabelle `dogs` e `dog_notes` a `src/lib/db/schema.ts` seguendo pattern esistente (uuid PK, tenantId, timestamps). Schema pushato al DB con `drizzle-kit push`.
 - ✅ Task 2: Creati schemi Zod `createDogSchema`, `updateDogSchema`, `addDogNoteSchema` con tipi inferiti in `src/lib/validations/dogs.ts`. Segue pattern di `clients.ts`.
+- ✅ Task 3: Create Server Actions `createDog`, `updateDog`, `addDogNote` in `src/lib/actions/dogs.ts`. Verifica client/dog ownership + tenantId. NO checkRole. Pattern identico a `clients.ts`.
 
 ### File List
 
 - `src/lib/db/schema.ts` — MODIFICATO: aggiunte tabelle `dogs` e `dogNotes`
 - `src/lib/validations/dogs.ts` — CREATO: schemi Zod per cani e note
+- `src/lib/actions/dogs.ts` — CREATO: Server Actions createDog, updateDog, addDogNote
