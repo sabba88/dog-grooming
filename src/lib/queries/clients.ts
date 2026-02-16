@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
-import { clients, clientNotes, users } from '@/lib/db/schema'
-import { eq, and, asc, desc, isNull, ilike, or } from 'drizzle-orm'
+import { clients, clientNotes, users, dogs } from '@/lib/db/schema'
+import { eq, and, asc, desc, isNull, ilike, or, count } from 'drizzle-orm'
 
 export async function getClients(tenantId: string) {
   return db
@@ -11,9 +11,19 @@ export async function getClients(tenantId: string) {
       phone: clients.phone,
       email: clients.email,
       createdAt: clients.createdAt,
+      dogsCount: count(dogs.id),
     })
     .from(clients)
+    .leftJoin(dogs, eq(dogs.clientId, clients.id))
     .where(and(eq(clients.tenantId, tenantId), isNull(clients.deletedAt)))
+    .groupBy(
+      clients.id,
+      clients.firstName,
+      clients.lastName,
+      clients.phone,
+      clients.email,
+      clients.createdAt
+    )
     .orderBy(asc(clients.lastName), asc(clients.firstName))
 }
 

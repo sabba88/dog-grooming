@@ -63,11 +63,11 @@ so that **possa conoscere ogni cane e offrire un servizio personalizzato basato 
   - [x] 3.3 Implementare `updateDog` — NO checkRole, update con filtro id + tenantId, updatedAt = new Date()
   - [x] 3.4 Implementare `addDogNote` — NO checkRole, verificare che il cane esista e appartenga al tenantId, insert con authorId = ctx.userId
 
-- [ ] Task 4: Creare query functions per cani (AC: #1, #2, #3, #5, #7)
-  - [ ] 4.1 Creare `src/lib/queries/dogs.ts` — `getDogsByClient(clientId, tenantId)`: tutti i cani del cliente, ordinati per name ASC
-  - [ ] 4.2 Creare `getDogById(dogId, tenantId)` — singolo cane con i dati del cliente associato (firstName, lastName); restituire null se non trovato
-  - [ ] 4.3 Creare `getDogNotes(dogId, tenantId)` — note del cane ordinate per createdAt DESC, con JOIN su users per ottenere il nome dell'autore
-  - [ ] 4.4 Aggiornare `getClients` in `src/lib/queries/clients.ts` — aggiungere LEFT JOIN con `dogs` e `count(dogs.id)` come `dogsCount`; aggiungere `groupBy(clients.id)`
+- [x] Task 4: Creare query functions per cani (AC: #1, #2, #3, #5, #7)
+  - [x] 4.1 Creare `src/lib/queries/dogs.ts` — `getDogsByClient(clientId, tenantId)`: tutti i cani del cliente, ordinati per name ASC
+  - [x] 4.2 Creare `getDogById(dogId, tenantId)` — singolo cane con i dati del cliente associato (firstName, lastName); restituire null se non trovato
+  - [x] 4.3 Creare `getDogNotes(dogId, tenantId)` — note del cane ordinate per createdAt DESC, con JOIN su users per ottenere il nome dell'autore
+  - [x] 4.4 Aggiornare `getClients` in `src/lib/queries/clients.ts` — aggiungere LEFT JOIN con `dogs` e `count(dogs.id)` come `dogsCount`; aggiungere `groupBy(clients.id)`
 
 - [ ] Task 5: Creare componente DogForm per aggiunta/modifica cane (AC: #1, #4)
   - [ ] 5.1 Creare `src/components/dog/DogForm.tsx` — Client Component con React Hook Form + Zod resolver
@@ -485,9 +485,12 @@ Claude Opus 4.6
 - ✅ Task 1: Aggiunte tabelle `dogs` e `dog_notes` a `src/lib/db/schema.ts` seguendo pattern esistente (uuid PK, tenantId, timestamps). Schema pushato al DB con `drizzle-kit push`.
 - ✅ Task 2: Creati schemi Zod `createDogSchema`, `updateDogSchema`, `addDogNoteSchema` con tipi inferiti in `src/lib/validations/dogs.ts`. Segue pattern di `clients.ts`.
 - ✅ Task 3: Create Server Actions `createDog`, `updateDog`, `addDogNote` in `src/lib/actions/dogs.ts`. Verifica client/dog ownership + tenantId. NO checkRole. Pattern identico a `clients.ts`.
+- ✅ Task 4: Create query functions `getDogsByClient`, `getDogById`, `getDogNotes` in `src/lib/queries/dogs.ts`. Aggiornata `getClients` con LEFT JOIN + count per `dogsCount`.
 
 ### File List
 
 - `src/lib/db/schema.ts` — MODIFICATO: aggiunte tabelle `dogs` e `dogNotes`
 - `src/lib/validations/dogs.ts` — CREATO: schemi Zod per cani e note
 - `src/lib/actions/dogs.ts` — CREATO: Server Actions createDog, updateDog, addDogNote
+- `src/lib/queries/dogs.ts` — CREATO: query getDogsByClient, getDogById, getDogNotes
+- `src/lib/queries/clients.ts` — MODIFICATO: getClients con LEFT JOIN dogs + dogsCount
