@@ -4,8 +4,11 @@ import { authActionClient } from '@/lib/actions/client'
 import { getAppointmentsQuerySchema, createAppointmentSchema } from '@/lib/validations/appointments'
 import { getAppointmentsByDateAndLocation } from '@/lib/queries/appointments'
 import { getStationsWithScheduleForDay } from '@/lib/queries/appointments'
+import { getDogsByClient } from '@/lib/queries/dogs'
+import { getServicesForStation } from '@/lib/queries/stations'
 import { toDayOfWeek, timeToMinutes } from '@/lib/utils/schedule'
 import { getDay } from 'date-fns'
+import { z } from 'zod'
 import { db } from '@/lib/db'
 import { appointments, stationServices, stationSchedules } from '@/lib/db/schema'
 import { eq, and, lt, gt, gte, asc } from 'drizzle-orm'
@@ -91,6 +94,20 @@ async function findAlternativeSlots(
 
   return alternatives
 }
+
+export const fetchDogsForClient = authActionClient
+  .schema(z.object({ clientId: z.string().uuid() }))
+  .action(async ({ parsedInput, ctx }) => {
+    const dogs = await getDogsByClient(parsedInput.clientId, ctx.tenantId)
+    return { dogs }
+  })
+
+export const fetchServicesForStation = authActionClient
+  .schema(z.object({ stationId: z.string().uuid() }))
+  .action(async ({ parsedInput, ctx }) => {
+    const services = await getServicesForStation(parsedInput.stationId, ctx.tenantId)
+    return { services }
+  })
 
 export const createAppointment = authActionClient
   .schema(createAppointmentSchema)

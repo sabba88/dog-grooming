@@ -88,19 +88,19 @@ so that **possa prenotare velocemente anche durante una telefonata con le mani o
   - [x] 5.5 Al successo: `onCreated(client)` callback con i dati del nuovo cliente — NON chiudere il form principale
   - [x] 5.6 Toast "Cliente creato"
 
-- [ ] Task 6: Creare componente `AppointmentForm` completo (AC: #1, #2, #3, #4, #5, #6, #7)
-  - [ ] 6.1 Creare `src/components/appointment/AppointmentForm.tsx` — Client Component
-  - [ ] 6.2 Props: `prefilledSlot: { stationId, stationName, date, time }`, `onSuccess()`, `onCancel()`
-  - [ ] 6.3 Header form: mostrare postazione (read-only), data formattata in italiano, ora
-  - [ ] 6.4 Sezione ClientSearch con stato selezionato (avatar + nome + bottone cambia)
-  - [ ] 6.5 Sezione selezione cane: dopo selezione cliente, caricare cani con `getDogsByClient`. Auto-selezionare se uno solo. Select dropdown se piu' di uno. Messaggio + CTA "Aggiungi cane" se nessun cane.
-  - [ ] 6.6 Sezione selezione servizio: Select con servizi abilitati dalla postazione (`getServicesForStation`). Al cambio servizio, aggiornare durata e prezzo automaticamente.
-  - [ ] 6.7 Campi durata (minuti) e prezzo (EUR) pre-compilati dal servizio, editabili manualmente
-  - [ ] 6.8 Validazione client-side con React Hook Form + Zod (`createAppointmentSchema`)
-  - [ ] 6.9 Bottone "Conferma" (primary) — NO conferma "sei sicuro?"
-  - [ ] 6.10 Gestione errore `SLOT_OCCUPIED`: mostrare messaggio + slot alternativi come bottoni cliccabili
-  - [ ] 6.11 Gestione errore `EXCEEDS_CLOSING_TIME`: mostrare messaggio + permettere modifica durata
-  - [ ] 6.12 Loading state sul bottone durante il salvataggio
+- [x] Task 6: Creare componente `AppointmentForm` completo (AC: #1, #2, #3, #4, #5, #6, #7)
+  - [x] 6.1 Creare `src/components/appointment/AppointmentForm.tsx` — Client Component
+  - [x] 6.2 Props: `prefilledSlot: { stationId, stationName, date, time }`, `onSuccess()`, `onCancel()`
+  - [x] 6.3 Header form: mostrare postazione (read-only), data formattata in italiano, ora
+  - [x] 6.4 Sezione ClientSearch con stato selezionato (avatar + nome + bottone cambia)
+  - [x] 6.5 Sezione selezione cane: dopo selezione cliente, caricare cani con `getDogsByClient`. Auto-selezionare se uno solo. Select dropdown se piu' di uno. Messaggio + CTA "Aggiungi cane" se nessun cane.
+  - [x] 6.6 Sezione selezione servizio: Select con servizi abilitati dalla postazione (`getServicesForStation`). Al cambio servizio, aggiornare durata e prezzo automaticamente.
+  - [x] 6.7 Campi durata (minuti) e prezzo (EUR) pre-compilati dal servizio, editabili manualmente
+  - [x] 6.8 Validazione client-side con React Hook Form + Zod (`createAppointmentSchema`)
+  - [x] 6.9 Bottone "Conferma" (primary) — NO conferma "sei sicuro?"
+  - [x] 6.10 Gestione errore `SLOT_OCCUPIED`: mostrare messaggio + slot alternativi come bottoni cliccabili
+  - [x] 6.11 Gestione errore `EXCEEDS_CLOSING_TIME`: mostrare messaggio + permettere modifica durata
+  - [x] 6.12 Loading state sul bottone durante il salvataggio
 
 - [ ] Task 7: Integrare form nell'AgendaView con Dialog/Sheet e optimistic update (AC: #1, #5)
   - [ ] 7.1 Aggiornare `src/components/schedule/AgendaView.tsx` — aggiungere stato per Dialog/Sheet aperto con dati slot
