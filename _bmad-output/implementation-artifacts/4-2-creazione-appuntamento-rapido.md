@@ -70,15 +70,15 @@ so that **possa prenotare velocemente anche durante una telefonata con le mani o
   - [x] 3.4 Per ogni cliente trovato, caricare il count dei cani associati con `getDogsByClient`
   - [x] 3.5 Formato risposta: `{ success: true, data: [{ id, firstName, lastName, phone, dogsCount }] }`
 
-- [ ] Task 4: Creare componente `ClientSearch` con ricerca type-ahead (AC: #2, #3)
-  - [ ] 4.1 Creare `src/components/appointment/ClientSearch.tsx` — Client Component
-  - [ ] 4.2 Input di ricerca con icona Search (Lucide) e debounce 300ms
-  - [ ] 4.3 Dropdown risultati dopo 2+ caratteri: avatar iniziali + nome completo + telefono + badge "N cani"
-  - [ ] 4.4 Opzione "Crea nuovo cliente" in fondo alla lista se nessun risultato o sempre come ultima opzione
-  - [ ] 4.5 `onSelect(client)` callback al click su un risultato — restituisce { id, firstName, lastName }
-  - [ ] 4.6 `onCreateNew()` callback al click su "Crea nuovo cliente"
-  - [ ] 4.7 Auto-focus sull'input al mount
-  - [ ] 4.8 Stato "Nessun risultato" con messaggio e CTA creazione
+- [x] Task 4: Creare componente `ClientSearch` con ricerca type-ahead (AC: #2, #3)
+  - [x] 4.1 Creare `src/components/appointment/ClientSearch.tsx` — Client Component
+  - [x] 4.2 Input di ricerca con icona Search (Lucide) e debounce 300ms
+  - [x] 4.3 Dropdown risultati dopo 2+ caratteri: avatar iniziali + nome completo + telefono + badge "N cani"
+  - [x] 4.4 Opzione "Crea nuovo cliente" in fondo alla lista se nessun risultato o sempre come ultima opzione
+  - [x] 4.5 `onSelect(client)` callback al click su un risultato — restituisce { id, firstName, lastName }
+  - [x] 4.6 `onCreateNew()` callback al click su "Crea nuovo cliente"
+  - [x] 4.7 Auto-focus sull'input al mount
+  - [x] 4.8 Stato "Nessun risultato" con messaggio e CTA creazione
 
 - [ ] Task 5: Creare sotto-form `QuickClientForm` per creazione al volo (AC: #3)
   - [ ] 5.1 Creare `src/components/appointment/QuickClientForm.tsx` — Client Component
