@@ -105,24 +105,22 @@ export const updateStationServices = authActionClient
       }
     }
 
-    // Replace strategy: delete all + insert new in transaction
-    await db.transaction(async (tx) => {
-      await tx.delete(stationServices)
-        .where(and(
-          eq(stationServices.stationId, parsedInput.stationId),
-          eq(stationServices.tenantId, ctx.tenantId)
-        ))
+    // Replace strategy: delete all + insert new
+    await db.delete(stationServices)
+      .where(and(
+        eq(stationServices.stationId, parsedInput.stationId),
+        eq(stationServices.tenantId, ctx.tenantId)
+      ))
 
-      if (parsedInput.serviceIds.length > 0) {
-        await tx.insert(stationServices).values(
-          parsedInput.serviceIds.map(serviceId => ({
-            stationId: parsedInput.stationId,
-            serviceId,
-            tenantId: ctx.tenantId,
-          }))
-        )
-      }
-    })
+    if (parsedInput.serviceIds.length > 0) {
+      await db.insert(stationServices).values(
+        parsedInput.serviceIds.map(serviceId => ({
+          stationId: parsedInput.stationId,
+          serviceId,
+          tenantId: ctx.tenantId,
+        }))
+      )
+    }
 
     return { success: true }
   })
@@ -145,26 +143,24 @@ export const updateStationSchedule = authActionClient
       throw new Error('Postazione non trovata')
     }
 
-    // Replace strategy: delete all + insert new in transaction
-    await db.transaction(async (tx) => {
-      await tx.delete(stationSchedules)
-        .where(and(
-          eq(stationSchedules.stationId, parsedInput.stationId),
-          eq(stationSchedules.tenantId, ctx.tenantId)
-        ))
+    // Replace strategy: delete all + insert new
+    await db.delete(stationSchedules)
+      .where(and(
+        eq(stationSchedules.stationId, parsedInput.stationId),
+        eq(stationSchedules.tenantId, ctx.tenantId)
+      ))
 
-      if (parsedInput.schedules.length > 0) {
-        await tx.insert(stationSchedules).values(
-          parsedInput.schedules.map(schedule => ({
-            stationId: parsedInput.stationId,
-            dayOfWeek: schedule.dayOfWeek,
-            openTime: schedule.openTime,
-            closeTime: schedule.closeTime,
-            tenantId: ctx.tenantId,
-          }))
-        )
-      }
-    })
+    if (parsedInput.schedules.length > 0) {
+      await db.insert(stationSchedules).values(
+        parsedInput.schedules.map(schedule => ({
+          stationId: parsedInput.stationId,
+          dayOfWeek: schedule.dayOfWeek,
+          openTime: schedule.openTime,
+          closeTime: schedule.closeTime,
+          tenantId: ctx.tenantId,
+        }))
+      )
+    }
 
     return { success: true }
   })

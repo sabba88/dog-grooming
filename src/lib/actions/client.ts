@@ -1,9 +1,18 @@
 import { createSafeActionClient } from 'next-safe-action'
 import { auth } from '@/lib/auth/auth'
 
-export const actionClient = createSafeActionClient()
+const handleServerError = (e: Error) => {
+  console.error('Action error:', e.message)
+  return e.message
+}
 
-export const authActionClient = createSafeActionClient().use(async ({ next }) => {
+export const actionClient = createSafeActionClient({
+  handleServerError,
+})
+
+export const authActionClient = createSafeActionClient({
+  handleServerError,
+}).use(async ({ next }) => {
   const session = await auth()
 
   if (!session?.user) {
