@@ -91,12 +91,12 @@ so that **possa avere il controllo completo della giornata a colpo d'occhio**.
   - [x] 7.7 onClick handler (predisposto per dettaglio appuntamento in Story 4.3)
   - [x] 7.8 Hover: ombra elevata. Cursore pointer.
 
-- [ ] Task 8: Creare componente EmptySlot (AC: #5)
-  - [ ] 8.1 Creare `src/components/schedule/EmptySlot.tsx` — Client Component
-  - [ ] 8.2 Variante `grid`: sfondo con pattern CSS a righe diagonali (`repeating-linear-gradient`)
-  - [ ] 8.3 Variante `timeline`: bordo tratteggiato, testo "+ Slot libero"
-  - [ ] 8.4 Hover: evidenziazione bordo primary. Cursore pointer.
-  - [ ] 8.5 onClick handler con dati slot (stationId, date, time) — predisposto per Story 4.2
+- [x] Task 8: Creare componente EmptySlot (AC: #5)
+  - [x] 8.1 Creare `src/components/schedule/EmptySlot.tsx` — Client Component
+  - [x] 8.2 Variante `grid`: sfondo con pattern CSS a righe diagonali (`repeating-linear-gradient`)
+  - [x] 8.3 Variante `timeline`: bordo tratteggiato, testo "+ Slot libero"
+  - [x] 8.4 Hover: evidenziazione bordo primary. Cursore pointer.
+  - [x] 8.5 onClick handler con dati slot (stationId, date, time) — predisposto per Story 4.2
 
 - [ ] Task 9: Creare componente ScheduleGrid per desktop (AC: #1, #4, #5)
   - [ ] 9.1 Creare `src/components/schedule/ScheduleGrid.tsx` — Client Component
@@ -662,3 +662,4 @@ Claude Opus 4.6
 - `src/components/ui/tabs.tsx` — CREATED (shadcn/ui)
 - `src/components/schedule/DateStrip.tsx` — CREATED: strip giorni scorrevole per mobile
 - `src/components/schedule/AppointmentBlock.tsx` — CREATED: blocco appuntamento con varianti grid/timeline, colori servizio, hover shadow
+- `src/components/schedule/EmptySlot.tsx` — CREATED: slot vuoto con pattern diagonali (grid) e bordo tratteggiato (timeline)
