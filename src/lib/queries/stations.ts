@@ -84,6 +84,25 @@ export async function getStationServices(stationId: string, tenantId: string) {
   return rows
 }
 
+export async function getServicesForStation(stationId: string, tenantId: string) {
+  const rows = await db
+    .select({
+      id: services.id,
+      name: services.name,
+      price: services.price,
+      duration: services.duration,
+    })
+    .from(stationServices)
+    .innerJoin(services, eq(stationServices.serviceId, services.id))
+    .where(and(
+      eq(stationServices.stationId, stationId),
+      eq(stationServices.tenantId, tenantId)
+    ))
+    .orderBy(asc(services.name))
+
+  return rows
+}
+
 export async function getStationSchedule(stationId: string, tenantId: string) {
   return db
     .select({

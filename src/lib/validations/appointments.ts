@@ -6,3 +6,16 @@ export const getAppointmentsQuerySchema = z.object({
 })
 
 export type GetAppointmentsQuery = z.infer<typeof getAppointmentsQuerySchema>
+
+export const createAppointmentSchema = z.object({
+  stationId: z.string().uuid(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().regex(/^\d{2}:\d{2}$/),
+  clientId: z.string().uuid(),
+  dogId: z.string().uuid(),
+  serviceId: z.string().uuid(),
+  duration: z.number().int().min(15),
+  price: z.number().int().min(0),
+})
+
+export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>
