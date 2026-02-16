@@ -115,16 +115,16 @@ so that **possa avere il controllo completo della giornata a colpo d'occhio**.
   - [x] 10.4 Scroll verticale per tutta la giornata
   - [x] 10.5 Slot vuoti con bordo tratteggiato e testo "+ Slot libero"
 
-- [ ] Task 11: Aggiornare pagina Agenda con orchestrazione completa (AC: #1, #2, #3, #6, #7)
-  - [ ] 11.1 Aggiornare `src/app/(auth)/agenda/page.tsx` — Server Component che fetcha locations, stations con schedule, e appuntamenti per la data corrente e sede selezionata
-  - [ ] 11.2 Creare `src/components/schedule/AgendaView.tsx` — Client Component orchestratore
-  - [ ] 11.3 Stato data selezionata con `useState` (default: oggi)
-  - [ ] 11.4 Integrazione con `useLocationSelector` per sede corrente
-  - [ ] 11.5 `useIsMobile()` per switch ScheduleGrid/ScheduleTimeline
-  - [ ] 11.6 TanStack Query per fetch appuntamenti al cambio data/sede: `useQuery({ queryKey: ['appointments', locationId, dateString] })`
-  - [ ] 11.7 DateNavigation (desktop) o DateStrip (mobile) in alto
-  - [ ] 11.8 Stato vuoto se nessuna postazione configurata: "Nessuna postazione configurata per questa sede — Vai a Impostazioni per configurare le postazioni"
-  - [ ] 11.9 Stato vuoto se nessun appuntamento: la griglia mostra comunque le fasce orarie con tutti gli slot vuoti (questo E' il comportamento corretto, non un errore)
+- [x] Task 11: Aggiornare pagina Agenda con orchestrazione completa (AC: #1, #2, #3, #6, #7)
+  - [x] 11.1 Aggiornare `src/app/(auth)/agenda/page.tsx` — Server Component che fetcha locations, stations con schedule, e appuntamenti per la data corrente e sede selezionata
+  - [x] 11.2 Creare `src/components/schedule/AgendaView.tsx` — Client Component orchestratore
+  - [x] 11.3 Stato data selezionata con `useState` (default: oggi)
+  - [x] 11.4 Integrazione con `useLocationSelector` per sede corrente
+  - [x] 11.5 `useIsMobile()` per switch ScheduleGrid/ScheduleTimeline
+  - [x] 11.6 TanStack Query per fetch appuntamenti al cambio data/sede: `useQuery({ queryKey: ['appointments', locationId, dateString] })`
+  - [x] 11.7 DateNavigation (desktop) o DateStrip (mobile) in alto
+  - [x] 11.8 Stato vuoto se nessuna postazione configurata: "Nessuna postazione configurata per questa sede — Vai a Impostazioni per configurare le postazioni"
+  - [x] 11.9 Stato vuoto se nessun appuntamento: la griglia mostra comunque le fasce orarie con tutti gli slot vuoti (questo E' il comportamento corretto, non un errore)
 
 ## Dev Notes
 
@@ -649,6 +649,16 @@ Claude Opus 4.6
 ### Completion Notes List
 
 - Task 1: Aggiunta tabella `appointments` in schema.ts con tutti i campi richiesti (id, clientId, dogId, serviceId, stationId, startTime, endTime, price, notes, tenantId, createdAt, updatedAt). Schema pushed al DB con successo.
+- Task 2: Schema Zod `getAppointmentsQuerySchema` con locationId (uuid) e date (YYYY-MM-DD).
+- Task 3: Query functions `getAppointmentsByDateAndLocation` (4x JOIN) e `getStationsWithScheduleForDay`.
+- Task 4: Utility functions: generateTimeSlots, getGlobalTimeRange, isSlotOccupied, getAppointmentPosition, SERVICE_COLORS, getServiceColor, toDayOfWeek, timeToMinutes.
+- Task 5: DateNavigation desktop con frecce navigazione, bottone Oggi, Popover Calendar shadcn/ui. Installati date-fns, calendar, popover, tabs.
+- Task 6: DateStrip mobile con 7 giorni scorrevoli, scroll-snap, dot indicator per oggi.
+- Task 7: AppointmentBlock con varianti grid (compatta) e timeline (dettagliata), colori dinamici, hover shadow.
+- Task 8: EmptySlot con righe diagonali CSS (grid) e bordo tratteggiato (timeline), onClick predisposto.
+- Task 9: ScheduleGrid desktop — CSS Grid con colonne postazioni, time labels, AppointmentBlock posizionati assolutamente, EmptySlot, indicatore ora corrente.
+- Task 10: ScheduleTimeline mobile — Tabs shadcn/ui per filtro postazioni ("Tutte" + singole), layout verticale orario+blocco.
+- Task 11: AgendaView orchestratore con useState per data, useLocationSelector, useIsMobile, TanStack Query. Server Component page.tsx aggiornato. Server Action getAgendaData creata. Stato vuoto per postazioni mancanti.
 
 ### File List
 
@@ -665,3 +675,6 @@ Claude Opus 4.6
 - `src/components/schedule/EmptySlot.tsx` — CREATED: slot vuoto con pattern diagonali (grid) e bordo tratteggiato (timeline)
 - `src/components/schedule/ScheduleGrid.tsx` — CREATED: griglia desktop CSS Grid con colonne postazioni, AppointmentBlock posizionati, EmptySlot, current time indicator
 - `src/components/schedule/ScheduleTimeline.tsx` — CREATED: timeline mobile con tab postazioni, layout orario-blocco verticale
+- `src/components/schedule/AgendaView.tsx` — CREATED: Client Component orchestratore (date state, location selector, TanStack Query, responsive switch)
+- `src/lib/actions/appointments.ts` — CREATED: Server Action getAgendaData (authActionClient, fetch appointments + stations)
+- `src/app/(auth)/agenda/page.tsx` — MODIFIED: da placeholder a Server Component con fetch locations
