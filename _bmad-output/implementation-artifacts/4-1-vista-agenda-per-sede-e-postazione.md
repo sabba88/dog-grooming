@@ -81,15 +81,15 @@ so that **possa avere il controllo completo della giornata a colpo d'occhio**.
   - [x] 6.4 Giorno corrente con dot indicator
   - [x] 6.5 Mostrare 7 giorni centrati sulla data corrente, aggiornabili con scroll
 
-- [ ] Task 7: Creare componente AppointmentBlock (AC: #4)
-  - [ ] 7.1 Creare `src/components/schedule/AppointmentBlock.tsx` — Client Component
-  - [ ] 7.2 Bordo sinistro 4px colorato per servizio (palette pastello)
-  - [ ] 7.3 Sfondo pastello corrispondente al servizio
-  - [ ] 7.4 Contenuto: nome cliente, nome cane, nome servizio — troncato con ellipsis se necessario
-  - [ ] 7.5 Variante `grid`: compatta, altezza proporzionale alla durata (1 minuto = X px)
-  - [ ] 7.6 Variante `timeline`: card con piu' dettagli (orario, prezzo formattato)
-  - [ ] 7.7 onClick handler (predisposto per dettaglio appuntamento in Story 4.3)
-  - [ ] 7.8 Hover: ombra elevata. Cursore pointer.
+- [x] Task 7: Creare componente AppointmentBlock (AC: #4)
+  - [x] 7.1 Creare `src/components/schedule/AppointmentBlock.tsx` — Client Component
+  - [x] 7.2 Bordo sinistro 4px colorato per servizio (palette pastello)
+  - [x] 7.3 Sfondo pastello corrispondente al servizio
+  - [x] 7.4 Contenuto: nome cliente, nome cane, nome servizio — troncato con ellipsis se necessario
+  - [x] 7.5 Variante `grid`: compatta, altezza proporzionale alla durata (1 minuto = X px)
+  - [x] 7.6 Variante `timeline`: card con piu' dettagli (orario, prezzo formattato)
+  - [x] 7.7 onClick handler (predisposto per dettaglio appuntamento in Story 4.3)
+  - [x] 7.8 Hover: ombra elevata. Cursore pointer.
 
 - [ ] Task 8: Creare componente EmptySlot (AC: #5)
   - [ ] 8.1 Creare `src/components/schedule/EmptySlot.tsx` — Client Component
@@ -661,3 +661,4 @@ Claude Opus 4.6
 - `src/components/ui/popover.tsx` — CREATED (shadcn/ui)
 - `src/components/ui/tabs.tsx` — CREATED (shadcn/ui)
 - `src/components/schedule/DateStrip.tsx` — CREATED: strip giorni scorrevole per mobile
+- `src/components/schedule/AppointmentBlock.tsx` — CREATED: blocco appuntamento con varianti grid/timeline, colori servizio, hover shadow
