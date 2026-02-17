@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth/auth'
 import { getClientById, getClientNotes } from '@/lib/queries/clients'
+import { getDogsByClient } from '@/lib/queries/dogs'
 import { ClientDetail } from '@/components/client/ClientDetail'
 
 interface ClientDetailPageProps {
@@ -20,7 +21,10 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
     redirect('/clients')
   }
 
-  const notes = await getClientNotes(id, session.user.tenantId)
+  const [notes, dogs] = await Promise.all([
+    getClientNotes(id, session.user.tenantId),
+    getDogsByClient(id, session.user.tenantId),
+  ])
 
-  return <ClientDetail client={client} notes={notes} />
+  return <ClientDetail client={client} notes={notes} dogs={dogs} />
 }

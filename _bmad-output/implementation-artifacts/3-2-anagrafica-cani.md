@@ -1,6 +1,6 @@
 # Story 3.2: Anagrafica Cani
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -537,6 +537,7 @@ Claude Opus 4.6
 - ✅ Task 9: Aggiornate validazioni Zod, server actions e query con nuovi campi. Creata query `getAllDogs(tenantId)` per lista cani con nome proprietario.
 - ✅ Task 10: Aggiornato DogForm (Data di Nascita con input date, Sesso con Select, Sterilizzato con Checkbox), DogDetail (nuovi campi nella griglia), DogList e ClientDetail (interfacce aggiornate).
 - ✅ Task 11: Creata pagina lista cani `/dogs` con DogsPage (tabella desktop + card mobile) e Server Component che chiama `getAllDogs`.
+- ✅ Bug fix: Corretto `clients/[id]/page.tsx` — mancava il fetch di `getDogsByClient` e il passaggio della prop `dogs` a `ClientDetail`. Aggiunto `Promise.all` per fetch parallelo di notes e dogs.
 
 ### File List
 
