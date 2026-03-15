@@ -50,16 +50,6 @@ export const stationServices = pgTable('station_services', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
-export const stationSchedules = pgTable('station_schedules', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  stationId: uuid('station_id').notNull(),
-  dayOfWeek: integer('day_of_week').notNull(),
-  openTime: text('open_time').notNull(),
-  closeTime: text('close_time').notNull(),
-  tenantId: uuid('tenant_id').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
 
 export const clients = pgTable('clients', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -105,4 +95,31 @@ export const dogNotes = pgTable('dog_notes', {
   authorId: uuid('author_id').notNull(),
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+})
+
+export const userLocationAssignments = pgTable('user_location_assignments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  locationId: uuid('location_id').notNull(),
+  dayOfWeek: integer('day_of_week').notNull(), // 0=Lunedi', 1=Martedi', ..., 6=Domenica (ISO 8601)
+  startTime: text('start_time').notNull(), // "HH:mm"
+  endTime: text('end_time').notNull(), // "HH:mm"
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const appointments = pgTable('appointments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  clientId: uuid('client_id').notNull(),
+  dogId: uuid('dog_id').notNull(),
+  serviceId: uuid('service_id').notNull(),
+  stationId: uuid('station_id').notNull(),
+  startTime: timestamp('start_time').notNull(),
+  endTime: timestamp('end_time').notNull(),
+  price: integer('price').notNull(),
+  notes: text('notes'),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

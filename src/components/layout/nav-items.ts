@@ -1,6 +1,7 @@
 import {
   Calendar,
   Users,
+  UserCog,
   PawPrint,
   Scissors,
   LayoutDashboard,
@@ -21,6 +22,7 @@ export const mainNavItems: NavItem[] = [
   { label: 'Clienti', href: '/clients', icon: Users, roles: ['admin', 'collaborator'] },
   { label: 'Cani', href: '/dogs', icon: PawPrint, roles: ['admin', 'collaborator'] },
   { label: 'Servizi', href: '/services', icon: Scissors, roles: ['admin', 'collaborator'] },
+  { label: 'Personale', href: '/staff', icon: UserCog, roles: ['admin'] },
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'collaborator'] },
 ]
 
@@ -48,4 +50,5 @@ export const pageTitles: Record<string, string> = {
   '/settings': 'Impostazioni',
   '/settings/users': 'Gestione Utenze',
   '/settings/locations': 'Gestione Sedi',
+  '/staff': 'Gestione Personale',
 }

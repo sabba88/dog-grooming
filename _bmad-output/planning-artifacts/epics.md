@@ -141,9 +141,9 @@ FR27: Epica 4 - Navigazione agenda tra giorni
 FR28: Epica 4 - Agenda mostra cliente, cane, servizio per appuntamento
 FR29: Epica 4 - Identificazione visiva slot liberi e occupati
 FR30: Epica 5 - Dashboard riassuntiva attivita'
-FR31: Epica 3 - Gestione dati personali conforme GDPR
-FR32: Epica 3 - Diritto all'oblio (cancellazione dati)
-FR33: Epica 3 - Portabilita' dati (esportazione)
+FR31: Epica 6 - Gestione dati personali conforme GDPR
+FR32: Epica 6 - Diritto all'oblio (cancellazione dati)
+FR33: Epica 6 - Portabilita' dati (esportazione)
 
 ## Epic List
 
@@ -156,8 +156,8 @@ Marco (Amministratore) configura completamente il suo salone: crea sedi, postazi
 **FRs coperti:** FR5, FR6, FR7, FR8, FR9, FR10, FR11
 
 ### Epica 3: Gestione Clienti e Cani
-Marco e Sara gestiscono l'anagrafica completa: creano e modificano clienti e cani, aggiungono note libere, consultano lo storico delle note prestazione, cercano rapidamente i clienti. I dati personali sono gestiti in conformita' GDPR con diritto all'oblio e portabilita'.
-**FRs coperti:** FR12, FR13, FR14, FR15, FR16, FR17, FR18, FR19, FR31, FR32, FR33
+Marco e Sara gestiscono l'anagrafica completa: creano e modificano clienti e cani, aggiungono note libere, consultano lo storico delle note prestazione, cercano rapidamente i clienti.
+**FRs coperti:** FR12, FR13, FR14, FR15, FR16, FR17, FR18, FR19
 
 ### Epica 4: Agenda e Appuntamenti
 Il cuore del prodotto. Marco prende appuntamenti in meno di 30 secondi dall'agenda, sposta e cancella con facilita', aggiunge note alle prestazioni. L'agenda mostra la giornata organizzata per sede e postazione con slot liberi e occupati visibili a colpo d'occhio. Copre i Journey 2 (Presa Appuntamento), 3 (Spostamento) e 4 (Giornata Collaboratrice).
@@ -166,6 +166,10 @@ Il cuore del prodotto. Marco prende appuntamenti in meno di 30 secondi dall'agen
 ### Epica 5: Dashboard e Panoramica
 Marco e Sara accedono a una vista d'insieme dell'attivita' del salone con le metriche chiave della giornata.
 **FRs coperti:** FR30
+
+### Epica 6: Privacy e Conformita' GDPR
+Il salone opera nel rispetto della normativa sulla privacy. L'Amministratore gestisce il diritto all'oblio (soft delete dei dati cliente) e la portabilita' dei dati (esportazione JSON). Le query filtrano automaticamente i record cancellati.
+**FRs coperti:** FR31, FR32, FR33
 
 ## Epica 1: Accesso e Sicurezza del Sistema
 
@@ -375,7 +379,7 @@ So that **il salone sia completamente configurato e pronto per prendere appuntam
 
 ## Epica 3: Gestione Clienti e Cani
 
-Marco e Sara gestiscono l'anagrafica completa: creano e modificano clienti e cani, aggiungono note libere, consultano lo storico delle note prestazione, cercano rapidamente i clienti. I dati personali sono gestiti in conformita' GDPR con diritto all'oblio e portabilita'.
+Marco e Sara gestiscono l'anagrafica completa: creano e modificano clienti e cani, aggiungono note libere, consultano lo storico delle note prestazione, cercano rapidamente i clienti.
 
 ### Story 3.1: Anagrafica Clienti
 
@@ -452,39 +456,6 @@ So that **possa conoscere ogni cane e offrire un servizio personalizzato basato 
 **When** consulta lo storico delle note prestazione
 **Then** vengono mostrate tutte le note delle prestazioni precedenti in ordine cronologico inverso
 **And** ogni nota mostra data, servizio effettuato e testo della nota
-
-### Story 3.3: Privacy e Conformita' GDPR
-
-As a **Amministratore**,
-I want **gestire i dati personali dei clienti in conformita' GDPR, inclusi diritto all'oblio e portabilita'**,
-So that **il salone operi nel rispetto della normativa sulla privacy**.
-
-**Acceptance Criteria:**
-
-**Given** un Amministratore e' nel dettaglio di un cliente
-**When** clicca su "Elimina Dati Cliente" (diritto all'oblio)
-**Then** viene mostrato un Alert Dialog di conferma con descrizione dell'impatto: "Tutti i dati personali di [nome] verranno cancellati. Gli appuntamenti storici verranno anonimizzati. Questa azione e' irreversibile."
-**And** dopo conferma il sistema esegue un soft delete (campo deletedAt) sui dati del cliente
-**And** i dati personali non sono piu' visibili ne' ricercabili
-**And** mostra un toast "Dati cliente eliminati"
-
-**Given** un Amministratore e' nel dettaglio di un cliente
-**When** clicca su "Esporta Dati Cliente" (portabilita')
-**Then** il sistema genera un file JSON con tutti i dati del cliente: anagrafica, cani, note, storico appuntamenti
-**And** il file viene scaricato dal browser
-
-**Given** un nuovo cliente viene creato
-**When** il form di creazione viene compilato
-**Then** il campo consenso al trattamento e' obbligatorio
-**And** il sistema registra consentGivenAt (timestamp) e consentVersion
-
-**Given** un cliente ha subito soft delete (deletedAt valorizzato)
-**When** un utente esegue una ricerca clienti
-**Then** il cliente non appare nei risultati di ricerca
-
-**Given** un cliente ha subito soft delete
-**When** il sistema esegue query sui dati
-**Then** tutte le query filtrano automaticamente i record con deletedAt valorizzato (filtro implicito)
 
 ## Epica 4: Agenda e Appuntamenti
 
@@ -679,3 +650,40 @@ So that **possa avere una visione d'insieme dell'attivita' del salone in un colp
 **When** i dati vengono caricati
 **Then** il caricamento avviene senza indicatori di caricamento visibili (NFR1)
 **And** i dati sono aggregati dalla sede corrente selezionata nell'Header
+
+## Epica 6: Privacy e Conformita' GDPR
+
+Il salone opera nel rispetto della normativa sulla privacy. L'Amministratore gestisce il diritto all'oblio (soft delete dei dati cliente) e la portabilita' dei dati (esportazione JSON). Le query filtrano automaticamente i record cancellati.
+
+### Story 6.1: Privacy e Conformita' GDPR
+
+As a **Amministratore**,
+I want **gestire i dati personali dei clienti in conformita' GDPR, inclusi diritto all'oblio e portabilita'**,
+So that **il salone operi nel rispetto della normativa sulla privacy**.
+
+**Acceptance Criteria:**
+
+**Given** un Amministratore e' nel dettaglio di un cliente
+**When** clicca su "Elimina Dati Cliente" (diritto all'oblio)
+**Then** viene mostrato un Alert Dialog di conferma con descrizione dell'impatto: "Tutti i dati personali di [nome] verranno cancellati. Gli appuntamenti storici verranno anonimizzati. Questa azione e' irreversibile."
+**And** dopo conferma il sistema esegue un soft delete (campo deletedAt) sui dati del cliente
+**And** i dati personali non sono piu' visibili ne' ricercabili
+**And** mostra un toast "Dati cliente eliminati"
+
+**Given** un Amministratore e' nel dettaglio di un cliente
+**When** clicca su "Esporta Dati Cliente" (portabilita')
+**Then** il sistema genera un file JSON con tutti i dati del cliente: anagrafica, cani, note, storico appuntamenti
+**And** il file viene scaricato dal browser
+
+**Given** un nuovo cliente viene creato
+**When** il form di creazione viene compilato
+**Then** il campo consenso al trattamento e' obbligatorio
+**And** il sistema registra consentGivenAt (timestamp) e consentVersion
+
+**Given** un cliente ha subito soft delete (deletedAt valorizzato)
+**When** un utente esegue una ricerca clienti
+**Then** il cliente non appare nei risultati di ricerca
+
+**Given** un cliente ha subito soft delete
+**When** il sistema esegue query sui dati
+**Then** tutte le query filtrano automaticamente i record con deletedAt valorizzato (filtro implicito)

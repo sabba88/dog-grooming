@@ -51,21 +51,21 @@ development_status:
   epic-2: in-progress
   2-1-gestione-listino-servizi: review
   2-2-gestione-sedi: review
-  2-3-gestione-postazioni-con-servizi-abilitati-e-orari: review
+  2-3-gestione-postazioni-con-servizi-abilitati: review  # CC-2026-03-14: semplificata (rimossi orari)
+  2-4-assegnazione-collaboratori-sedi-calendario: review  # CC-2026-03-14: nuova story
   epic-2-retrospective: optional
 
   # Epica 3: Gestione Clienti e Cani
   epic-3: in-progress
   3-1-anagrafica-clienti: review
   3-2-anagrafica-cani: review
-  3-3-privacy-e-conformita-gdpr: backlog
   epic-3-retrospective: optional
 
   # Epica 4: Agenda e Appuntamenti
-  epic-4: backlog
-  4-1-vista-agenda-per-sede-e-postazione: backlog
-  4-2-creazione-appuntamento-rapido: backlog
-  4-3-cancellazione-e-spostamento-appuntamenti: backlog
+  epic-4: in-progress
+  4-1-vista-agenda-per-sede-e-persona: ready-for-dev             # CC-2026-03-14: riscritta (agenda per persone)
+  4-2-creazione-appuntamento-rapido: ready-for-dev               # CC-2026-03-14: modifica (persona pre-compilata, postazione opzionale)
+  4-3-cancellazione-e-spostamento-appuntamenti: backlog          # CC-2026-03-14: modifica (spostamento tra persone)
   4-4-note-prestazione: backlog
   epic-4-retrospective: optional
 
@@ -73,3 +73,8 @@ development_status:
   epic-5: backlog
   5-1-dashboard-riassuntiva: backlog
   epic-5-retrospective: optional
+
+  # Epica 6: Privacy e Conformita' GDPR
+  epic-6: backlog
+  6-1-privacy-e-conformita-gdpr: backlog
+  epic-6-retrospective: optional

@@ -5,10 +5,9 @@ import {
   createStationSchema,
   updateStationSchema,
   updateStationServicesSchema,
-  updateStationScheduleSchema,
 } from '@/lib/validations/stations'
 import { db } from '@/lib/db'
-import { stations, stationServices, stationSchedules, locations, services } from '@/lib/db/schema'
+import { stations, stationServices, locations, services } from '@/lib/db/schema'
 import { eq, and, inArray } from 'drizzle-orm'
 
 export const createStation = authActionClient
@@ -105,66 +104,22 @@ export const updateStationServices = authActionClient
       }
     }
 
-    // Replace strategy: delete all + insert new in transaction
-    await db.transaction(async (tx) => {
-      await tx.delete(stationServices)
-        .where(and(
-          eq(stationServices.stationId, parsedInput.stationId),
-          eq(stationServices.tenantId, ctx.tenantId)
-        ))
+    // Replace strategy: delete all + insert new
+    await db.delete(stationServices)
+      .where(and(
+        eq(stationServices.stationId, parsedInput.stationId),
+        eq(stationServices.tenantId, ctx.tenantId)
+      ))
 
-      if (parsedInput.serviceIds.length > 0) {
-        await tx.insert(stationServices).values(
-          parsedInput.serviceIds.map(serviceId => ({
-            stationId: parsedInput.stationId,
-            serviceId,
-            tenantId: ctx.tenantId,
-          }))
-        )
-      }
-    })
-
-    return { success: true }
-  })
-
-export const updateStationSchedule = authActionClient
-  .schema(updateStationScheduleSchema)
-  .action(async ({ parsedInput, ctx }) => {
-    if (ctx.role !== 'admin') {
-      throw new Error('Non autorizzato')
+    if (parsedInput.serviceIds.length > 0) {
+      await db.insert(stationServices).values(
+        parsedInput.serviceIds.map(serviceId => ({
+          stationId: parsedInput.stationId,
+          serviceId,
+          tenantId: ctx.tenantId,
+        }))
+      )
     }
-
-    // Verifica che la stazione appartenga al tenant
-    const [station] = await db
-      .select({ id: stations.id })
-      .from(stations)
-      .where(and(eq(stations.id, parsedInput.stationId), eq(stations.tenantId, ctx.tenantId)))
-      .limit(1)
-
-    if (!station) {
-      throw new Error('Postazione non trovata')
-    }
-
-    // Replace strategy: delete all + insert new in transaction
-    await db.transaction(async (tx) => {
-      await tx.delete(stationSchedules)
-        .where(and(
-          eq(stationSchedules.stationId, parsedInput.stationId),
-          eq(stationSchedules.tenantId, ctx.tenantId)
-        ))
-
-      if (parsedInput.schedules.length > 0) {
-        await tx.insert(stationSchedules).values(
-          parsedInput.schedules.map(schedule => ({
-            stationId: parsedInput.stationId,
-            dayOfWeek: schedule.dayOfWeek,
-            openTime: schedule.openTime,
-            closeTime: schedule.closeTime,
-            tenantId: ctx.tenantId,
-          }))
-        )
-      }
-    })
 
     return { success: true }
   })

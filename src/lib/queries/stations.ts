@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { stations, stationServices, stationSchedules, services } from '@/lib/db/schema'
+import { stations, stationServices, services } from '@/lib/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 
 export async function getStationsByLocation(locationId: string, tenantId: string) {
@@ -25,24 +25,9 @@ export async function getStationsByLocation(locationId: string, tenantId: string
           eq(stationServices.tenantId, tenantId)
         ))
 
-      const scheduleRows = await db
-        .select({
-          dayOfWeek: stationSchedules.dayOfWeek,
-          openTime: stationSchedules.openTime,
-          closeTime: stationSchedules.closeTime,
-        })
-        .from(stationSchedules)
-        .where(and(
-          eq(stationSchedules.stationId, station.id),
-          eq(stationSchedules.tenantId, tenantId)
-        ))
-        .orderBy(asc(stationSchedules.dayOfWeek))
-
       return {
         ...station,
         servicesCount: stationServiceRows.length,
-        schedulesCount: scheduleRows.length,
-        schedules: scheduleRows,
       }
     })
   )
@@ -84,18 +69,22 @@ export async function getStationServices(stationId: string, tenantId: string) {
   return rows
 }
 
-export async function getStationSchedule(stationId: string, tenantId: string) {
-  return db
+export async function getServicesForStation(stationId: string, tenantId: string) {
+  const rows = await db
     .select({
-      id: stationSchedules.id,
-      dayOfWeek: stationSchedules.dayOfWeek,
-      openTime: stationSchedules.openTime,
-      closeTime: stationSchedules.closeTime,
+      id: services.id,
+      name: services.name,
+      price: services.price,
+      duration: services.duration,
     })
-    .from(stationSchedules)
+    .from(stationServices)
+    .innerJoin(services, eq(stationServices.serviceId, services.id))
     .where(and(
-      eq(stationSchedules.stationId, stationId),
-      eq(stationSchedules.tenantId, tenantId)
+      eq(stationServices.stationId, stationId),
+      eq(stationServices.tenantId, tenantId)
     ))
-    .orderBy(asc(stationSchedules.dayOfWeek))
+    .orderBy(asc(services.name))
+
+  return rows
 }
+
