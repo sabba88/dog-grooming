@@ -1,6 +1,6 @@
 # Story 3.2: Anagrafica Cani
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -523,6 +523,8 @@ Nessun framework di test e' attualmente configurato nel progetto. Il testing per
 Claude Opus 4.6
 
 ### Debug Log References
+
+- Fix TS error: `clients/[id]/page.tsx` non passava prop `dogs` a `ClientDetail`. Aggiunto import `getDogsByClient` e fetch parallelo con `Promise.all`.
 
 ### Completion Notes List
 
