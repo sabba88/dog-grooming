@@ -6,6 +6,7 @@ import { getAppointmentsByDateAndLocationGroupedByUser } from '@/lib/queries/app
 import { getStaffStatusForDate } from '@/lib/queries/staff'
 import { getDogsByClient } from '@/lib/queries/dogs'
 import { getServicesForStation } from '@/lib/queries/stations'
+import { getServices } from '@/lib/queries/services'
 import { timeToMinutes } from '@/lib/utils/schedule'
 import { z } from 'zod'
 import { db } from '@/lib/db'
@@ -86,6 +87,13 @@ export const fetchServicesForStation = authActionClient
   .action(async ({ parsedInput, ctx }) => {
     const services = await getServicesForStation(parsedInput.stationId, ctx.tenantId)
     return { services }
+  })
+
+export const fetchAllServices = authActionClient
+  .schema(z.object({}))
+  .action(async ({ ctx }) => {
+    const allServices = await getServices(ctx.tenantId)
+    return { services: allServices }
   })
 
 export const createAppointment = authActionClient

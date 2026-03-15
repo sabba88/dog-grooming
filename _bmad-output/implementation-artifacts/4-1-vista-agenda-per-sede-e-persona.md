@@ -1,6 +1,6 @@
 # Story 4.1: Vista Agenda per Sede e Persona
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -80,40 +80,40 @@ so that **possa avere il controllo completo della giornata e sapere chi lavora, 
   - [x] 3.4 Badge stato con testo: "Attivo [HH:mm - HH:mm]", "Presso [Sede]", "Non assegnato"
   - [x] 3.5 Nome persona troncato con ellipsis, ruolo mostrato come badge piccolo
 
-- [ ] Task 4: Aggiornare ScheduleGrid per vista 24h con colonne persona (AC: #1, #4, #5, #6, #7, #8)
-  - [ ] 4.1 Aggiornare `src/components/schedule/ScheduleGrid.tsx` — sostituire l'interfaccia `Station` con interfaccia `Person` (id, name, role, status, assignment con startTime/endTime opzionali, locationName)
-  - [ ] 4.2 Vista 24h fissa: `globalOpen = '00:00'`, `globalClose = '23:30'` — la griglia mostra sempre l'intera giornata
-  - [ ] 4.3 Header colonne: usare `PersonHeader` al posto del nome postazione
-  - [ ] 4.4 Colonne persona attiva: fascia turno con sfondo bianco (area attiva), aree fuori turno con sfondo `bg-muted/20` (attenuate ma visibili)
-  - [ ] 4.5 Colonne persona elsewhere/unassigned: tutta la colonna con `opacity-50`
-  - [ ] 4.6 Filtrare appuntamenti per `userId` (non piu' `stationId`) per popolare le colonne
-  - [ ] 4.7 EmptySlot: passare `userId` e `userName` al posto di `stationId` nei dati dell'onClick handler
-  - [ ] 4.8 Mantenere indicatore "ora corrente" (linea rossa) e grid lines
+- [x] Task 4: Aggiornare ScheduleGrid per vista 24h con colonne persona (AC: #1, #4, #5, #6, #7, #8)
+  - [x] 4.1 Aggiornare `src/components/schedule/ScheduleGrid.tsx` — sostituire l'interfaccia `Station` con interfaccia `Person` (id, name, role, status, assignment con startTime/endTime opzionali, locationName)
+  - [x] 4.2 Vista 24h fissa: `globalOpen = '00:00'`, `globalClose = '23:30'` — la griglia mostra sempre l'intera giornata
+  - [x] 4.3 Header colonne: usare `PersonHeader` al posto del nome postazione
+  - [x] 4.4 Colonne persona attiva: fascia turno con sfondo bianco (area attiva), aree fuori turno con sfondo `bg-muted/20` (attenuate ma visibili)
+  - [x] 4.5 Colonne persona elsewhere/unassigned: tutta la colonna con `opacity-50`
+  - [x] 4.6 Filtrare appuntamenti per `userId` (non piu' `stationId`) per popolare le colonne
+  - [x] 4.7 EmptySlot: passare `userId` e `userName` al posto di `stationId` nei dati dell'onClick handler
+  - [x] 4.8 Mantenere indicatore "ora corrente" (linea rossa) e grid lines
 
-- [ ] Task 5: Aggiornare ScheduleTimeline per tab persone con stati (AC: #2, #4, #5, #6, #7, #8)
-  - [ ] 5.1 Aggiornare `src/components/schedule/ScheduleTimeline.tsx` — sostituire tab postazioni con tab persone
-  - [ ] 5.2 Tab "Tutte" (default) + un tab per persona, ogni tab con badge colorato per stato (pallino verde active, giallo elsewhere, grigio unassigned)
-  - [ ] 5.3 Filtrare appuntamenti per `userId` selezionato (o mostrare tutti se tab "Tutte")
-  - [ ] 5.4 Vista 24h: mostrare tutti gli slot dalla 00:00 alla 23:30
-  - [ ] 5.5 Slot vuoti con `userId` e `userName` nei dati onClick
+- [x] Task 5: Aggiornare ScheduleTimeline per tab persone con stati (AC: #2, #4, #5, #6, #7, #8)
+  - [x] 5.1 Aggiornare `src/components/schedule/ScheduleTimeline.tsx` — sostituire tab postazioni con tab persone
+  - [x] 5.2 Tab "Tutte" (default) + un tab per persona, ogni tab con badge colorato per stato (pallino verde active, giallo elsewhere, grigio unassigned)
+  - [x] 5.3 Filtrare appuntamenti per `userId` selezionato (o mostrare tutti se tab "Tutte")
+  - [x] 5.4 Vista 24h: mostrare tutti gli slot dalla 00:00 alla 23:30
+  - [x] 5.5 Slot vuoti con `userId` e `userName` nei dati onClick
 
-- [ ] Task 6: Aggiornare AgendaView orchestratore (AC: #1, #2, #3, #6, #7, #8, #9, #10)
-  - [ ] 6.1 Aggiornare `src/components/schedule/AgendaView.tsx` — cambiare interfaccia dati da `stations` a `staff` (array di persone con status)
-  - [ ] 6.2 Aggiornare TanStack Query: la `queryFn` deve mappare la risposta `staff` (non piu' `stations`)
-  - [ ] 6.3 Passare `staff` e appuntamenti a `ScheduleGrid` (desktop) e `ScheduleTimeline` (mobile)
-  - [ ] 6.4 Stato vuoto: se nessuna persona attiva, mostrare "Nessun collaboratore assegnato a questa sede per oggi — Vai a Impostazioni per configurare le assegnazioni"
-  - [ ] 6.5 Aggiornare `handleEmptySlotClick`: cambiare da `stationId/stationName` a `userId/userName` nei dati passati al form
-  - [ ] 6.6 Aggiornare `AppointmentForm prefilledSlot`: includere `userId` e `userName` al posto di `stationId` e `stationName`
+- [x] Task 6: Aggiornare AgendaView orchestratore (AC: #1, #2, #3, #6, #7, #8, #9, #10)
+  - [x] 6.1 Aggiornare `src/components/schedule/AgendaView.tsx` — cambiare interfaccia dati da `stations` a `staff` (array di persone con status)
+  - [x] 6.2 Aggiornare TanStack Query: la `queryFn` deve mappare la risposta `staff` (non piu' `stations`)
+  - [x] 6.3 Passare `staff` e appuntamenti a `ScheduleGrid` (desktop) e `ScheduleTimeline` (mobile)
+  - [x] 6.4 Stato vuoto: se nessuna persona attiva, mostrare "Nessun collaboratore assegnato a questa sede per oggi — Vai a Impostazioni per configurare le assegnazioni"
+  - [x] 6.5 Aggiornare `handleEmptySlotClick`: cambiare da `stationId/stationName` a `userId/userName` nei dati passati al form
+  - [x] 6.6 Aggiornare `AppointmentForm prefilledSlot`: includere `userId` e `userName` al posto di `stationId` e `stationName`
 
-- [ ] Task 7: Aggiornare EmptySlot per supportare userId (AC: #5)
-  - [ ] 7.1 Aggiornare `src/components/schedule/EmptySlot.tsx` — accettare `userId` e `userName` come props (al posto di / in aggiunta a `stationId`)
-  - [ ] 7.2 onClick handler: passare `userId` nei dati dell'evento
+- [x] Task 7: Aggiornare EmptySlot per supportare userId (AC: #5)
+  - [x] 7.1 Aggiornare `src/components/schedule/EmptySlot.tsx` — accettare `userId` e `userName` come props (al posto di / in aggiunta a `stationId`)
+  - [x] 7.2 onClick handler: passare `userId` nei dati dell'evento
 
-- [ ] Task 8: Aggiornare AppointmentForm per supportare userId (AC: #4)
-  - [ ] 8.1 Aggiornare `src/components/appointment/AppointmentForm.tsx` — accettare `userId` e `userName` nel `prefilledSlot`, rendere `stationId` opzionale
-  - [ ] 8.2 Mostrare nome persona come campo pre-compilato non editabile (la persona e' gia' determinata dalla colonna)
-  - [ ] 8.3 Rendere il campo postazione opzionale (select con "Nessuna postazione" come default)
-  - [ ] 8.4 Inviare `userId` nel payload di `createAppointment`
+- [x] Task 8: Aggiornare AppointmentForm per supportare userId (AC: #4)
+  - [x] 8.1 Aggiornare `src/components/appointment/AppointmentForm.tsx` — accettare `userId` e `userName` nel `prefilledSlot`, rendere `stationId` opzionale
+  - [x] 8.2 Mostrare nome persona come campo pre-compilato non editabile (la persona e' gia' determinata dalla colonna)
+  - [x] 8.3 Rendere il campo postazione opzionale (select con "Nessuna postazione" come default)
+  - [x] 8.4 Inviare `userId` nel payload di `createAppointment`
 
 ## Dev Notes
 
@@ -544,6 +544,11 @@ Claude Opus 4.6
 - Task 1: Aggiornato schema DB — aggiunto `userId` NOT NULL a `appointments`, reso `stationId` nullable. Aggiornata validazione Zod e server action `createAppointment` con overlap check su `userId`. Schema pushato al DB di sviluppo (4 appuntamenti esistenti troncati).
 - Task 2: Creata query `getAppointmentsByDateAndLocationGroupedByUser` per fetch appuntamenti raggruppati per userId. Aggiornata `getAgendaData` per restituire `{ appointments, staff }` usando `getStaffStatusForDate`.
 - Task 3: Creato PersonHeader con sfondo condizionato per stato, badge ruolo e testo stato (Attivo/Presso/Non assegnato).
+- Task 4: Riscritto ScheduleGrid — colonne persona con PersonHeader, vista 24h fissa (00:00-23:30), aree fuori turno attenuate, colonne elsewhere/unassigned con opacity-50, filtro per userId.
+- Task 5: Riscritto ScheduleTimeline — tab persone con badge colorato per stato (verde/giallo/grigio), vista 24h, filtro per userId.
+- Task 6: Riscritto AgendaView — interfaccia stations→staff, TanStack Query aggiornata, empty state per sede senza collaboratori, handleEmptySlotClick con userId/userName, locationName arricchito dal prop locations.
+- Task 7: Riscritto EmptySlot — accetta userId/userName, passa userId nell'onClick handler.
+- Task 8: Riscritto AppointmentForm — prefilledSlot con userId/userName, icona User al posto di MapPin, caricamento tutti i servizi del tenant (fetchAllServices), stationId rimosso dal payload.
 
 ### File List
 
@@ -552,3 +557,13 @@ Claude Opus 4.6
 - src/lib/actions/appointments.ts (modificato)
 - src/lib/queries/appointments.ts (modificato)
 - src/components/schedule/PersonHeader.tsx (creato)
+- src/components/schedule/ScheduleGrid.tsx (modificato)
+- src/components/schedule/ScheduleTimeline.tsx (modificato)
+- src/components/schedule/AgendaView.tsx (modificato)
+- src/components/schedule/EmptySlot.tsx (modificato)
+- src/components/appointment/AppointmentForm.tsx (modificato)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (modificato)
+
+### Change Log
+
+- 2026-03-15: Implementazione completa — migrazione da postazione a persona, vista 24h, stati visivi, aggiornamento form appuntamento. Build e TypeScript verificati senza errori.

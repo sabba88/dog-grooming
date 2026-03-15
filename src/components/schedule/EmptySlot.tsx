@@ -1,16 +1,18 @@
 'use client'
 
 interface EmptySlotProps {
-  stationId: string
+  userId: string
+  userName: string
   date: string
   time: string
   variant: 'grid' | 'timeline'
   style?: React.CSSProperties
-  onClick?: (data: { stationId: string; date: string; time: string }) => void
+  onClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
 }
 
 export function EmptySlot({
-  stationId,
+  userId,
+  userName,
   date,
   time,
   variant,
@@ -20,7 +22,7 @@ export function EmptySlot({
   if (variant === 'grid') {
     return (
       <button
-        onClick={() => onClick?.({ stationId, date, time })}
+        onClick={() => onClick?.({ userId, userName, date, time })}
         className="absolute inset-x-0 cursor-pointer transition-colors hover:border-primary hover:border rounded-sm"
         style={{
           ...style,
@@ -40,7 +42,7 @@ export function EmptySlot({
   // timeline variant
   return (
     <button
-      onClick={() => onClick?.({ stationId, date, time })}
+      onClick={() => onClick?.({ userId, userName, date, time })}
       className="w-full rounded-lg p-3 text-left cursor-pointer transition-colors hover:border-primary min-h-11"
       style={{
         border: '2px dashed #E2E8F0',
