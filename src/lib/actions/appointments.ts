@@ -2,12 +2,11 @@
 
 import { authActionClient } from '@/lib/actions/client'
 import { getAppointmentsQuerySchema, createAppointmentSchema } from '@/lib/validations/appointments'
-import { getAppointmentsByDateAndLocation } from '@/lib/queries/appointments'
-import { getStationsWithScheduleForDay } from '@/lib/queries/appointments'
+import { getAppointmentsByDateAndLocationGroupedByUser } from '@/lib/queries/appointments'
+import { getStaffStatusForDate } from '@/lib/queries/staff'
 import { getDogsByClient } from '@/lib/queries/dogs'
 import { getServicesForStation } from '@/lib/queries/stations'
-import { toDayOfWeek, timeToMinutes } from '@/lib/utils/schedule'
-import { getDay } from 'date-fns'
+import { timeToMinutes } from '@/lib/utils/schedule'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { appointments, stationServices } from '@/lib/db/schema'
@@ -18,14 +17,13 @@ export const getAgendaData = authActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { locationId, date } = parsedInput
     const dateObj = new Date(date + 'T00:00:00.000Z')
-    const dayOfWeek = toDayOfWeek(getDay(dateObj))
 
-    const [appts, stations] = await Promise.all([
-      getAppointmentsByDateAndLocation(locationId, date, ctx.tenantId),
-      getStationsWithScheduleForDay(locationId, dayOfWeek, ctx.tenantId),
+    const [appts, staff] = await Promise.all([
+      getAppointmentsByDateAndLocationGroupedByUser(date, ctx.tenantId),
+      getStaffStatusForDate(locationId, dateObj, ctx.tenantId),
     ])
 
-    return { appointments: appts, stations }
+    return { appointments: appts, staff }
   })
 
 async function findAlternativeSlots(

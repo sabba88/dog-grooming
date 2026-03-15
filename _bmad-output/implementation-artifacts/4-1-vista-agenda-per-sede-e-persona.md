@@ -69,9 +69,9 @@ so that **possa avere il controllo completo della giornata e sapere chi lavora, 
   - [x] 1.3 Aggiornare `createAppointmentSchema` in `src/lib/validations/appointments.ts`: aggiungere campo `userId` (uuid, required), rendere `stationId` opzionale
   - [x] 1.4 Aggiornare `createAppointment` server action in `src/lib/actions/appointments.ts`: includere `userId` nell'INSERT, rendere `stationId` opzionale, cambiare overlap check da `stationId` a `userId`
 
-- [ ] Task 2: Creare nuova query `getAgendaDataByPersons` per agenda per persone (AC: #1, #3, #4, #6, #7, #8)
-  - [ ] 2.1 Creare `getAppointmentsByDateAndLocationGroupedByUser(locationId, date, tenantId)` in `src/lib/queries/appointments.ts` — fetch appuntamenti del giorno con JOIN su clients, dogs, services; includere `userId` nel SELECT; filtrare appuntamenti il cui `userId` sia tra le persone associate alla sede (query su `userLocationAssignments`) O il cui `stationId` appartenga a una postazione della sede
-  - [ ] 2.2 Aggiornare la server action `getAgendaData` in `src/lib/actions/appointments.ts` — sostituire il fetch di `stations` con il fetch di `staffStatus` usando `getStaffStatusForDate(locationId, date, tenantId)` da `src/lib/queries/staff.ts`; restituire `{ appointments, staff }` invece di `{ appointments, stations }`
+- [x] Task 2: Creare nuova query `getAgendaDataByPersons` per agenda per persone (AC: #1, #3, #4, #6, #7, #8)
+  - [x] 2.1 Creare `getAppointmentsByDateAndLocationGroupedByUser(locationId, date, tenantId)` in `src/lib/queries/appointments.ts` — fetch appuntamenti del giorno con JOIN su clients, dogs, services; includere `userId` nel SELECT; filtrare appuntamenti il cui `userId` sia tra le persone associate alla sede (query su `userLocationAssignments`) O il cui `stationId` appartenga a una postazione della sede
+  - [x] 2.2 Aggiornare la server action `getAgendaData` in `src/lib/actions/appointments.ts` — sostituire il fetch di `stations` con il fetch di `staffStatus` usando `getStaffStatusForDate(locationId, date, tenantId)` da `src/lib/queries/staff.ts`; restituire `{ appointments, staff }` invece di `{ appointments, stations }`
 
 - [ ] Task 3: Creare componente PersonHeader per header colonne persona (AC: #6, #7, #8)
   - [ ] 3.1 Creare `src/components/schedule/PersonHeader.tsx` — Client Component
@@ -542,9 +542,11 @@ Claude Opus 4.6
 ### Completion Notes List
 
 - Task 1: Aggiornato schema DB — aggiunto `userId` NOT NULL a `appointments`, reso `stationId` nullable. Aggiornata validazione Zod e server action `createAppointment` con overlap check su `userId`. Schema pushato al DB di sviluppo (4 appuntamenti esistenti troncati).
+- Task 2: Creata query `getAppointmentsByDateAndLocationGroupedByUser` per fetch appuntamenti raggruppati per userId. Aggiornata `getAgendaData` per restituire `{ appointments, staff }` usando `getStaffStatusForDate`.
 
 ### File List
 
 - src/lib/db/schema.ts (modificato)
 - src/lib/validations/appointments.ts (modificato)
 - src/lib/actions/appointments.ts (modificato)
+- src/lib/queries/appointments.ts (modificato)
