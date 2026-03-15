@@ -177,6 +177,7 @@ export function StaffList({ users, locations }: StaffListProps) {
 
       {selectedUser && (
         <StaffScheduleCalendar
+          key={selectedUser.id}
           open={calendarOpen}
           onOpenChange={setCalendarOpen}
           onSuccess={handleSuccess}
