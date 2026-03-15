@@ -52,7 +52,7 @@ development_status:
   2-1-gestione-listino-servizi: review
   2-2-gestione-sedi: review
   2-3-gestione-postazioni-con-servizi-abilitati: review  # CC-2026-03-14: semplificata (rimossi orari)
-  2-4-assegnazione-collaboratori-sedi-calendario: ready-for-dev  # CC-2026-03-14: nuova story
+  2-4-assegnazione-collaboratori-sedi-calendario: review  # CC-2026-03-14: nuova story
   epic-2-retrospective: optional
 
   # Epica 3: Gestione Clienti e Cani

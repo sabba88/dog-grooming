@@ -97,6 +97,18 @@ export const dogNotes = pgTable('dog_notes', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+export const userLocationAssignments = pgTable('user_location_assignments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  locationId: uuid('location_id').notNull(),
+  dayOfWeek: integer('day_of_week').notNull(), // 0=Lunedi', 1=Martedi', ..., 6=Domenica (ISO 8601)
+  startTime: text('start_time').notNull(), // "HH:mm"
+  endTime: text('end_time').notNull(), // "HH:mm"
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
 export const appointments = pgTable('appointments', {
   id: uuid('id').primaryKey().defaultRandom(),
   clientId: uuid('client_id').notNull(),

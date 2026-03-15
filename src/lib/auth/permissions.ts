@@ -7,6 +7,7 @@ export const permissions = {
   manageServices: ['admin'] as UserRole[],
   manageLocations: ['admin'] as UserRole[],
   viewAgenda: ['admin', 'collaborator'] as UserRole[],
+  manageStaff: ['admin'] as UserRole[],
   manageAppointments: ['admin', 'collaborator'] as UserRole[],
   viewDashboard: ['admin', 'collaborator'] as UserRole[],
 } as const
@@ -27,6 +28,7 @@ export async function checkPermission(permission: Permission): Promise<boolean> 
 
 // Route admin-only: collaboratore viene rediretto a /agenda
 export const adminOnlyRoutes = [
+  '/staff',
   '/settings',
   '/settings/users',
   '/settings/locations',
