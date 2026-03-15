@@ -73,12 +73,12 @@ so that **possa avere il controllo completo della giornata e sapere chi lavora, 
   - [x] 2.1 Creare `getAppointmentsByDateAndLocationGroupedByUser(locationId, date, tenantId)` in `src/lib/queries/appointments.ts` — fetch appuntamenti del giorno con JOIN su clients, dogs, services; includere `userId` nel SELECT; filtrare appuntamenti il cui `userId` sia tra le persone associate alla sede (query su `userLocationAssignments`) O il cui `stationId` appartenga a una postazione della sede
   - [x] 2.2 Aggiornare la server action `getAgendaData` in `src/lib/actions/appointments.ts` — sostituire il fetch di `stations` con il fetch di `staffStatus` usando `getStaffStatusForDate(locationId, date, tenantId)` da `src/lib/queries/staff.ts`; restituire `{ appointments, staff }` invece di `{ appointments, stations }`
 
-- [ ] Task 3: Creare componente PersonHeader per header colonne persona (AC: #6, #7, #8)
-  - [ ] 3.1 Creare `src/components/schedule/PersonHeader.tsx` — Client Component
-  - [ ] 3.2 Props: `name: string`, `role: 'admin' | 'collaborator'`, `status: 'active' | 'elsewhere' | 'unassigned'`, `locationName?: string` (nome sede se elsewhere), `startTime?: string`, `endTime?: string` (turno se active)
-  - [ ] 3.3 Sfondo condizionato: `#E8F0ED` (active), `#FEF3C7` (elsewhere), `#F9FAFB` (unassigned)
-  - [ ] 3.4 Badge stato con testo: "Attivo [HH:mm - HH:mm]", "Presso [Sede]", "Non assegnato"
-  - [ ] 3.5 Nome persona troncato con ellipsis, ruolo mostrato come badge piccolo
+- [x] Task 3: Creare componente PersonHeader per header colonne persona (AC: #6, #7, #8)
+  - [x] 3.1 Creare `src/components/schedule/PersonHeader.tsx` — Client Component
+  - [x] 3.2 Props: `name: string`, `role: 'admin' | 'collaborator'`, `status: 'active' | 'elsewhere' | 'unassigned'`, `locationName?: string` (nome sede se elsewhere), `startTime?: string`, `endTime?: string` (turno se active)
+  - [x] 3.3 Sfondo condizionato: `#E8F0ED` (active), `#FEF3C7` (elsewhere), `#F9FAFB` (unassigned)
+  - [x] 3.4 Badge stato con testo: "Attivo [HH:mm - HH:mm]", "Presso [Sede]", "Non assegnato"
+  - [x] 3.5 Nome persona troncato con ellipsis, ruolo mostrato come badge piccolo
 
 - [ ] Task 4: Aggiornare ScheduleGrid per vista 24h con colonne persona (AC: #1, #4, #5, #6, #7, #8)
   - [ ] 4.1 Aggiornare `src/components/schedule/ScheduleGrid.tsx` — sostituire l'interfaccia `Station` con interfaccia `Person` (id, name, role, status, assignment con startTime/endTime opzionali, locationName)
@@ -543,6 +543,7 @@ Claude Opus 4.6
 
 - Task 1: Aggiornato schema DB — aggiunto `userId` NOT NULL a `appointments`, reso `stationId` nullable. Aggiornata validazione Zod e server action `createAppointment` con overlap check su `userId`. Schema pushato al DB di sviluppo (4 appuntamenti esistenti troncati).
 - Task 2: Creata query `getAppointmentsByDateAndLocationGroupedByUser` per fetch appuntamenti raggruppati per userId. Aggiornata `getAgendaData` per restituire `{ appointments, staff }` usando `getStaffStatusForDate`.
+- Task 3: Creato PersonHeader con sfondo condizionato per stato, badge ruolo e testo stato (Attivo/Presso/Non assegnato).
 
 ### File List
 
@@ -550,3 +551,4 @@ Claude Opus 4.6
 - src/lib/validations/appointments.ts (modificato)
 - src/lib/actions/appointments.ts (modificato)
 - src/lib/queries/appointments.ts (modificato)
+- src/components/schedule/PersonHeader.tsx (creato)
