@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAction } from 'next-safe-action/hooks'
 import { toast } from 'sonner'
-import { createAppointment, fetchDogsForClient, fetchAllServices } from '@/lib/actions/appointments'
+import { createAppointment, fetchDogsForClient, fetchAllServices, fetchStationsForLocation, fetchServicesForStation } from '@/lib/actions/appointments'
 import { formatPrice, formatDuration } from '@/lib/utils/formatting'
 import { ClientSearch } from '@/components/appointment/ClientSearch'
 import { QuickClientForm } from '@/components/appointment/QuickClientForm'
@@ -20,6 +20,7 @@ interface PrefilledSlot {
   userName: string
   date: string
   time: string
+  locationId: string
 }
 
 interface AppointmentFormProps {
@@ -52,6 +53,8 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
   const [showQuickClient, setShowQuickClient] = useState(false)
   const [dogs, setDogs] = useState<Dog[]>([])
   const [selectedDogId, setSelectedDogId] = useState<string | null>(null)
+  const [stationsList, setStationsList] = useState<{ id: string; name: string }[]>([])
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(null)
   const [services, setServices] = useState<Service[]>([])
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [duration, setDuration] = useState<number>(0)
@@ -60,7 +63,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     code: string
     message: string
     alternatives?: string[]
-    closingTime?: string
+    shiftEndTime?: string
   } | null>(null)
 
   const { execute: loadDogs, isPending: isLoadingDogs } = useAction(fetchDogsForClient, {
@@ -74,7 +77,23 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     },
   })
 
-  const { execute: loadServices, isPending: isLoadingServices } = useAction(fetchAllServices, {
+  const { execute: loadStations, isPending: isLoadingStations } = useAction(fetchStationsForLocation, {
+    onSuccess: ({ data }) => {
+      if (data?.stations) {
+        setStationsList(data.stations)
+      }
+    },
+  })
+
+  const { execute: loadServicesForStation, isPending: isLoadingServicesForStation } = useAction(fetchServicesForStation, {
+    onSuccess: ({ data }) => {
+      if (data?.services) {
+        setServices(data.services)
+      }
+    },
+  })
+
+  const { execute: loadServices, isPending: isLoadingAllServices } = useAction(fetchAllServices, {
     onSuccess: ({ data }) => {
       if (data?.services) {
         setServices(data.services)
@@ -96,8 +115,9 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     },
   })
 
-  // Load all services on mount
+  // Load stations for location and all services on mount
   useEffect(() => {
+    loadStations({ locationId: prefilledSlot.locationId })
     loadServices({})
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -112,6 +132,20 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
   const handleClientCreated = (client: { id: string; firstName: string; lastName: string }) => {
     setShowQuickClient(false)
     handleClientSelect(client)
+  }
+
+  const handleStationChange = (value: string) => {
+    const stationId = value === '__all__' ? null : value
+    setSelectedStationId(stationId)
+    setSelectedServiceId(null)
+    setDuration(0)
+    setPriceEur('')
+    setBusinessError(null)
+    if (stationId) {
+      loadServicesForStation({ stationId })
+    } else {
+      loadServices({})
+    }
   }
 
   const handleServiceChange = (serviceId: string) => {
@@ -137,6 +171,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
         serviceId: selectedServiceId,
         duration,
         price: priceCents,
+        ...(selectedStationId && { stationId: selectedStationId }),
       })
     }
   }
@@ -154,6 +189,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
       serviceId: selectedServiceId,
       duration,
       price: priceCents,
+      ...(selectedStationId && { stationId: selectedStationId }),
     })
   }
 
@@ -188,7 +224,12 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
       {/* Sezione cliente */}
       <div>
         <Label className="mb-1.5 block text-sm font-medium">Cliente</Label>
-        {selectedClient ? (
+        {showQuickClient ? (
+          <QuickClientForm
+            onCreated={handleClientCreated}
+            onCancel={() => setShowQuickClient(false)}
+          />
+        ) : selectedClient ? (
           <div className="flex items-center gap-3 rounded-lg border p-2.5">
             <Avatar size="sm">
               <AvatarFallback className="text-xs">
@@ -207,10 +248,12 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
                 setSelectedClient(null)
                 setSelectedDogId(null)
                 setDogs([])
+                setSelectedStationId(null)
                 setSelectedServiceId(null)
                 setDuration(0)
                 setPriceEur('')
                 setBusinessError(null)
+                loadServices({})
               }}
             >
               <X className="size-4" />
@@ -257,11 +300,38 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
         </div>
       )}
 
+      {/* Sezione postazione — mostrata solo dopo selezione cane */}
+      {selectedDogId && (
+        <div>
+          <Label className="mb-1.5 block text-sm font-medium">Postazione (opzionale)</Label>
+          {isLoadingStations ? (
+            <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              Caricamento postazioni...
+            </div>
+          ) : (
+            <Select value={selectedStationId ?? '__all__'} onValueChange={handleStationChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Tutte le postazioni" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">Tutte le postazioni</SelectItem>
+                {stationsList.map((station) => (
+                  <SelectItem key={station.id} value={station.id}>
+                    {station.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      )}
+
       {/* Sezione servizio — mostrata solo dopo selezione cane */}
       {selectedDogId && (
         <div>
           <Label className="mb-1.5 block text-sm font-medium">Servizio</Label>
-          {isLoadingServices ? (
+          {(isLoadingAllServices || isLoadingServicesForStation) ? (
             <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
               Caricamento servizi...
@@ -337,9 +407,9 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
               </div>
             </div>
           )}
-          {businessError.code === 'EXCEEDS_CLOSING_TIME' && businessError.closingTime && (
+          {businessError.code === 'EXCEEDS_SHIFT_TIME' && businessError.shiftEndTime && (
             <p className="text-muted-foreground mt-1 text-xs">
-              Chiusura alle {businessError.closingTime}. Riduci la durata per procedere.
+              Fine turno alle {businessError.shiftEndTime}. Riduci la durata per procedere.
             </p>
           )}
         </div>
@@ -364,12 +434,6 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
         </Button>
       )}
 
-      {/* Quick Client Form (Dialog secondario) */}
-      <QuickClientForm
-        open={showQuickClient}
-        onOpenChange={setShowQuickClient}
-        onCreated={handleClientCreated}
-      />
     </div>
   )
 }

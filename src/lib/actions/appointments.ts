@@ -3,14 +3,14 @@
 import { authActionClient } from '@/lib/actions/client'
 import { getAppointmentsQuerySchema, createAppointmentSchema } from '@/lib/validations/appointments'
 import { getAppointmentsByDateAndLocationGroupedByUser } from '@/lib/queries/appointments'
-import { getStaffStatusForDate } from '@/lib/queries/staff'
+import { getStaffStatusForDate, getIsoDayOfWeek } from '@/lib/queries/staff'
 import { getDogsByClient } from '@/lib/queries/dogs'
-import { getServicesForStation } from '@/lib/queries/stations'
+import { getStationsByLocation, getServicesForStation } from '@/lib/queries/stations'
 import { getServices } from '@/lib/queries/services'
 import { timeToMinutes } from '@/lib/utils/schedule'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { appointments, stationServices } from '@/lib/db/schema'
+import { appointments, stationServices, userLocationAssignments } from '@/lib/db/schema'
 import { eq, and, lt, gt, gte, asc } from 'drizzle-orm'
 
 export const getAgendaData = authActionClient
@@ -74,6 +74,13 @@ async function findAlternativeSlots(
 
   return alternatives
 }
+
+export const fetchStationsForLocation = authActionClient
+  .schema(z.object({ locationId: z.string().uuid() }))
+  .action(async ({ parsedInput, ctx }) => {
+    const stations = await getStationsByLocation(parsedInput.locationId, ctx.tenantId)
+    return { stations: stations.map((s) => ({ id: s.id, name: s.name })) }
+  })
 
 export const fetchDogsForClient = authActionClient
   .schema(z.object({ clientId: z.string().uuid() }))
@@ -149,7 +156,37 @@ export const createAppointment = authActionClient
       }
     }
 
-    // 4. INSERT
+    // 4. Validazione turno persona
+    const dayOfWeek = getIsoDayOfWeek(startTime)
+    const [assignment] = await db
+      .select({
+        endTime: userLocationAssignments.endTime,
+      })
+      .from(userLocationAssignments)
+      .where(
+        and(
+          eq(userLocationAssignments.userId, userId),
+          eq(userLocationAssignments.dayOfWeek, dayOfWeek),
+          eq(userLocationAssignments.tenantId, ctx.tenantId)
+        )
+      )
+      .limit(1)
+
+    if (assignment) {
+      const appointmentEndMinutes = endTime.getUTCHours() * 60 + endTime.getUTCMinutes()
+      const shiftEndMinutes = timeToMinutes(assignment.endTime)
+      if (appointmentEndMinutes > shiftEndMinutes) {
+        return {
+          error: {
+            code: 'EXCEEDS_SHIFT_TIME' as const,
+            message: "L'appuntamento supera la fine del turno",
+            shiftEndTime: assignment.endTime,
+          },
+        }
+      }
+    }
+
+    // 5. INSERT
     const [created] = await db
       .insert(appointments)
       .values({

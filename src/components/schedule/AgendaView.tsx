@@ -33,6 +33,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
     userName: string
     date: string
     time: string
+    locationId: string
   } | null>(null)
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
@@ -76,7 +77,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
   const staff = data?.staff ?? []
 
   const handleEmptySlotClick = (slotData: { userId: string; userName: string; date: string; time: string }) => {
-    setAppointmentSlot(slotData)
+    setAppointmentSlot({ ...slotData, locationId: selectedLocationId! })
   }
 
   const handleAppointmentCreated = () => {
