@@ -163,9 +163,19 @@ export function ScheduleGrid({
                 )
               })}
 
-              {/* Out-of-shift areas for active persons */}
+              {/* Shift highlight + out-of-shift areas for active persons */}
               {shiftStart !== null && shiftEnd !== null && (
                 <>
+                  {/* Active shift zone — green highlight */}
+                  <div
+                    className="absolute inset-x-0"
+                    style={{
+                      top: `${((shiftStart - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
+                      height: `${((shiftEnd - shiftStart) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
+                      backgroundColor: '#E8F0ED',
+                    }}
+                  />
+                  {/* Out-of-shift areas */}
                   {shiftStart > dayStartMinutes && (
                     <div
                       className="absolute inset-x-0 bg-muted/20"
