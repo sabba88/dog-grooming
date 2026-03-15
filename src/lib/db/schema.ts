@@ -50,16 +50,6 @@ export const stationServices = pgTable('station_services', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
-export const stationSchedules = pgTable('station_schedules', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  stationId: uuid('station_id').notNull(),
-  dayOfWeek: integer('day_of_week').notNull(),
-  openTime: text('open_time').notNull(),
-  closeTime: text('close_time').notNull(),
-  tenantId: uuid('tenant_id').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
 
 export const clients = pgTable('clients', {
   id: uuid('id').primaryKey().defaultRandom(),

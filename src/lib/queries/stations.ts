@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { stations, stationServices, stationSchedules, services } from '@/lib/db/schema'
+import { stations, stationServices, services } from '@/lib/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 
 export async function getStationsByLocation(locationId: string, tenantId: string) {
@@ -25,24 +25,9 @@ export async function getStationsByLocation(locationId: string, tenantId: string
           eq(stationServices.tenantId, tenantId)
         ))
 
-      const scheduleRows = await db
-        .select({
-          dayOfWeek: stationSchedules.dayOfWeek,
-          openTime: stationSchedules.openTime,
-          closeTime: stationSchedules.closeTime,
-        })
-        .from(stationSchedules)
-        .where(and(
-          eq(stationSchedules.stationId, station.id),
-          eq(stationSchedules.tenantId, tenantId)
-        ))
-        .orderBy(asc(stationSchedules.dayOfWeek))
-
       return {
         ...station,
         servicesCount: stationServiceRows.length,
-        schedulesCount: scheduleRows.length,
-        schedules: scheduleRows,
       }
     })
   )
@@ -103,18 +88,3 @@ export async function getServicesForStation(stationId: string, tenantId: string)
   return rows
 }
 
-export async function getStationSchedule(stationId: string, tenantId: string) {
-  return db
-    .select({
-      id: stationSchedules.id,
-      dayOfWeek: stationSchedules.dayOfWeek,
-      openTime: stationSchedules.openTime,
-      closeTime: stationSchedules.closeTime,
-    })
-    .from(stationSchedules)
-    .where(and(
-      eq(stationSchedules.stationId, stationId),
-      eq(stationSchedules.tenantId, tenantId)
-    ))
-    .orderBy(asc(stationSchedules.dayOfWeek))
-}

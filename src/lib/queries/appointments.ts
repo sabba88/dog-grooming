@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { appointments, clients, dogs, services, stations, stationSchedules } from '@/lib/db/schema'
+import { appointments, clients, dogs, services, stations } from '@/lib/db/schema'
 import { eq, and, gte, lt, asc, isNull } from 'drizzle-orm'
 
 export async function getAppointmentsByDateAndLocation(
@@ -43,9 +43,12 @@ export async function getAppointmentsByDateAndLocation(
 
 export async function getStationsWithScheduleForDay(
   locationId: string,
-  dayOfWeek: number,
+  _dayOfWeek: number,
   tenantId: string
 ) {
+  // TODO: Story 4.x — riscrittura agenda per persone
+  // Gli orari delle postazioni sono stati rimossi (CC-2026-03-14).
+  // Restituisce tutte le postazioni della sede con orari default.
   const stationRows = await db
     .select({
       id: stations.id,
@@ -55,32 +58,9 @@ export async function getStationsWithScheduleForDay(
     .where(and(eq(stations.locationId, locationId), eq(stations.tenantId, tenantId)))
     .orderBy(asc(stations.name))
 
-  const result = await Promise.all(
-    stationRows.map(async (station) => {
-      const [schedule] = await db
-        .select({
-          openTime: stationSchedules.openTime,
-          closeTime: stationSchedules.closeTime,
-        })
-        .from(stationSchedules)
-        .where(
-          and(
-            eq(stationSchedules.stationId, station.id),
-            eq(stationSchedules.dayOfWeek, dayOfWeek),
-            eq(stationSchedules.tenantId, tenantId)
-          )
-        )
-        .limit(1)
-
-      if (!schedule) return null
-
-      return {
-        ...station,
-        openTime: schedule.openTime,
-        closeTime: schedule.closeTime,
-      }
-    })
-  )
-
-  return result.filter((s): s is NonNullable<typeof s> => s !== null)
+  return stationRows.map((station) => ({
+    ...station,
+    openTime: '08:00',
+    closeTime: '20:00',
+  }))
 }

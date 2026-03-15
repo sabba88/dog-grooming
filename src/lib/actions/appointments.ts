@@ -10,7 +10,7 @@ import { toDayOfWeek, timeToMinutes } from '@/lib/utils/schedule'
 import { getDay } from 'date-fns'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { appointments, stationServices, stationSchedules } from '@/lib/db/schema'
+import { appointments, stationServices } from '@/lib/db/schema'
 import { eq, and, lt, gt, gte, asc } from 'drizzle-orm'
 
 export const getAgendaData = authActionClient
@@ -37,27 +37,9 @@ async function findAlternativeSlots(
   const dayStart = new Date(date + 'T00:00:00.000Z')
   const dayEnd = new Date(date + 'T23:59:59.999Z')
 
-  const dayOfWeek = toDayOfWeek(getDay(dayStart))
-
-  const [schedule] = await db
-    .select({
-      openTime: stationSchedules.openTime,
-      closeTime: stationSchedules.closeTime,
-    })
-    .from(stationSchedules)
-    .where(
-      and(
-        eq(stationSchedules.stationId, stationId),
-        eq(stationSchedules.dayOfWeek, dayOfWeek),
-        eq(stationSchedules.tenantId, tenantId)
-      )
-    )
-    .limit(1)
-
-  if (!schedule) return []
-
-  const openMinutes = timeToMinutes(schedule.openTime)
-  const closeMinutes = timeToMinutes(schedule.closeTime)
+  // TODO: Story 4.x — riscrittura agenda per persone (orari rimossi da postazioni)
+  const openMinutes = timeToMinutes('08:00')
+  const closeMinutes = timeToMinutes('20:00')
 
   const existing = await db
     .select({
@@ -160,37 +142,9 @@ export const createAppointment = authActionClient
       }
     }
 
-    // 4. Verifica orario chiusura postazione
-    const dayOfWeek = toDayOfWeek(getDay(new Date(date + 'T00:00:00.000Z')))
-    const [schedule] = await db
-      .select({
-        closeTime: stationSchedules.closeTime,
-      })
-      .from(stationSchedules)
-      .where(
-        and(
-          eq(stationSchedules.stationId, stationId),
-          eq(stationSchedules.dayOfWeek, dayOfWeek),
-          eq(stationSchedules.tenantId, ctx.tenantId)
-        )
-      )
-      .limit(1)
+    // TODO: Story 4.x — riscrittura verifica orari per persone (orari rimossi da postazioni)
 
-    if (schedule) {
-      const closeMinutes = timeToMinutes(schedule.closeTime)
-      const endMinutes = endTime.getUTCHours() * 60 + endTime.getUTCMinutes()
-      if (endMinutes > closeMinutes) {
-        return {
-          error: {
-            code: 'EXCEEDS_CLOSING_TIME' as const,
-            message: "L'appuntamento supera l'orario di chiusura",
-            closingTime: schedule.closeTime,
-          },
-        }
-      }
-    }
-
-    // 5. INSERT
+    // 4. INSERT
     const [created] = await db
       .insert(appointments)
       .values({

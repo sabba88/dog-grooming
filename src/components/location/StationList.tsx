@@ -14,29 +14,19 @@ import {
 } from '@/components/ui/table'
 import { StationForm } from '@/components/location/StationForm'
 import { StationServicesForm } from '@/components/location/StationServicesForm'
-import { StationScheduleForm } from '@/components/location/StationScheduleForm'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { DAYS_OF_WEEK } from '@/lib/validations/stations'
-import { Plus, Pencil, ListChecks, Clock } from 'lucide-react'
-
-interface ScheduleEntry {
-  dayOfWeek: number
-  openTime: string
-  closeTime: string
-}
+import { Plus, Pencil, ListChecks } from 'lucide-react'
 
 interface Station {
   id: string
   name: string
   locationId: string
   servicesCount: number
-  schedulesCount: number
-  schedules: ScheduleEntry[]
 }
 
 interface Service {
@@ -54,16 +44,6 @@ interface StationListProps {
   stationEnabledServices: Record<string, string[]>
 }
 
-function formatScheduleSummary(schedules: ScheduleEntry[]): string {
-  if (schedules.length === 0) return 'Nessun orario'
-  if (schedules.length === 7) return 'Tutti i giorni'
-
-  const dayLabels = schedules
-    .map(s => DAYS_OF_WEEK[s.dayOfWeek]?.label.slice(0, 3))
-    .join(', ')
-  return dayLabels
-}
-
 export function StationList({
   stations,
   locationId,
@@ -77,9 +57,6 @@ export function StationList({
 
   const [servicesFormOpen, setServicesFormOpen] = useState(false)
   const [servicesStation, setServicesStation] = useState<Station | null>(null)
-
-  const [scheduleFormOpen, setScheduleFormOpen] = useState(false)
-  const [scheduleStation, setScheduleStation] = useState<Station | null>(null)
 
   function handleNew() {
     setEditingStation(null)
@@ -96,17 +73,12 @@ export function StationList({
     setServicesFormOpen(true)
   }
 
-  function handleSchedule(station: Station) {
-    setScheduleStation(station)
-    setScheduleFormOpen(true)
-  }
-
   function handleSuccess() {
     router.refresh()
   }
 
   function isIncomplete(station: Station) {
-    return station.servicesCount === 0 || station.schedulesCount === 0
+    return station.servicesCount === 0
   }
 
   return (
@@ -138,7 +110,6 @@ export function StationList({
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Servizi</TableHead>
-                  <TableHead>Orari</TableHead>
                   <TableHead>Stato</TableHead>
                   <TableHead className="text-right">Azioni</TableHead>
                 </TableRow>
@@ -153,11 +124,6 @@ export function StationList({
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {formatScheduleSummary(station.schedules)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
                       {isIncomplete(station) && (
                         <TooltipProvider>
                           <Tooltip>
@@ -167,7 +133,7 @@ export function StationList({
                               </Badge>
                             </TooltipTrigger>
                             <TooltipContent>
-                              Aggiungi servizi e orari per rendere la postazione prenotabile
+                              Aggiungi servizi per rendere la postazione prenotabile
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -193,15 +159,6 @@ export function StationList({
                           <ListChecks className="h-4 w-4 mr-1" />
                           Servizi
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleSchedule(station)}
-                          aria-label={`Orari ${station.name}`}
-                        >
-                          <Clock className="h-4 w-4 mr-1" />
-                          Orari
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -224,7 +181,7 @@ export function StationList({
                       <Badge className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-50 text-xs">
                         Incompleta
                       </Badge>
-                      <span className="text-[10px] text-amber-600">Aggiungi servizi e orari</span>
+                      <span className="text-[10px] text-amber-600">Aggiungi servizi</span>
                     </div>
                   )}
                 </div>
@@ -232,9 +189,6 @@ export function StationList({
                   <Badge variant="secondary" className="text-xs">
                     {station.servicesCount} servizi
                   </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {formatScheduleSummary(station.schedules)}
-                  </span>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -254,15 +208,6 @@ export function StationList({
                   >
                     <ListChecks className="h-4 w-4 mr-1" />
                     Servizi
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSchedule(station)}
-                    className="flex-1"
-                  >
-                    <Clock className="h-4 w-4 mr-1" />
-                    Orari
                   </Button>
                 </div>
               </div>
@@ -288,17 +233,6 @@ export function StationList({
           stationName={servicesStation.name}
           allServices={allServices}
           enabledServiceIds={stationEnabledServices[servicesStation.id] ?? []}
-        />
-      )}
-
-      {scheduleStation && (
-        <StationScheduleForm
-          open={scheduleFormOpen}
-          onOpenChange={setScheduleFormOpen}
-          onSuccess={handleSuccess}
-          stationId={scheduleStation.id}
-          stationName={scheduleStation.name}
-          existingSchedules={scheduleStation.schedules}
         />
       )}
     </>
