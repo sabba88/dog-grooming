@@ -2,12 +2,12 @@
 
 import { authActionClient } from '@/lib/actions/client'
 import { getAppointmentsQuerySchema, createAppointmentSchema } from '@/lib/validations/appointments'
-import { getAppointmentsByDateAndLocation } from '@/lib/queries/appointments'
-import { getStationsWithScheduleForDay } from '@/lib/queries/appointments'
+import { getAppointmentsByDateAndLocationGroupedByUser } from '@/lib/queries/appointments'
+import { getStaffStatusForDate } from '@/lib/queries/staff'
 import { getDogsByClient } from '@/lib/queries/dogs'
 import { getServicesForStation } from '@/lib/queries/stations'
-import { toDayOfWeek, timeToMinutes } from '@/lib/utils/schedule'
-import { getDay } from 'date-fns'
+import { getServices } from '@/lib/queries/services'
+import { timeToMinutes } from '@/lib/utils/schedule'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { appointments, stationServices } from '@/lib/db/schema'
@@ -18,18 +18,17 @@ export const getAgendaData = authActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { locationId, date } = parsedInput
     const dateObj = new Date(date + 'T00:00:00.000Z')
-    const dayOfWeek = toDayOfWeek(getDay(dateObj))
 
-    const [appts, stations] = await Promise.all([
-      getAppointmentsByDateAndLocation(locationId, date, ctx.tenantId),
-      getStationsWithScheduleForDay(locationId, dayOfWeek, ctx.tenantId),
+    const [appts, staff] = await Promise.all([
+      getAppointmentsByDateAndLocationGroupedByUser(date, ctx.tenantId),
+      getStaffStatusForDate(locationId, dateObj, ctx.tenantId),
     ])
 
-    return { appointments: appts, stations }
+    return { appointments: appts, staff }
   })
 
 async function findAlternativeSlots(
-  stationId: string,
+  userId: string,
   date: string,
   durationMinutes: number,
   tenantId: string
@@ -37,7 +36,6 @@ async function findAlternativeSlots(
   const dayStart = new Date(date + 'T00:00:00.000Z')
   const dayEnd = new Date(date + 'T23:59:59.999Z')
 
-  // TODO: Story 4.x — riscrittura agenda per persone (orari rimossi da postazioni)
   const openMinutes = timeToMinutes('08:00')
   const closeMinutes = timeToMinutes('20:00')
 
@@ -49,7 +47,7 @@ async function findAlternativeSlots(
     .from(appointments)
     .where(
       and(
-        eq(appointments.stationId, stationId),
+        eq(appointments.userId, userId),
         eq(appointments.tenantId, tenantId),
         gte(appointments.startTime, dayStart),
         lt(appointments.startTime, dayEnd)
@@ -91,39 +89,48 @@ export const fetchServicesForStation = authActionClient
     return { services }
   })
 
+export const fetchAllServices = authActionClient
+  .schema(z.object({}))
+  .action(async ({ ctx }) => {
+    const allServices = await getServices(ctx.tenantId)
+    return { services: allServices }
+  })
+
 export const createAppointment = authActionClient
   .schema(createAppointmentSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const { stationId, date, time, clientId, dogId, serviceId, duration, price } = parsedInput
+    const { userId, stationId, date, time, clientId, dogId, serviceId, duration, price } = parsedInput
 
     // 1. Calcola startTime e endTime
     const startTime = new Date(`${date}T${time}:00.000Z`)
     const endTime = new Date(startTime.getTime() + duration * 60 * 1000)
 
-    // 2. Validare servizio abilitato sulla postazione
-    const [stationService] = await db
-      .select({ serviceId: stationServices.serviceId })
-      .from(stationServices)
-      .where(
-        and(
-          eq(stationServices.stationId, stationId),
-          eq(stationServices.serviceId, serviceId),
-          eq(stationServices.tenantId, ctx.tenantId)
+    // 2. Validare servizio abilitato sulla postazione (solo se stationId fornito)
+    if (stationId) {
+      const [stationService] = await db
+        .select({ serviceId: stationServices.serviceId })
+        .from(stationServices)
+        .where(
+          and(
+            eq(stationServices.stationId, stationId),
+            eq(stationServices.serviceId, serviceId),
+            eq(stationServices.tenantId, ctx.tenantId)
+          )
         )
-      )
-      .limit(1)
+        .limit(1)
 
-    if (!stationService) {
-      throw new Error('Servizio non abilitato su questa postazione')
+      if (!stationService) {
+        throw new Error('Servizio non abilitato su questa postazione')
+      }
     }
 
-    // 3. Verifica non-sovrapposizione
+    // 3. Verifica non-sovrapposizione per persona (userId)
     const conflicts = await db
       .select({ id: appointments.id })
       .from(appointments)
       .where(
         and(
-          eq(appointments.stationId, stationId),
+          eq(appointments.userId, userId),
           eq(appointments.tenantId, ctx.tenantId),
           lt(appointments.startTime, endTime),
           gt(appointments.endTime, startTime)
@@ -132,7 +139,7 @@ export const createAppointment = authActionClient
       .limit(1)
 
     if (conflicts.length > 0) {
-      const alternatives = await findAlternativeSlots(stationId, date, duration, ctx.tenantId)
+      const alternatives = await findAlternativeSlots(userId, date, duration, ctx.tenantId)
       return {
         error: {
           code: 'SLOT_OCCUPIED' as const,
@@ -142,8 +149,6 @@ export const createAppointment = authActionClient
       }
     }
 
-    // TODO: Story 4.x — riscrittura verifica orari per persone (orari rimossi da postazioni)
-
     // 4. INSERT
     const [created] = await db
       .insert(appointments)
@@ -151,7 +156,8 @@ export const createAppointment = authActionClient
         clientId,
         dogId,
         serviceId,
-        stationId,
+        userId,
+        stationId: stationId ?? null,
         startTime,
         endTime,
         price,

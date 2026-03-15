@@ -8,7 +8,8 @@ export const getAppointmentsQuerySchema = z.object({
 export type GetAppointmentsQuery = z.infer<typeof getAppointmentsQuerySchema>
 
 export const createAppointmentSchema = z.object({
-  stationId: z.string().uuid(),
+  userId: z.string().uuid(),
+  stationId: z.string().uuid().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
   clientId: z.string().uuid(),

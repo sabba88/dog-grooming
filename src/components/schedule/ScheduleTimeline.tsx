@@ -4,12 +4,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { AppointmentBlock } from './AppointmentBlock'
 import { EmptySlot } from './EmptySlot'
 import { generateTimeSlots, getServiceColor } from '@/lib/utils/schedule'
+import type { StaffStatus } from '@/lib/queries/staff'
 
-interface Station {
+interface Person {
   id: string
   name: string
-  openTime: string
-  closeTime: string
+  role: 'admin' | 'collaborator'
+  status: StaffStatus
+  assignment: {
+    startTime: string
+    endTime: string
+    locationId: string
+  } | null
 }
 
 interface Appointment {
@@ -18,7 +24,8 @@ interface Appointment {
   endTime: Date
   price: number
   notes: string | null
-  stationId: string
+  userId: string
+  stationId: string | null
   clientFirstName: string
   clientLastName: string
   dogName: string
@@ -27,29 +34,38 @@ interface Appointment {
 }
 
 interface ScheduleTimelineProps {
-  stations: Station[]
+  staff: Person[]
   appointments: Appointment[]
   dateString: string
   onAppointmentClick?: (id: string) => void
-  onEmptySlotClick?: (data: { stationId: string; date: string; time: string }) => void
+  onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
 }
 
-function StationTimeline({
-  station,
+const GLOBAL_OPEN = '00:00'
+const GLOBAL_CLOSE = '23:30'
+
+const STATUS_DOT_COLOR: Record<StaffStatus, string> = {
+  active: '#22C55E',
+  elsewhere: '#EAB308',
+  unassigned: '#9CA3AF',
+}
+
+function PersonTimeline({
+  person,
   appointments,
   allServiceIds,
   dateString,
   onAppointmentClick,
   onEmptySlotClick,
 }: {
-  station: Station
+  person: Person
   appointments: Appointment[]
   allServiceIds: string[]
   dateString: string
   onAppointmentClick?: (id: string) => void
-  onEmptySlotClick?: (data: { stationId: string; date: string; time: string }) => void
+  onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
 }) {
-  const timeSlots = generateTimeSlots(station.openTime, station.closeTime)
+  const timeSlots = generateTimeSlots(GLOBAL_OPEN, GLOBAL_CLOSE)
 
   return (
     <div className="flex flex-col gap-2">
@@ -96,7 +112,8 @@ function StationTimeline({
             <span className="text-xs text-muted-foreground w-12 pt-3 shrink-0">{slot}</span>
             <div className="flex-1">
               <EmptySlot
-                stationId={station.id}
+                userId={person.id}
+                userName={person.name}
                 date={dateString}
                 time={slot}
                 variant="timeline"
@@ -111,7 +128,7 @@ function StationTimeline({
 }
 
 export function ScheduleTimeline({
-  stations,
+  staff,
   appointments,
   dateString,
   onAppointmentClick,
@@ -123,25 +140,35 @@ export function ScheduleTimeline({
     <Tabs defaultValue="all" className="w-full">
       <TabsList className="w-full overflow-x-auto">
         <TabsTrigger value="all">Tutte</TabsTrigger>
-        {stations.map((station) => (
-          <TabsTrigger key={station.id} value={station.id}>
-            {station.name}
+        {staff.map((person) => (
+          <TabsTrigger key={person.id} value={person.id} className="gap-1.5">
+            <span
+              className="size-2 rounded-full inline-block shrink-0"
+              style={{ backgroundColor: STATUS_DOT_COLOR[person.status] }}
+            />
+            {person.name}
           </TabsTrigger>
         ))}
       </TabsList>
 
       <TabsContent value="all" className="mt-4">
         <div className="flex flex-col gap-6">
-          {stations.map((station) => {
-            const stationAppointments = appointments.filter(
-              (a) => a.stationId === station.id
+          {staff.map((person) => {
+            const personAppointments = appointments.filter(
+              (a) => a.userId === person.id
             )
             return (
-              <div key={station.id}>
-                <h3 className="text-sm font-semibold text-foreground mb-2">{station.name}</h3>
-                <StationTimeline
-                  station={station}
-                  appointments={stationAppointments}
+              <div key={person.id}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className="size-2 rounded-full inline-block shrink-0"
+                    style={{ backgroundColor: STATUS_DOT_COLOR[person.status] }}
+                  />
+                  <h3 className="text-sm font-semibold text-foreground">{person.name}</h3>
+                </div>
+                <PersonTimeline
+                  person={person}
+                  appointments={personAppointments}
                   allServiceIds={allServiceIds}
                   dateString={dateString}
                   onAppointmentClick={onAppointmentClick}
@@ -153,15 +180,15 @@ export function ScheduleTimeline({
         </div>
       </TabsContent>
 
-      {stations.map((station) => {
-        const stationAppointments = appointments.filter(
-          (a) => a.stationId === station.id
+      {staff.map((person) => {
+        const personAppointments = appointments.filter(
+          (a) => a.userId === person.id
         )
         return (
-          <TabsContent key={station.id} value={station.id} className="mt-4">
-            <StationTimeline
-              station={station}
-              appointments={stationAppointments}
+          <TabsContent key={person.id} value={person.id} className="mt-4">
+            <PersonTimeline
+              person={person}
+              appointments={personAppointments}
               allServiceIds={allServiceIds}
               dateString={dateString}
               onAppointmentClick={onAppointmentClick}

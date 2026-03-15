@@ -3,21 +3,27 @@
 import { isToday } from 'date-fns'
 import { AppointmentBlock } from './AppointmentBlock'
 import { EmptySlot } from './EmptySlot'
+import { PersonHeader } from './PersonHeader'
 import {
   generateTimeSlots,
-  getGlobalTimeRange,
   getAppointmentPosition,
   getServiceColor,
   timeToMinutes,
   SLOT_HEIGHT_PX,
   MINUTES_PER_SLOT,
 } from '@/lib/utils/schedule'
+import type { StaffStatus } from '@/lib/queries/staff'
 
-interface Station {
+interface Person {
   id: string
   name: string
-  openTime: string
-  closeTime: string
+  role: 'admin' | 'collaborator'
+  status: StaffStatus
+  assignment: {
+    startTime: string
+    endTime: string
+    locationId: string
+  } | null
 }
 
 interface Appointment {
@@ -26,7 +32,8 @@ interface Appointment {
   endTime: Date
   price: number
   notes: string | null
-  stationId: string
+  userId: string
+  stationId: string | null
   clientFirstName: string
   clientLastName: string
   dogName: string
@@ -35,29 +42,30 @@ interface Appointment {
 }
 
 interface ScheduleGridProps {
-  stations: Station[]
+  staff: Person[]
   appointments: Appointment[]
   selectedDate: Date
   dateString: string
   onAppointmentClick?: (id: string) => void
-  onEmptySlotClick?: (data: { stationId: string; date: string; time: string }) => void
+  onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
 }
 
+const GLOBAL_OPEN = '00:00'
+const GLOBAL_CLOSE = '23:30'
+
 export function ScheduleGrid({
-  stations,
+  staff,
   appointments,
   selectedDate,
   dateString,
   onAppointmentClick,
   onEmptySlotClick,
 }: ScheduleGridProps) {
-  const timeRange = getGlobalTimeRange(stations)
-  if (!timeRange) return null
+  if (staff.length === 0) return null
 
-  const { globalOpen, globalClose } = timeRange
-  const timeSlots = generateTimeSlots(globalOpen, globalClose)
-  const dayStartMinutes = timeToMinutes(globalOpen)
-  const totalMinutes = timeToMinutes(globalClose) - dayStartMinutes
+  const timeSlots = generateTimeSlots(GLOBAL_OPEN, GLOBAL_CLOSE)
+  const dayStartMinutes = timeToMinutes(GLOBAL_OPEN)
+  const totalMinutes = timeToMinutes(GLOBAL_CLOSE) - dayStartMinutes
   const totalHeight = (totalMinutes / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
 
   const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
@@ -73,15 +81,22 @@ export function ScheduleGrid({
     <div className="overflow-auto">
       {/* Header row */}
       <div
-        className="grid sticky top-0 z-20 bg-card border-b border-border"
+        className="grid sticky top-0 z-20 border-b border-border"
         style={{
-          gridTemplateColumns: `60px repeat(${stations.length}, 1fr)`,
+          gridTemplateColumns: `60px repeat(${staff.length}, 1fr)`,
         }}
       >
-        <div className="p-2 text-xs text-muted-foreground font-medium">Orario</div>
-        {stations.map((station) => (
-          <div key={station.id} className="p-2 text-sm font-medium text-center border-l border-border">
-            {station.name}
+        <div className="p-2 text-xs text-muted-foreground font-medium bg-card">Orario</div>
+        {staff.map((person) => (
+          <div key={person.id} className="border-l border-border">
+            <PersonHeader
+              name={person.name}
+              role={person.role}
+              status={person.status}
+              locationName={person.status === 'elsewhere' && person.assignment ? undefined : undefined}
+              startTime={person.status === 'active' && person.assignment ? person.assignment.startTime : undefined}
+              endTime={person.status === 'active' && person.assignment ? person.assignment.endTime : undefined}
+            />
           </div>
         ))}
       </div>
@@ -90,7 +105,7 @@ export function ScheduleGrid({
       <div
         className="grid relative"
         style={{
-          gridTemplateColumns: `60px repeat(${stations.length}, 1fr)`,
+          gridTemplateColumns: `60px repeat(${staff.length}, 1fr)`,
         }}
       >
         {/* Time labels column */}
@@ -110,23 +125,30 @@ export function ScheduleGrid({
           })}
         </div>
 
-        {/* Station columns */}
-        {stations.map((station) => {
-          const stationAppointments = appointments.filter(
-            (a) => a.stationId === station.id
+        {/* Person columns */}
+        {staff.map((person) => {
+          const personAppointments = appointments.filter(
+            (a) => a.userId === person.id
           )
 
-          // Generate empty slots for this station
-          const stationSlots = generateTimeSlots(station.openTime, station.closeTime)
-          const stationStartOffset = timeToMinutes(station.openTime) - dayStartMinutes
-          const stationEndOffset = timeToMinutes(station.closeTime) - dayStartMinutes
-          const stationHeight = ((stationEndOffset - stationStartOffset) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
+          const isDimmed = person.status === 'elsewhere' || person.status === 'unassigned'
+
+          // Active person shift range
+          const shiftStart = person.status === 'active' && person.assignment
+            ? timeToMinutes(person.assignment.startTime)
+            : null
+          const shiftEnd = person.status === 'active' && person.assignment
+            ? timeToMinutes(person.assignment.endTime)
+            : null
 
           return (
             <div
-              key={station.id}
+              key={person.id}
               className="relative border-l border-border"
-              style={{ height: `${totalHeight}px` }}
+              style={{
+                height: `${totalHeight}px`,
+                opacity: isDimmed ? 0.5 : 1,
+              }}
             >
               {/* Horizontal grid lines */}
               {timeSlots.map((slot) => {
@@ -141,27 +163,44 @@ export function ScheduleGrid({
                 )
               })}
 
-              {/* Closed area (before station opens or after closes) */}
-              {stationStartOffset > 0 && (
-                <div
-                  className="absolute inset-x-0 bg-muted/30"
-                  style={{ top: 0, height: `${(stationStartOffset / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px` }}
-                />
-              )}
-              {stationEndOffset < totalMinutes && (
-                <div
-                  className="absolute inset-x-0 bg-muted/30"
-                  style={{
-                    top: `${(stationEndOffset / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
-                    height: `${((totalMinutes - stationEndOffset) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
-                  }}
-                />
+              {/* Shift highlight + out-of-shift areas for active persons */}
+              {shiftStart !== null && shiftEnd !== null && (
+                <>
+                  {/* Active shift zone — green highlight */}
+                  <div
+                    className="absolute inset-x-0"
+                    style={{
+                      top: `${((shiftStart - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
+                      height: `${((shiftEnd - shiftStart) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
+                      backgroundColor: '#E8F0ED',
+                    }}
+                  />
+                  {/* Out-of-shift areas */}
+                  {shiftStart > dayStartMinutes && (
+                    <div
+                      className="absolute inset-x-0 bg-muted/20"
+                      style={{
+                        top: 0,
+                        height: `${((shiftStart - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
+                      }}
+                    />
+                  )}
+                  {shiftEnd < dayStartMinutes + totalMinutes && (
+                    <div
+                      className="absolute inset-x-0 bg-muted/20"
+                      style={{
+                        top: `${((shiftEnd - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
+                        height: `${((dayStartMinutes + totalMinutes - shiftEnd) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
+                      }}
+                    />
+                  )}
+                </>
               )}
 
-              {/* Empty slots (only during station open hours) */}
-              {stationSlots.map((slot) => {
+              {/* Empty slots */}
+              {timeSlots.map((slot) => {
                 const slotMinutes = timeToMinutes(slot)
-                const isOccupied = stationAppointments.some((appt) => {
+                const isOccupied = personAppointments.some((appt) => {
                   const apptStart = appt.startTime.getUTCHours() * 60 + appt.startTime.getUTCMinutes()
                   const apptEnd = appt.endTime.getUTCHours() * 60 + appt.endTime.getUTCMinutes()
                   return slotMinutes >= apptStart && slotMinutes < apptEnd
@@ -174,8 +213,9 @@ export function ScheduleGrid({
 
                 return (
                   <EmptySlot
-                    key={`${station.id}-${slot}`}
-                    stationId={station.id}
+                    key={`${person.id}-${slot}`}
+                    userId={person.id}
+                    userName={person.name}
                     date={dateString}
                     time={slot}
                     variant="grid"
@@ -189,7 +229,7 @@ export function ScheduleGrid({
               })}
 
               {/* Appointment blocks */}
-              {stationAppointments.map((appt) => {
+              {personAppointments.map((appt) => {
                 const position = getAppointmentPosition(
                   appt.startTime,
                   appt.endTime,

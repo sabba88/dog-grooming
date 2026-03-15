@@ -29,8 +29,8 @@ interface AgendaViewProps {
 export function AgendaView({ locations }: AgendaViewProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [appointmentSlot, setAppointmentSlot] = useState<{
-    stationId: string
-    stationName: string
+    userId: string
+    userName: string
     date: string
     time: string
   } | null>(null)
@@ -46,13 +46,23 @@ export function AgendaView({ locations }: AgendaViewProps) {
       if (!selectedLocationId) return null
       const result = await getAgendaData({ locationId: selectedLocationId, date: dateString })
       if (result?.data) {
+        // Enrich staff with locationName for "elsewhere" persons
+        const enrichedStaff = result.data.staff.map((person) => {
+          let locationName: string | undefined
+          if (person.status === 'elsewhere' && person.assignment) {
+            const loc = locations.find((l) => l.id === person.assignment!.locationId)
+            locationName = loc?.name
+          }
+          return { ...person, locationName }
+        })
+
         return {
           appointments: result.data.appointments.map((a) => ({
             ...a,
             startTime: new Date(a.startTime),
             endTime: new Date(a.endTime),
           })),
-          stations: result.data.stations,
+          staff: enrichedStaff,
         }
       }
       return null
@@ -63,14 +73,10 @@ export function AgendaView({ locations }: AgendaViewProps) {
   if (!isHydrated) return null
 
   const appointments = data?.appointments ?? []
-  const stations = data?.stations ?? []
+  const staff = data?.staff ?? []
 
-  const handleEmptySlotClick = (slotData: { stationId: string; date: string; time: string }) => {
-    const station = stations.find((s) => s.id === slotData.stationId)
-    setAppointmentSlot({
-      ...slotData,
-      stationName: station?.name ?? '',
-    })
+  const handleEmptySlotClick = (slotData: { userId: string; userName: string; date: string; time: string }) => {
+    setAppointmentSlot(slotData)
   }
 
   const handleAppointmentCreated = () => {
@@ -78,8 +84,8 @@ export function AgendaView({ locations }: AgendaViewProps) {
     queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
   }
 
-  // No stations configured
-  if (isHydrated && selectedLocationId && data && stations.length === 0) {
+  // No staff assigned
+  if (isHydrated && selectedLocationId && data && staff.length === 0) {
     return (
       <div className="flex flex-col gap-4">
         {isMobile ? (
@@ -90,13 +96,13 @@ export function AgendaView({ locations }: AgendaViewProps) {
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <Settings className="size-10 text-muted-foreground" />
           <p className="text-muted-foreground text-center">
-            Nessuna postazione configurata per questa sede
+            Nessun collaboratore assegnato a questa sede per oggi
           </p>
           <Link
-            href="/stations"
+            href="/settings/staff"
             className="text-sm text-primary hover:underline"
           >
-            Vai a Impostazioni per configurare le postazioni
+            Vai a Impostazioni per configurare le assegnazioni
           </Link>
         </div>
       </div>
@@ -113,14 +119,14 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
       {isMobile ? (
         <ScheduleTimeline
-          stations={stations}
+          staff={staff}
           appointments={appointments}
           dateString={dateString}
           onEmptySlotClick={handleEmptySlotClick}
         />
       ) : (
         <ScheduleGrid
-          stations={stations}
+          staff={staff}
           appointments={appointments}
           selectedDate={selectedDate}
           dateString={dateString}

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAction } from 'next-safe-action/hooks'
 import { toast } from 'sonner'
-import { createAppointment, fetchDogsForClient, fetchServicesForStation } from '@/lib/actions/appointments'
+import { createAppointment, fetchDogsForClient, fetchAllServices } from '@/lib/actions/appointments'
 import { formatPrice, formatDuration } from '@/lib/utils/formatting'
 import { ClientSearch } from '@/components/appointment/ClientSearch'
 import { QuickClientForm } from '@/components/appointment/QuickClientForm'
@@ -13,11 +13,11 @@ import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { MapPin, Calendar, Clock, X, Loader2 } from 'lucide-react'
+import { User, Calendar, Clock, X, Loader2 } from 'lucide-react'
 
 interface PrefilledSlot {
-  stationId: string
-  stationName: string
+  userId: string
+  userName: string
   date: string
   time: string
 }
@@ -40,7 +40,7 @@ interface Dog {
   breed: string | null
 }
 
-interface StationService {
+interface Service {
   id: string
   name: string
   price: number
@@ -52,7 +52,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
   const [showQuickClient, setShowQuickClient] = useState(false)
   const [dogs, setDogs] = useState<Dog[]>([])
   const [selectedDogId, setSelectedDogId] = useState<string | null>(null)
-  const [services, setServices] = useState<StationService[]>([])
+  const [services, setServices] = useState<Service[]>([])
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [duration, setDuration] = useState<number>(0)
   const [priceEur, setPriceEur] = useState<string>('')
@@ -74,7 +74,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     },
   })
 
-  const { execute: loadServices, isPending: isLoadingServices } = useAction(fetchServicesForStation, {
+  const { execute: loadServices, isPending: isLoadingServices } = useAction(fetchAllServices, {
     onSuccess: ({ data }) => {
       if (data?.services) {
         setServices(data.services)
@@ -96,10 +96,10 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     },
   })
 
-  // Load services for station on mount
+  // Load all services on mount
   useEffect(() => {
-    loadServices({ stationId: prefilledSlot.stationId })
-  }, [prefilledSlot.stationId]) // eslint-disable-line react-hooks/exhaustive-deps
+    loadServices({})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClientSelect = (client: SelectedClient) => {
     setSelectedClient(client)
@@ -129,7 +129,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     if (selectedClient && selectedDogId && selectedServiceId) {
       const priceCents = Math.round(parseFloat(priceEur) * 100)
       submitAppointment({
-        stationId: prefilledSlot.stationId,
+        userId: prefilledSlot.userId,
         date: prefilledSlot.date,
         time,
         clientId: selectedClient.id,
@@ -146,7 +146,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     setBusinessError(null)
     const priceCents = Math.round(parseFloat(priceEur) * 100)
     submitAppointment({
-      stationId: prefilledSlot.stationId,
+      userId: prefilledSlot.userId,
       date: prefilledSlot.date,
       time: prefilledSlot.time,
       clientId: selectedClient.id,
@@ -170,8 +170,8 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
       {/* Header: slot pre-compilato */}
       <div className="bg-muted/50 flex items-center gap-3 rounded-lg p-3">
         <div className="flex items-center gap-1.5 text-sm">
-          <MapPin className="text-muted-foreground size-4" />
-          <span className="font-medium">{prefilledSlot.stationName}</span>
+          <User className="text-muted-foreground size-4" />
+          <span className="font-medium">{prefilledSlot.userName}</span>
         </div>
         <Separator orientation="vertical" className="h-4" />
         <div className="flex items-center gap-1.5 text-sm">
@@ -267,7 +267,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
               Caricamento servizi...
             </div>
           ) : services.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Nessun servizio abilitato su questa postazione</p>
+            <p className="text-muted-foreground text-sm">Nessun servizio disponibile</p>
           ) : (
             <Select value={selectedServiceId ?? undefined} onValueChange={handleServiceChange}>
               <SelectTrigger className="w-full">
