@@ -65,14 +65,14 @@ so that **possa riorganizzare l'agenda senza pasticci, come cancellature su un q
     - Se OK: aggiornare `db.update(appointments).set({ userId, startTime, endTime, updatedAt }).where(...)` e restituire `{ success: true }`
   - [x] 1.6 Creare `fetchAppointmentDetail` server action (wrapper di `getAppointmentById`) in `src/lib/actions/appointments.ts` — usa `authActionClient` con schema `{ id: z.string().uuid() }`
 
-- [ ] Task 2: Creare componente AppointmentDetail per vista dettaglio appuntamento (AC: #1, #2)
-  - [ ] 2.1 Creare `src/components/appointment/AppointmentDetail.tsx` — Client Component
-  - [ ] 2.2 Props: `appointmentId: string`, `onClose: () => void`, `onMove: (appointmentId: string) => void`, `onDeleted: () => void`
-  - [ ] 2.3 Al mount, caricare i dati con `fetchAppointmentDetail(appointmentId)` — mostrare: nome cliente, nome cane, nome servizio, nome persona, data formattata in italiano (es. "Lun 17 Mar 2026"), ora inizio-fine (es. "09:00 - 10:00"), durata (es. "1h"), prezzo (es. "€ 25,00")
-  - [ ] 2.4 Due pulsanti azione in basso: "Sposta" (variant outline, icona ArrowRightLeft) e "Cancella" (variant destructive, icona Trash2)
-  - [ ] 2.5 Click su "Cancella": mostrare AlertDialog di conferma con titolo "Cancellare l'appuntamento?" e descrizione "L'appuntamento di [cliente] ([cane]) verra' cancellato." — bottoni "Annulla" e "Cancella" (variant destructive)
-  - [ ] 2.6 Dopo conferma cancellazione: chiamare `deleteAppointment({ id })`, mostrare toast "Appuntamento cancellato", invocare `onDeleted()` (che invalida la query agenda e chiude il dialog)
-  - [ ] 2.7 Click su "Sposta": invocare `onMove(appointmentId)` (che chiude il dettaglio e attiva la modalita' spostamento in AgendaView)
+- [x] Task 2: Creare componente AppointmentDetail per vista dettaglio appuntamento (AC: #1, #2)
+  - [x] 2.1 Creare `src/components/appointment/AppointmentDetail.tsx` — Client Component
+  - [x] 2.2 Props: `appointmentId: string`, `onClose: () => void`, `onMove: (appointmentId: string) => void`, `onDeleted: () => void`
+  - [x] 2.3 Al mount, caricare i dati con `fetchAppointmentDetail(appointmentId)` — mostrare: nome cliente, nome cane, nome servizio, nome persona, data formattata in italiano (es. "Lun 17 Mar 2026"), ora inizio-fine (es. "09:00 - 10:00"), durata (es. "1h"), prezzo (es. "€ 25,00")
+  - [x] 2.4 Due pulsanti azione in basso: "Sposta" (variant outline, icona ArrowRightLeft) e "Cancella" (variant destructive, icona Trash2)
+  - [x] 2.5 Click su "Cancella": mostrare AlertDialog di conferma con titolo "Cancellare l'appuntamento?" e descrizione "L'appuntamento di [cliente] ([cane]) verra' cancellato." — bottoni "Annulla" e "Cancella" (variant destructive)
+  - [x] 2.6 Dopo conferma cancellazione: chiamare `deleteAppointment({ id })`, mostrare toast "Appuntamento cancellato", invocare `onDeleted()` (che invalida la query agenda e chiude il dialog)
+  - [x] 2.7 Click su "Sposta": invocare `onMove(appointmentId)` (che chiude il dettaglio e attiva la modalita' spostamento in AgendaView)
 
 - [ ] Task 3: Integrare AppointmentDetail e modalita' spostamento in AgendaView (AC: #1, #3, #4, #5, #6, #7)
   - [ ] 3.1 In `AgendaView.tsx`, aggiungere stati: `selectedAppointmentId: string | null` (per il dettaglio), `movingAppointment: { id: string, duration: number, serviceName: string } | null` (per la modalita' spostamento)
@@ -443,9 +443,11 @@ Claude Opus 4.6 (1M context)
 ### Completion Notes List
 
 - Task 1: Implementati `getAppointmentById` (query con JOIN su clients, dogs, services, users), `deleteAppointmentSchema`/`moveAppointmentSchema` (Zod), `deleteAppointment` (hard delete con verifica tenant), `moveAppointment` (con validazione sovrapposizione escludendo se stesso, validazione turno persona, findAlternativeSlots), `fetchAppointmentDetail` (wrapper action). TypeScript compila senza errori.
+- Task 2: Creato `AppointmentDetail.tsx` — client component con caricamento dati via fetchAppointmentDetail, display info complete (cliente, cane, servizio, persona, data it, orario, durata, prezzo), pulsanti Sposta/Cancella, AlertDialog conferma cancellazione con toast feedback.
 
 ### File List
 
 - src/lib/queries/appointments.ts (modificato — aggiunto getAppointmentById)
 - src/lib/validations/appointments.ts (modificato — aggiunti deleteAppointmentSchema, moveAppointmentSchema)
 - src/lib/actions/appointments.ts (modificato — aggiunti fetchAppointmentDetail, deleteAppointment, moveAppointment)
+- src/components/appointment/AppointmentDetail.tsx (creato)
