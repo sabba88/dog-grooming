@@ -1,8 +1,8 @@
 'use server'
 
 import { authActionClient } from '@/lib/actions/client'
-import { getAppointmentsQuerySchema, createAppointmentSchema } from '@/lib/validations/appointments'
-import { getAppointmentsByDateAndLocationGroupedByUser } from '@/lib/queries/appointments'
+import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema } from '@/lib/validations/appointments'
+import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById } from '@/lib/queries/appointments'
 import { getStaffStatusForDate, getIsoDayOfWeek } from '@/lib/queries/staff'
 import { getDogsByClient } from '@/lib/queries/dogs'
 import { getStationsByLocation, getServicesForStation } from '@/lib/queries/stations'
@@ -11,7 +11,7 @@ import { timeToMinutes } from '@/lib/utils/schedule'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { appointments, stationServices, userLocationAssignments } from '@/lib/db/schema'
-import { eq, and, lt, gt, gte, asc } from 'drizzle-orm'
+import { eq, and, lt, gt, gte, asc, ne } from 'drizzle-orm'
 
 export const getAgendaData = authActionClient
   .schema(getAppointmentsQuerySchema)
@@ -203,4 +203,151 @@ export const createAppointment = authActionClient
       .returning()
 
     return { appointment: created }
+  })
+
+export const fetchAppointmentDetail = authActionClient
+  .schema(z.object({ id: z.string().uuid() }))
+  .action(async ({ parsedInput, ctx }) => {
+    const appointment = await getAppointmentById(parsedInput.id, ctx.tenantId)
+    if (!appointment) {
+      throw new Error('Appuntamento non trovato')
+    }
+    return { appointment }
+  })
+
+export const deleteAppointment = authActionClient
+  .schema(deleteAppointmentSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const [existing] = await db
+      .select({ id: appointments.id })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.id, parsedInput.id),
+          eq(appointments.tenantId, ctx.tenantId)
+        )
+      )
+      .limit(1)
+
+    if (!existing) {
+      throw new Error('Appuntamento non trovato')
+    }
+
+    await db
+      .delete(appointments)
+      .where(
+        and(
+          eq(appointments.id, parsedInput.id),
+          eq(appointments.tenantId, ctx.tenantId)
+        )
+      )
+
+    return { success: true }
+  })
+
+export const moveAppointment = authActionClient
+  .schema(moveAppointmentSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { id, userId, date, time } = parsedInput
+
+    // 1. Caricare appuntamento esistente per calcolare durata
+    const [existing] = await db
+      .select({
+        id: appointments.id,
+        startTime: appointments.startTime,
+        endTime: appointments.endTime,
+      })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.id, id),
+          eq(appointments.tenantId, ctx.tenantId)
+        )
+      )
+      .limit(1)
+
+    if (!existing) {
+      throw new Error('Appuntamento non trovato')
+    }
+
+    const durationMs = existing.endTime.getTime() - existing.startTime.getTime()
+    const durationMinutes = durationMs / (60 * 1000)
+
+    // 2. Calcolare nuovo startTime e endTime
+    const newStartTime = new Date(`${date}T${time}:00.000Z`)
+    const newEndTime = new Date(newStartTime.getTime() + durationMs)
+
+    // 3. Validare sovrapposizione (escludere l'appuntamento stesso)
+    const conflicts = await db
+      .select({ id: appointments.id })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.userId, userId),
+          eq(appointments.tenantId, ctx.tenantId),
+          ne(appointments.id, id),
+          lt(appointments.startTime, newEndTime),
+          gt(appointments.endTime, newStartTime)
+        )
+      )
+      .limit(1)
+
+    if (conflicts.length > 0) {
+      const alternatives = await findAlternativeSlots(userId, date, durationMinutes, ctx.tenantId)
+      return {
+        error: {
+          code: 'SLOT_OCCUPIED' as const,
+          message: "Lo slot non e' piu' disponibile",
+          alternatives,
+        },
+      }
+    }
+
+    // 4. Validazione turno persona destinazione
+    const dayOfWeek = getIsoDayOfWeek(newStartTime)
+    const [assignment] = await db
+      .select({
+        endTime: userLocationAssignments.endTime,
+      })
+      .from(userLocationAssignments)
+      .where(
+        and(
+          eq(userLocationAssignments.userId, userId),
+          eq(userLocationAssignments.dayOfWeek, dayOfWeek),
+          eq(userLocationAssignments.tenantId, ctx.tenantId)
+        )
+      )
+      .limit(1)
+
+    if (assignment) {
+      const appointmentEndMinutes = newEndTime.getUTCHours() * 60 + newEndTime.getUTCMinutes()
+      const shiftEndMinutes = timeToMinutes(assignment.endTime)
+      if (appointmentEndMinutes > shiftEndMinutes) {
+        return {
+          error: {
+            code: 'EXCEEDS_SHIFT_TIME' as const,
+            message: "L'appuntamento supera la fine del turno",
+            shiftEndTime: assignment.endTime,
+          },
+        }
+      }
+    }
+
+    // 5. Aggiornare appuntamento
+    await db
+      .update(appointments)
+      .set({
+        userId,
+        startTime: newStartTime,
+        endTime: newEndTime,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(appointments.id, id),
+          eq(appointments.tenantId, ctx.tenantId)
+        )
+      )
+
+    return { success: true }
   })

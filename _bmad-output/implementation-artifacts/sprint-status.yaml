@@ -65,7 +65,7 @@ development_status:
   epic-4: in-progress
   4-1-vista-agenda-per-sede-e-persona: review                     # CC-2026-03-14: riscritta (agenda per persone)
   4-2-creazione-appuntamento-rapido: review               # CC-2026-03-14: modifica (persona pre-compilata, postazione opzionale)
-  4-3-cancellazione-e-spostamento-appuntamenti: backlog          # CC-2026-03-14: modifica (spostamento tra persone)
+  4-3-cancellazione-e-spostamento-appuntamenti: in-progress    # CC-2026-03-14: modifica (spostamento tra persone)
   4-4-note-prestazione: backlog
   epic-4-retrospective: optional
 

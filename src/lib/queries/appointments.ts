@@ -1,6 +1,40 @@
 import { db } from '@/lib/db'
-import { appointments, clients, dogs, services, stations } from '@/lib/db/schema'
+import { appointments, clients, dogs, services, stations, users } from '@/lib/db/schema'
 import { eq, and, gte, lt, asc, isNull, isNotNull } from 'drizzle-orm'
+
+export async function getAppointmentById(id: string, tenantId: string) {
+  const [result] = await db
+    .select({
+      id: appointments.id,
+      startTime: appointments.startTime,
+      endTime: appointments.endTime,
+      price: appointments.price,
+      notes: appointments.notes,
+      userId: appointments.userId,
+      stationId: appointments.stationId,
+      clientFirstName: clients.firstName,
+      clientLastName: clients.lastName,
+      dogName: dogs.name,
+      serviceName: services.name,
+      serviceId: services.id,
+      userName: users.name,
+    })
+    .from(appointments)
+    .innerJoin(clients, eq(appointments.clientId, clients.id))
+    .innerJoin(dogs, eq(appointments.dogId, dogs.id))
+    .innerJoin(services, eq(appointments.serviceId, services.id))
+    .innerJoin(users, eq(appointments.userId, users.id))
+    .where(
+      and(
+        eq(appointments.id, id),
+        eq(appointments.tenantId, tenantId),
+        isNull(clients.deletedAt)
+      )
+    )
+    .limit(1)
+
+  return result ?? null
+}
 
 export async function getAppointmentsByDateAndLocation(
   locationId: string,

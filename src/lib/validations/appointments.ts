@@ -20,3 +20,14 @@ export const createAppointmentSchema = z.object({
 })
 
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>
+
+export const deleteAppointmentSchema = z.object({
+  id: z.string().uuid(),
+})
+
+export const moveAppointmentSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().regex(/^\d{2}:\d{2}$/),
+})
