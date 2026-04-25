@@ -295,7 +295,7 @@ Nessun blocco critico — TypeScript zero errori, lint ok su tutti i file modifi
 ### Completion Notes List
 
 - Task 1: Tabella `location_business_hours` aggiunta allo schema e creata nel DB con `drizzle-kit push` (operazione non distruttiva).
-- Task 2: Schema Zod con validazione refine (closeTime > openTime, max 2 fasce), query con `orderBy(dayOfWeek, openTime)`, server action con delete+insert in transaction per pattern replace-per-giorno.
+- Task 2: Schema Zod con validazione refine (closeTime > openTime, max 2 fasce), query con `orderBy(dayOfWeek, openTime)`, server action con delete+insert sequenziali (il driver neon-http non supporta transazioni — stesso pattern degli altri actions del progetto).
 - Task 3: `BusinessHoursEditor` client component con stato locale Map, rendering 7 giorni ISO, validazione client per sovrapposizioni, salvataggio per singolo giorno con `useAction`. Pagina sede aggiornata con sezione "Orari di Apertura".
 - Task 4: `SLOT_HEIGHT_PX` → 30, `MINUTES_PER_SLOT` → 15. `getAppointmentPosition` invariato — usa le costanti dinamicamente, quindi 30min = 2slot × 30px = 60px come prima. Aggiunta `computeAgendaRange` con helper `addOneHour`/`subtractOneHour`.
 - Task 5: `getAgendaData` ora include `businessHours` nel Promise.all. `AgendaView` calcola dayOfWeek ISO con `(getDay(date) + 6) % 7`, chiama `computeAgendaRange`, passa `globalOpen`/`globalClose` come props a `ScheduleGrid` e `ScheduleTimeline`. Costanti hardcoded `GLOBAL_OPEN`/`GLOBAL_CLOSE` rimosse da entrambi i componenti.

@@ -67,18 +67,16 @@ export const upsertLocationBusinessHours = authActionClient
   .schema(upsertLocationBusinessHoursSchema)
   .action(async ({ parsedInput: { locationId, dayOfWeek, slots }, ctx }) => {
     if (ctx.role !== 'admin') throw new Error('Non autorizzato')
-    await db.transaction(async (tx) => {
-      await tx.delete(locationBusinessHours).where(
-        and(
-          eq(locationBusinessHours.locationId, locationId),
-          eq(locationBusinessHours.dayOfWeek, dayOfWeek),
-          eq(locationBusinessHours.tenantId, ctx.tenantId)
-        )
+    await db.delete(locationBusinessHours).where(
+      and(
+        eq(locationBusinessHours.locationId, locationId),
+        eq(locationBusinessHours.dayOfWeek, dayOfWeek),
+        eq(locationBusinessHours.tenantId, ctx.tenantId)
       )
-      if (slots.length > 0) {
-        await tx.insert(locationBusinessHours).values(
-          slots.map(s => ({ ...s, locationId, dayOfWeek, tenantId: ctx.tenantId }))
-        )
-      }
-    })
+    )
+    if (slots.length > 0) {
+      await db.insert(locationBusinessHours).values(
+        slots.map(s => ({ ...s, locationId, dayOfWeek, tenantId: ctx.tenantId }))
+      )
+    }
   })
