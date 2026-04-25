@@ -77,7 +77,7 @@ export function ScheduleGrid({
   const currentTimeTop = ((currentMinutes - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
 
   return (
-    <div className="overflow-auto">
+    <div>
       {/* Header row */}
       <div
         className="grid sticky top-0 z-20 border-b border-border"
