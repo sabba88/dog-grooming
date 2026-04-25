@@ -33,13 +33,12 @@ interface ScheduleTimelineProps {
   staff: Person[]
   appointments: Appointment[]
   dateString: string
+  globalOpen: string
+  globalClose: string
   onAppointmentClick?: (id: string) => void
   onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
   movingAppointmentId?: string
 }
-
-const GLOBAL_OPEN = '00:00'
-const GLOBAL_CLOSE = '23:30'
 
 const STATUS_DOT_COLOR: Record<StaffStatus, string> = {
   active: '#22C55E',
@@ -52,6 +51,8 @@ function PersonTimeline({
   appointments,
   allServiceIds,
   dateString,
+  globalOpen,
+  globalClose,
   onAppointmentClick,
   onEmptySlotClick,
   movingAppointmentId,
@@ -60,11 +61,13 @@ function PersonTimeline({
   appointments: Appointment[]
   allServiceIds: string[]
   dateString: string
+  globalOpen: string
+  globalClose: string
   onAppointmentClick?: (id: string) => void
   onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
   movingAppointmentId?: string
 }) {
-  const timeSlots = generateTimeSlots(GLOBAL_OPEN, GLOBAL_CLOSE)
+  const timeSlots = generateTimeSlots(globalOpen, globalClose)
 
   return (
     <div className="flex flex-col gap-2">
@@ -132,6 +135,8 @@ export function ScheduleTimeline({
   staff,
   appointments,
   dateString,
+  globalOpen,
+  globalClose,
   onAppointmentClick,
   onEmptySlotClick,
   movingAppointmentId,
@@ -173,6 +178,8 @@ export function ScheduleTimeline({
                   appointments={personAppointments}
                   allServiceIds={allServiceIds}
                   dateString={dateString}
+                  globalOpen={globalOpen}
+                  globalClose={globalClose}
                   onAppointmentClick={onAppointmentClick}
                   onEmptySlotClick={onEmptySlotClick}
                   movingAppointmentId={movingAppointmentId}
@@ -194,6 +201,8 @@ export function ScheduleTimeline({
               appointments={personAppointments}
               allServiceIds={allServiceIds}
               dateString={dateString}
+              globalOpen={globalOpen}
+              globalClose={globalClose}
               onAppointmentClick={onAppointmentClick}
               onEmptySlotClick={onEmptySlotClick}
               movingAppointmentId={movingAppointmentId}

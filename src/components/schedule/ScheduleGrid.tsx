@@ -42,28 +42,29 @@ interface ScheduleGridProps {
   appointments: Appointment[]
   selectedDate: Date
   dateString: string
+  globalOpen: string
+  globalClose: string
   onAppointmentClick?: (id: string) => void
   onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
   movingAppointmentId?: string
 }
-
-const GLOBAL_OPEN = '00:00'
-const GLOBAL_CLOSE = '23:30'
 
 export function ScheduleGrid({
   staff,
   appointments,
   selectedDate,
   dateString,
+  globalOpen,
+  globalClose,
   onAppointmentClick,
   onEmptySlotClick,
   movingAppointmentId,
 }: ScheduleGridProps) {
   if (staff.length === 0) return null
 
-  const timeSlots = generateTimeSlots(GLOBAL_OPEN, GLOBAL_CLOSE)
-  const dayStartMinutes = timeToMinutes(GLOBAL_OPEN)
-  const totalMinutes = timeToMinutes(GLOBAL_CLOSE) - dayStartMinutes
+  const timeSlots = generateTimeSlots(globalOpen, globalClose)
+  const dayStartMinutes = timeToMinutes(globalOpen)
+  const totalMinutes = timeToMinutes(globalClose) - dayStartMinutes
   const totalHeight = (totalMinutes / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
 
   const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]

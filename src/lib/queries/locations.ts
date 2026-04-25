@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { locations } from '@/lib/db/schema'
+import { locations, locationBusinessHours } from '@/lib/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 
 export async function getLocations(tenantId: string) {
@@ -28,4 +28,18 @@ export async function getLocationById(locationId: string, tenantId: string) {
     .limit(1)
 
   return location ?? null
+}
+
+export async function getLocationBusinessHours(locationId: string, tenantId: string) {
+  return db.select({
+    dayOfWeek: locationBusinessHours.dayOfWeek,
+    openTime: locationBusinessHours.openTime,
+    closeTime: locationBusinessHours.closeTime,
+  })
+  .from(locationBusinessHours)
+  .where(and(
+    eq(locationBusinessHours.locationId, locationId),
+    eq(locationBusinessHours.tenantId, tenantId),
+  ))
+  .orderBy(asc(locationBusinessHours.dayOfWeek), asc(locationBusinessHours.openTime))
 }

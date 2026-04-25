@@ -1,5 +1,5 @@
-export const SLOT_HEIGHT_PX = 60
-export const MINUTES_PER_SLOT = 30
+export const SLOT_HEIGHT_PX = 30
+export const MINUTES_PER_SLOT = 15
 
 export const SERVICE_COLORS = [
   { bg: '#DBEAFE', border: '#93C5FD', label: 'Azzurro' },
@@ -92,4 +92,27 @@ export function toDayOfWeek(dateFnsDay: number): number {
 export function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number)
   return h * 60 + m
+}
+
+function subtractOneHour(time: string): string {
+  const [h, m] = time.split(':').map(Number)
+  const total = Math.max(0, h * 60 + m - 60)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
+function addOneHour(time: string): string {
+  const [h, m] = time.split(':').map(Number)
+  const total = Math.min(23 * 60 + 45, h * 60 + m + 60)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
+export function computeAgendaRange(
+  businessHours: { dayOfWeek: number; openTime: string; closeTime: string }[],
+  dayOfWeek: number,
+): { globalOpen: string; globalClose: string } {
+  const todaySlots = businessHours.filter(h => h.dayOfWeek === dayOfWeek)
+  if (todaySlots.length === 0) return { globalOpen: '08:00', globalClose: '20:00' }
+  const minOpen = todaySlots.reduce((min, s) => s.openTime < min ? s.openTime : min, '23:59')
+  const maxClose = todaySlots.reduce((max, s) => s.closeTime > max ? s.closeTime : max, '00:00')
+  return { globalOpen: subtractOneHour(minOpen), globalClose: addOneHour(maxClose) }
 }

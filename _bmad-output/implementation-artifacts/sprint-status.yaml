@@ -53,7 +53,7 @@ development_status:
   2-2-gestione-sedi: done
   2-3-gestione-postazioni-con-servizi-abilitati: done  # CC-2026-03-14: semplificata (rimossi orari)
   2-4-assegnazione-collaboratori-sedi-calendario: done  # CC-2026-03-14: nuova story; CC-2026-04-26: rewrite completato - fasce per data di calendario
-  2-5-orari-apertura-sede: backlog  # CC-2026-04-26: nuova story - orari settimanali sede (2 fasce/giorno), prerequisito per agenda range dinamico
+  2-5-orari-apertura-sede: review  # CC-2026-04-26: nuova story - orari settimanali sede (2 fasce/giorno), prerequisito per agenda range dinamico
   epic-2-retrospective: optional
 
   # Epica 3: Gestione Clienti e Cani

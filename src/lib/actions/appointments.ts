@@ -3,7 +3,8 @@
 import { authActionClient } from '@/lib/actions/client'
 import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema } from '@/lib/validations/appointments'
 import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById } from '@/lib/queries/appointments'
-import { getStaffStatusForDate, getIsoDayOfWeek } from '@/lib/queries/staff'
+import { getStaffStatusForDate } from '@/lib/queries/staff'
+import { getLocationBusinessHours } from '@/lib/queries/locations'
 import { getDogsByClient } from '@/lib/queries/dogs'
 import { getStationsByLocation, getServicesForStation } from '@/lib/queries/stations'
 import { getServices } from '@/lib/queries/services'
@@ -17,14 +18,13 @@ export const getAgendaData = authActionClient
   .schema(getAppointmentsQuerySchema)
   .action(async ({ parsedInput, ctx }) => {
     const { locationId, date } = parsedInput
-    const dateObj = new Date(date + 'T00:00:00.000Z')
-
-    const [appts, staff] = await Promise.all([
+    const [appts, staff, businessHours] = await Promise.all([
       getAppointmentsByDateAndLocationGroupedByUser(date, ctx.tenantId),
-      getStaffStatusForDate(locationId, dateObj, ctx.tenantId),
+      getStaffStatusForDate(locationId, date, ctx.tenantId),
+      getLocationBusinessHours(locationId, ctx.tenantId),
     ])
 
-    return { appointments: appts, staff }
+    return { appointments: appts, staff, businessHours }
   })
 
 async function findAlternativeSlots(
@@ -156,31 +156,30 @@ export const createAppointment = authActionClient
       }
     }
 
-    // 4. Validazione turno persona
-    const dayOfWeek = getIsoDayOfWeek(startTime)
-    const [assignment] = await db
-      .select({
-        endTime: userLocationAssignments.endTime,
-      })
+    // 4. Validazione turno persona (per data specifica)
+    const shiftsForDate = await db
+      .select({ startTime: userLocationAssignments.startTime, endTime: userLocationAssignments.endTime })
       .from(userLocationAssignments)
-      .where(
-        and(
-          eq(userLocationAssignments.userId, userId),
-          eq(userLocationAssignments.dayOfWeek, dayOfWeek),
-          eq(userLocationAssignments.tenantId, ctx.tenantId)
-        )
-      )
-      .limit(1)
+      .where(and(
+        eq(userLocationAssignments.userId, userId),
+        eq(userLocationAssignments.date, date),
+        eq(userLocationAssignments.tenantId, ctx.tenantId)
+      ))
 
-    if (assignment) {
+    if (shiftsForDate.length > 0) {
+      const appointmentStartMinutes = startTime.getUTCHours() * 60 + startTime.getUTCMinutes()
       const appointmentEndMinutes = endTime.getUTCHours() * 60 + endTime.getUTCMinutes()
-      const shiftEndMinutes = timeToMinutes(assignment.endTime)
-      if (appointmentEndMinutes > shiftEndMinutes) {
+      const coveringShift = shiftsForDate.find(s => {
+        const shiftStart = timeToMinutes(s.startTime)
+        const shiftEnd = timeToMinutes(s.endTime)
+        return appointmentStartMinutes >= shiftStart && appointmentStartMinutes < shiftEnd
+      })
+      if (coveringShift && appointmentEndMinutes > timeToMinutes(coveringShift.endTime)) {
         return {
           error: {
             code: 'EXCEEDS_SHIFT_TIME' as const,
             message: "L'appuntamento supera la fine del turno",
-            shiftEndTime: assignment.endTime,
+            shiftEndTime: coveringShift.endTime,
           },
         }
       }
@@ -303,31 +302,30 @@ export const moveAppointment = authActionClient
       }
     }
 
-    // 4. Validazione turno persona destinazione
-    const dayOfWeek = getIsoDayOfWeek(newStartTime)
-    const [assignment] = await db
-      .select({
-        endTime: userLocationAssignments.endTime,
-      })
+    // 4. Validazione turno persona destinazione (per data specifica)
+    const shiftsForMoveDate = await db
+      .select({ startTime: userLocationAssignments.startTime, endTime: userLocationAssignments.endTime })
       .from(userLocationAssignments)
-      .where(
-        and(
-          eq(userLocationAssignments.userId, userId),
-          eq(userLocationAssignments.dayOfWeek, dayOfWeek),
-          eq(userLocationAssignments.tenantId, ctx.tenantId)
-        )
-      )
-      .limit(1)
+      .where(and(
+        eq(userLocationAssignments.userId, userId),
+        eq(userLocationAssignments.date, date),
+        eq(userLocationAssignments.tenantId, ctx.tenantId)
+      ))
 
-    if (assignment) {
-      const appointmentEndMinutes = newEndTime.getUTCHours() * 60 + newEndTime.getUTCMinutes()
-      const shiftEndMinutes = timeToMinutes(assignment.endTime)
-      if (appointmentEndMinutes > shiftEndMinutes) {
+    if (shiftsForMoveDate.length > 0) {
+      const apptStartMinutes = newStartTime.getUTCHours() * 60 + newStartTime.getUTCMinutes()
+      const apptEndMinutes = newEndTime.getUTCHours() * 60 + newEndTime.getUTCMinutes()
+      const coveringShift = shiftsForMoveDate.find(s => {
+        const shiftStart = timeToMinutes(s.startTime)
+        const shiftEnd = timeToMinutes(s.endTime)
+        return apptStartMinutes >= shiftStart && apptStartMinutes < shiftEnd
+      })
+      if (coveringShift && apptEndMinutes > timeToMinutes(coveringShift.endTime)) {
         return {
           error: {
             code: 'EXCEEDS_SHIFT_TIME' as const,
             message: "L'appuntamento supera la fine del turno",
-            shiftEndTime: assignment.endTime,
+            shiftEndTime: coveringShift.endTime,
           },
         }
       }

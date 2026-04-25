@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { format } from 'date-fns'
+import { format, getDay } from 'date-fns'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useLocationSelector } from '@/hooks/useLocationSelector'
@@ -12,6 +12,7 @@ import { ScheduleTimeline } from './ScheduleTimeline'
 import { AppointmentForm } from '@/components/appointment/AppointmentForm'
 import { AppointmentDetail } from '@/components/appointment/AppointmentDetail'
 import { getAgendaData, fetchAppointmentDetail, moveAppointment as moveAppointmentAction } from '@/lib/actions/appointments'
+import { computeAgendaRange } from '@/lib/utils/schedule'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
@@ -63,6 +64,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
             endTime: new Date(a.endTime),
           })),
           staff: result.data.staff,
+          businessHours: result.data.businessHours,
         }
       }
       return null
@@ -74,6 +76,10 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
   const appointments = data?.appointments ?? []
   const staff = data?.staff ?? []
+  const dayOfWeek = (getDay(selectedDate) + 6) % 7
+  const { globalOpen, globalClose } = data?.businessHours
+    ? computeAgendaRange(data.businessHours, dayOfWeek)
+    : { globalOpen: '08:00', globalClose: '20:00' }
 
   const handleAppointmentClick = (id: string) => {
     if (movingAppointment) return // Ignorare click durante modalita' spostamento
@@ -200,6 +206,8 @@ export function AgendaView({ locations }: AgendaViewProps) {
           staff={staff}
           appointments={appointments}
           dateString={dateString}
+          globalOpen={globalOpen}
+          globalClose={globalClose}
           onAppointmentClick={handleAppointmentClick}
           onEmptySlotClick={handleEmptySlotClick}
           movingAppointmentId={movingAppointment?.id}
@@ -210,6 +218,8 @@ export function AgendaView({ locations }: AgendaViewProps) {
           appointments={appointments}
           selectedDate={selectedDate}
           dateString={dateString}
+          globalOpen={globalOpen}
+          globalClose={globalClose}
           onAppointmentClick={handleAppointmentClick}
           onEmptySlotClick={handleEmptySlotClick}
           movingAppointmentId={movingAppointment?.id}

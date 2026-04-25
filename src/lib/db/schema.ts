@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, boolean, integer, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, boolean, integer, pgEnum, date } from 'drizzle-orm/pg-core'
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'collaborator'])
 
@@ -101,9 +101,20 @@ export const userLocationAssignments = pgTable('user_location_assignments', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull(),
   locationId: uuid('location_id').notNull(),
-  dayOfWeek: integer('day_of_week').notNull(), // 0=Lunedi', 1=Martedi', ..., 6=Domenica (ISO 8601)
+  date: date('date').notNull(), // YYYY-MM-DD — data specifica di calendario (CC-2026-04-26)
   startTime: text('start_time').notNull(), // "HH:mm"
   endTime: text('end_time').notNull(), // "HH:mm"
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const locationBusinessHours = pgTable('location_business_hours', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  locationId: uuid('location_id').notNull(),
+  dayOfWeek: integer('day_of_week').notNull(), // 0=Lunedi' (ISO 8601), 6=Domenica
+  openTime: text('open_time').notNull(),   // "HH:mm"
+  closeTime: text('close_time').notNull(), // "HH:mm"
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
