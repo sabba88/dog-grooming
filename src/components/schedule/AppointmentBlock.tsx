@@ -15,6 +15,7 @@ interface AppointmentBlockProps {
   variant: 'grid' | 'timeline'
   style?: React.CSSProperties
   onClick?: (id: string) => void
+  isMoving?: boolean
 }
 
 export function AppointmentBlock({
@@ -29,6 +30,7 @@ export function AppointmentBlock({
   variant,
   style,
   onClick,
+  isMoving,
 }: AppointmentBlockProps) {
   const formatTime = (date: Date) => {
     const h = String(date.getUTCHours()).padStart(2, '0')
@@ -40,7 +42,10 @@ export function AppointmentBlock({
     return (
       <button
         onClick={() => onClick?.(id)}
-        className="absolute inset-x-0.5 rounded-md px-1.5 py-1 text-left overflow-hidden cursor-pointer transition-shadow hover:shadow-md z-10"
+        className={cn(
+          "absolute inset-x-0.5 rounded-md px-1.5 py-1 text-left overflow-hidden cursor-pointer transition-shadow hover:shadow-md z-10",
+          isMoving && "opacity-40 pointer-events-none"
+        )}
         style={{
           ...style,
           backgroundColor: color.bg,
@@ -59,7 +64,10 @@ export function AppointmentBlock({
   return (
     <button
       onClick={() => onClick?.(id)}
-      className="w-full rounded-lg p-3 text-left cursor-pointer transition-shadow hover:shadow-md"
+      className={cn(
+        "w-full rounded-lg p-3 text-left cursor-pointer transition-shadow hover:shadow-md",
+        isMoving && "opacity-40 pointer-events-none"
+      )}
       style={{
         backgroundColor: color.bg,
         borderLeft: `4px solid ${color.border}`,

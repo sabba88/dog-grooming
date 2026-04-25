@@ -10,10 +10,13 @@ import { DateStrip } from './DateStrip'
 import { ScheduleGrid } from './ScheduleGrid'
 import { ScheduleTimeline } from './ScheduleTimeline'
 import { AppointmentForm } from '@/components/appointment/AppointmentForm'
-import { getAgendaData } from '@/lib/actions/appointments'
+import { AppointmentDetail } from '@/components/appointment/AppointmentDetail'
+import { getAgendaData, fetchAppointmentDetail, moveAppointment as moveAppointmentAction } from '@/lib/actions/appointments'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Settings, X } from 'lucide-react'
+import { toast } from 'sonner'
 import Link from 'next/link'
 
 interface Location {
@@ -35,6 +38,12 @@ export function AgendaView({ locations }: AgendaViewProps) {
     time: string
     locationId: string
   } | null>(null)
+  const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null)
+  const [movingAppointment, setMovingAppointment] = useState<{
+    id: string
+    duration: number
+    serviceName: string
+  } | null>(null)
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
   const { selectedLocationId, isHydrated } = useLocationSelector(locations)
@@ -47,23 +56,13 @@ export function AgendaView({ locations }: AgendaViewProps) {
       if (!selectedLocationId) return null
       const result = await getAgendaData({ locationId: selectedLocationId, date: dateString })
       if (result?.data) {
-        // Enrich staff with locationName for "elsewhere" persons
-        const enrichedStaff = result.data.staff.map((person) => {
-          let locationName: string | undefined
-          if (person.status === 'elsewhere' && person.assignment) {
-            const loc = locations.find((l) => l.id === person.assignment!.locationId)
-            locationName = loc?.name
-          }
-          return { ...person, locationName }
-        })
-
         return {
           appointments: result.data.appointments.map((a) => ({
             ...a,
             startTime: new Date(a.startTime),
             endTime: new Date(a.endTime),
           })),
-          staff: enrichedStaff,
+          staff: result.data.staff,
         }
       }
       return null
@@ -76,12 +75,72 @@ export function AgendaView({ locations }: AgendaViewProps) {
   const appointments = data?.appointments ?? []
   const staff = data?.staff ?? []
 
+  const handleAppointmentClick = (id: string) => {
+    if (movingAppointment) return // Ignorare click durante modalita' spostamento
+    setSelectedAppointmentId(id)
+  }
+
+  const handleMoveStart = async (appointmentId: string) => {
+    const result = await fetchAppointmentDetail({ id: appointmentId })
+    if (result?.data?.appointment) {
+      const appt = result.data.appointment
+      const start = new Date(appt.startTime)
+      const end = new Date(appt.endTime)
+      const duration = (end.getTime() - start.getTime()) / (60 * 1000)
+      setMovingAppointment({ id: appointmentId, duration, serviceName: appt.serviceName })
+      setSelectedAppointmentId(null)
+    }
+  }
+
+  const handleMoveSlotClick = async (userId: string, date: string, time: string) => {
+    if (!movingAppointment) return
+
+    const result = await moveAppointmentAction({
+      id: movingAppointment.id,
+      userId,
+      date,
+      time,
+    })
+
+    if (result?.data?.error) {
+      const error = result.data.error
+      if (error.code === 'SLOT_OCCUPIED') {
+        toast.error("Lo slot non e' piu' disponibile")
+        if (error.alternatives && error.alternatives.length > 0) {
+          toast.info(`Slot alternativi: ${error.alternatives.join(', ')}`)
+        }
+      } else if (error.code === 'EXCEEDS_SHIFT_TIME') {
+        toast.warning(`L'appuntamento supera la fine del turno (${error.shiftEndTime})`)
+      }
+      return
+    }
+
+    if (result?.data?.success) {
+      toast.success('Appuntamento spostato')
+      setMovingAppointment(null)
+      queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
+    }
+  }
+
+  const handleMoveCancel = () => {
+    setMovingAppointment(null)
+  }
+
   const handleEmptySlotClick = (slotData: { userId: string; userName: string; date: string; time: string }) => {
+    if (movingAppointment) {
+      handleMoveSlotClick(slotData.userId, slotData.date, slotData.time)
+      return
+    }
     setAppointmentSlot({ ...slotData, locationId: selectedLocationId! })
   }
 
   const handleAppointmentCreated = () => {
     setAppointmentSlot(null)
+    queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
+  }
+
+  const handleAppointmentDeleted = () => {
+    setSelectedAppointmentId(null)
     queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
   }
 
@@ -112,6 +171,24 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Banner spostamento */}
+      {movingAppointment && (
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm text-amber-800">
+            Tocca un nuovo slot per spostare &quot;{movingAppointment.serviceName}&quot;
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleMoveCancel}
+            className="text-amber-800 hover:text-amber-900 hover:bg-amber-100"
+          >
+            <X className="size-4" />
+            <span className="ml-1">Annulla</span>
+          </Button>
+        </div>
+      )}
+
       {isMobile ? (
         <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
       ) : (
@@ -123,7 +200,9 @@ export function AgendaView({ locations }: AgendaViewProps) {
           staff={staff}
           appointments={appointments}
           dateString={dateString}
+          onAppointmentClick={handleAppointmentClick}
           onEmptySlotClick={handleEmptySlotClick}
+          movingAppointmentId={movingAppointment?.id}
         />
       ) : (
         <ScheduleGrid
@@ -131,8 +210,45 @@ export function AgendaView({ locations }: AgendaViewProps) {
           appointments={appointments}
           selectedDate={selectedDate}
           dateString={dateString}
+          onAppointmentClick={handleAppointmentClick}
           onEmptySlotClick={handleEmptySlotClick}
+          movingAppointmentId={movingAppointment?.id}
         />
+      )}
+
+      {/* Dettaglio appuntamento — Dialog desktop / Sheet mobile */}
+      {isMobile ? (
+        <Sheet open={!!selectedAppointmentId} onOpenChange={() => setSelectedAppointmentId(null)}>
+          <SheetContent side="bottom" className="h-auto max-h-[80vh] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Dettaglio Appuntamento</SheetTitle>
+            </SheetHeader>
+            {selectedAppointmentId && (
+              <AppointmentDetail
+                appointmentId={selectedAppointmentId}
+                onClose={() => setSelectedAppointmentId(null)}
+                onMove={handleMoveStart}
+                onDeleted={handleAppointmentDeleted}
+              />
+            )}
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={!!selectedAppointmentId} onOpenChange={() => setSelectedAppointmentId(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Dettaglio Appuntamento</DialogTitle>
+            </DialogHeader>
+            {selectedAppointmentId && (
+              <AppointmentDetail
+                appointmentId={selectedAppointmentId}
+                onClose={() => setSelectedAppointmentId(null)}
+                onMove={handleMoveStart}
+                onDeleted={handleAppointmentDeleted}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* Form appuntamento — Dialog desktop / Sheet mobile */}

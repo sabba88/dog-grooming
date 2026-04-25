@@ -1,6 +1,6 @@
 # Story 4.3: Cancellazione e Spostamento Appuntamenti
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -74,29 +74,29 @@ so that **possa riorganizzare l'agenda senza pasticci, come cancellature su un q
   - [x] 2.6 Dopo conferma cancellazione: chiamare `deleteAppointment({ id })`, mostrare toast "Appuntamento cancellato", invocare `onDeleted()` (che invalida la query agenda e chiude il dialog)
   - [x] 2.7 Click su "Sposta": invocare `onMove(appointmentId)` (che chiude il dettaglio e attiva la modalita' spostamento in AgendaView)
 
-- [ ] Task 3: Integrare AppointmentDetail e modalita' spostamento in AgendaView (AC: #1, #3, #4, #5, #6, #7)
-  - [ ] 3.1 In `AgendaView.tsx`, aggiungere stati: `selectedAppointmentId: string | null` (per il dettaglio), `movingAppointment: { id: string, duration: number, serviceName: string } | null` (per la modalita' spostamento)
-  - [ ] 3.2 Implementare `handleAppointmentClick(id: string)`: settare `selectedAppointmentId = id` per aprire il dettaglio in Dialog (desktop) / Sheet (mobile), con lo stesso pattern usato per AppointmentForm
-  - [ ] 3.3 Implementare `handleMoveStart(appointmentId: string)`: caricare i dati dell'appuntamento (fetchAppointmentDetail), settare `movingAppointment` con id, durata e nome servizio, chiudere il dettaglio (`selectedAppointmentId = null`)
-  - [ ] 3.4 Implementare `handleMoveSlotClick(userId: string, date: string, time: string)`: chiamare `moveAppointment({ id: movingAppointment.id, userId, date, time })`, gestire errori (SLOT_OCCUPIED con alternative, EXCEEDS_SHIFT_TIME), in caso di successo invalidare query `['appointments', selectedLocationId, dateString]`, mostrare toast "Appuntamento spostato", resettare `movingAppointment = null`
-  - [ ] 3.5 Implementare `handleMoveCancel()`: resettare `movingAppointment = null`
-  - [ ] 3.6 Quando `movingAppointment` e' attivo, mostrare un banner fisso in alto con testo "Tocca un nuovo slot per spostare [servizio]" e pulsante "Annulla" che invoca `handleMoveCancel()`
-  - [ ] 3.7 Passare `onAppointmentClick={handleAppointmentClick}` a ScheduleGrid e ScheduleTimeline (gia' previsto come prop ma non collegato)
-  - [ ] 3.8 Passare `movingAppointmentId={movingAppointment?.id}` a ScheduleGrid e ScheduleTimeline per l'effetto visivo opacita' ridotta
-  - [ ] 3.9 Modificare il comportamento di `handleEmptySlotClick`: se `movingAppointment` e' attivo, invocare `handleMoveSlotClick(userId, date, time)` invece di aprire AppointmentForm
-  - [ ] 3.10 Dopo cancellazione (`onDeleted`): invalidare query `['appointments', selectedLocationId, dateString]`, chiudere dettaglio (`selectedAppointmentId = null`)
+- [x] Task 3: Integrare AppointmentDetail e modalita' spostamento in AgendaView (AC: #1, #3, #4, #5, #6, #7)
+  - [x] 3.1 In `AgendaView.tsx`, aggiungere stati: `selectedAppointmentId: string | null` (per il dettaglio), `movingAppointment: { id: string, duration: number, serviceName: string } | null` (per la modalita' spostamento)
+  - [x] 3.2 Implementare `handleAppointmentClick(id: string)`: settare `selectedAppointmentId = id` per aprire il dettaglio in Dialog (desktop) / Sheet (mobile), con lo stesso pattern usato per AppointmentForm
+  - [x] 3.3 Implementare `handleMoveStart(appointmentId: string)`: caricare i dati dell'appuntamento (fetchAppointmentDetail), settare `movingAppointment` con id, durata e nome servizio, chiudere il dettaglio (`selectedAppointmentId = null`)
+  - [x] 3.4 Implementare `handleMoveSlotClick(userId: string, date: string, time: string)`: chiamare `moveAppointment({ id: movingAppointment.id, userId, date, time })`, gestire errori (SLOT_OCCUPIED con alternative, EXCEEDS_SHIFT_TIME), in caso di successo invalidare query `['appointments', selectedLocationId, dateString]`, mostrare toast "Appuntamento spostato", resettare `movingAppointment = null`
+  - [x] 3.5 Implementare `handleMoveCancel()`: resettare `movingAppointment = null`
+  - [x] 3.6 Quando `movingAppointment` e' attivo, mostrare un banner fisso in alto con testo "Tocca un nuovo slot per spostare [servizio]" e pulsante "Annulla" che invoca `handleMoveCancel()`
+  - [x] 3.7 Passare `onAppointmentClick={handleAppointmentClick}` a ScheduleGrid e ScheduleTimeline (gia' previsto come prop ma non collegato)
+  - [x] 3.8 Passare `movingAppointmentId={movingAppointment?.id}` a ScheduleGrid e ScheduleTimeline per l'effetto visivo opacita' ridotta
+  - [x] 3.9 Modificare il comportamento di `handleEmptySlotClick`: se `movingAppointment` e' attivo, invocare `handleMoveSlotClick(userId, date, time)` invece di aprire AppointmentForm
+  - [x] 3.10 Dopo cancellazione (`onDeleted`): invalidare query `['appointments', selectedLocationId, dateString]`, chiudere dettaglio (`selectedAppointmentId = null`)
 
-- [ ] Task 4: Aggiornare ScheduleGrid e ScheduleTimeline per supportare modalita' spostamento (AC: #3, #4)
-  - [ ] 4.1 In `ScheduleGrid.tsx`, aggiungere prop `movingAppointmentId?: string` — quando valorizzato, applicare `opacity-40` al blocco dell'appuntamento in fase di spostamento (identificato per id)
-  - [ ] 4.2 In `ScheduleGrid.tsx`, quando `movingAppointmentId` e' valorizzato, applicare sfondo `bg-green-50` (verde chiaro) agli EmptySlot delle colonne persone attive per evidenziare le destinazioni disponibili
-  - [ ] 4.3 In `ScheduleTimeline.tsx`, stesse modifiche: `movingAppointmentId` come prop, opacita' ridotta sull'appuntamento in spostamento, sfondo verde sugli slot vuoti
-  - [ ] 4.4 In `AppointmentBlock.tsx`, aggiungere prop `isMoving?: boolean` — quando true, applicare `opacity-40` e `pointer-events-none` al blocco
+- [x] Task 4: Aggiornare ScheduleGrid e ScheduleTimeline per supportare modalita' spostamento (AC: #3, #4)
+  - [x] 4.1 In `ScheduleGrid.tsx`, aggiungere prop `movingAppointmentId?: string` — quando valorizzato, applicare `opacity-40` al blocco dell'appuntamento in fase di spostamento (identificato per id)
+  - [x] 4.2 In `ScheduleGrid.tsx`, quando `movingAppointmentId` e' valorizzato, applicare sfondo `bg-green-50` (verde chiaro) agli EmptySlot delle colonne persone attive per evidenziare le destinazioni disponibili
+  - [x] 4.3 In `ScheduleTimeline.tsx`, stesse modifiche: `movingAppointmentId` come prop, opacita' ridotta sull'appuntamento in spostamento, sfondo verde sugli slot vuoti
+  - [x] 4.4 In `AppointmentBlock.tsx`, aggiungere prop `isMoving?: boolean` — quando true, applicare `opacity-40` e `pointer-events-none` al blocco
 
-- [ ] Task 5: Gestione errori spostamento e casi limite (AC: #5, #6)
-  - [ ] 5.1 In `AgendaView.tsx`, nella `handleMoveSlotClick`, gestire errore `SLOT_OCCUPIED`: mostrare toast error "Lo slot non e' piu' disponibile" + se ci sono alternative, mostrarle in un secondo toast o messaggio sotto il banner
-  - [ ] 5.2 Gestire errore `EXCEEDS_SHIFT_TIME`: mostrare toast warning "L'appuntamento supera la fine del turno ([HH:mm])" — NON bloccare lo spostamento (l'utente puo' decidere, ma il server impedisce)
-  - [ ] 5.3 Gestire caso: l'utente clicca su un blocco appuntamento (non slot vuoto) durante la modalita' spostamento → ignorare il click (non aprire il dettaglio)
-  - [ ] 5.4 Gestire caso: l'utente cambia data durante la modalita' spostamento → mantenere la modalita' attiva, permettere spostamento su giorno diverso
+- [x] Task 5: Gestione errori spostamento e casi limite (AC: #5, #6)
+  - [x] 5.1 In `AgendaView.tsx`, nella `handleMoveSlotClick`, gestire errore `SLOT_OCCUPIED`: mostrare toast error "Lo slot non e' piu' disponibile" + se ci sono alternative, mostrarle in un secondo toast o messaggio sotto il banner
+  - [x] 5.2 Gestire errore `EXCEEDS_SHIFT_TIME`: mostrare toast warning "L'appuntamento supera la fine del turno ([HH:mm])" — NON bloccare lo spostamento (l'utente puo' decidere, ma il server impedisce)
+  - [x] 5.3 Gestire caso: l'utente clicca su un blocco appuntamento (non slot vuoto) durante la modalita' spostamento → ignorare il click (non aprire il dettaglio)
+  - [x] 5.4 Gestire caso: l'utente cambia data durante la modalita' spostamento → mantenere la modalita' attiva, permettere spostamento su giorno diverso
 
 ## Dev Notes
 
@@ -444,6 +444,9 @@ Claude Opus 4.6 (1M context)
 
 - Task 1: Implementati `getAppointmentById` (query con JOIN su clients, dogs, services, users), `deleteAppointmentSchema`/`moveAppointmentSchema` (Zod), `deleteAppointment` (hard delete con verifica tenant), `moveAppointment` (con validazione sovrapposizione escludendo se stesso, validazione turno persona, findAlternativeSlots), `fetchAppointmentDetail` (wrapper action). TypeScript compila senza errori.
 - Task 2: Creato `AppointmentDetail.tsx` — client component con caricamento dati via fetchAppointmentDetail, display info complete (cliente, cane, servizio, persona, data it, orario, durata, prezzo), pulsanti Sposta/Cancella, AlertDialog conferma cancellazione con toast feedback.
+- Task 3: Integrato AppointmentDetail in AgendaView con Dialog (desktop) / Sheet (mobile). Stati `selectedAppointmentId` e `movingAppointment` aggiunti. Implementati tutti gli handler: handleAppointmentClick (ignora click durante spostamento), handleMoveStart (carica dati appuntamento e attiva modalita'), handleMoveSlotClick (esegue moveAppointment action, gestisce errori), handleMoveCancel, handleAppointmentDeleted (invalida query, chiude dettaglio). Banner spostamento amber con testo servizio e pulsante Annulla. handleEmptySlotClick biforcato: se movingAppointment attivo → spostamento, altrimenti → crea appuntamento.
+- Task 4: ScheduleGrid e ScheduleTimeline aggiornati con prop `movingAppointmentId` — AppointmentBlock riceve `isMoving` (opacity-40 + pointer-events-none), EmptySlot riceve `isMovingTarget` (sfondo green-50 + bordo tratteggiato verde + label "Sposta qui"). AppointmentBlock.tsx aggiornato con prop `isMoving`.
+- Task 5: Gestione errori SLOT_OCCUPIED (toast.error + toast.info con alternative), EXCEEDS_SHIFT_TIME (toast.warning con orario turno). Click su appuntamento durante spostamento ignorato in handleAppointmentClick. Cambio data durante spostamento: modalita' resta attiva (slot del nuovo giorno mostrano verde). TypeScript compila senza errori — tutti gli AC soddisfatti.
 
 ### File List
 
@@ -451,3 +454,12 @@ Claude Opus 4.6 (1M context)
 - src/lib/validations/appointments.ts (modificato — aggiunti deleteAppointmentSchema, moveAppointmentSchema)
 - src/lib/actions/appointments.ts (modificato — aggiunti fetchAppointmentDetail, deleteAppointment, moveAppointment)
 - src/components/appointment/AppointmentDetail.tsx (creato)
+- src/components/schedule/AgendaView.tsx (modificato — integrazione AppointmentDetail, modalita' spostamento, banner, handler)
+- src/components/schedule/ScheduleGrid.tsx (modificato — prop movingAppointmentId, isMovingTarget su EmptySlot, isMoving su AppointmentBlock)
+- src/components/schedule/ScheduleTimeline.tsx (modificato — prop movingAppointmentId, isMovingTarget su EmptySlot, isMoving su AppointmentBlock)
+- src/components/schedule/AppointmentBlock.tsx (modificato — prop isMoving con opacity-40 e pointer-events-none)
+- src/components/schedule/EmptySlot.tsx (modificato — prop isMovingTarget con sfondo verde e label "Sposta qui")
+
+### Change Log
+
+- 2026-04-26: Story completata — Task 3 (integrazione AgendaView con dettaglio + modalita' spostamento), Task 4 (ScheduleGrid/Timeline/AppointmentBlock/EmptySlot per modalita' spostamento), Task 5 (gestione errori SLOT_OCCUPIED/EXCEEDS_SHIFT_TIME, click ignorato durante spostamento, persistenza modalita' al cambio data). Tutti gli AC soddisfatti. TypeScript compila senza errori.
