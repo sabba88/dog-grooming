@@ -1,6 +1,6 @@
 # Story 2.6: Gestione Razze Canine
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -483,6 +483,38 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+_Nessun blocco rilevante._
+
 ### Completion Notes List
 
+- Task 1: Aggiunto `breeds` e `serviceBreedPrices` a `schema.ts` con `uniqueIndex` su (service_id, breed_id, tenant_id). `drizzle-kit push` eseguito con successo — tabelle create senza dati da migrare.
+- Task 2: Validazioni Zod create. Query `getBreeds` usa `sql<number>count::int` per il contatore prezzi. Actions con pattern `authActionClient` + checkRole admin. Replace strategy (delete + insert sequenziali) per driver neon-http incompatibile con `db.transaction()`.
+- Task 3: `getServiceWithBreedPrices` aggiunto in queries/services. `upsertServiceBreedPrices` e `fetchServiceBreedPrices` aggiunti in actions/services. `fetchBreeds` aggiunto in actions/breeds per fetch interno lato client.
+- Task 4: `BreedList` segue pattern `ServiceList` (Table desktop / Cards mobile + AlertDialog delete). `BreedForm` usa TanStack Query con `fetchBreedWithPrices` (server action) per i prezzi esistenti in edit mode. `breeds/page.tsx` con redirect collaboratore. Voce "Razze" con icona `Dog` aggiunta a `mainNavItems` (admin only) + `pageTitles`.
+- Task 5: `ServiceBreedPricesSection` fetcha breeds e prezzi internamente via server actions (no prop drilling). Integrata in `ServiceForm` sotto il pulsante salva quando `isEditing`. Build Next.js verificato ✅ — 16 pagine generate, `/breeds` presente.
+- Nessun framework di test configurato nel progetto — nessun test unitario scritto.
+
 ### File List
+
+**Nuovi:**
+- `src/lib/validations/breeds.ts`
+- `src/lib/queries/breeds.ts`
+- `src/lib/actions/breeds.ts`
+- `src/app/(auth)/breeds/page.tsx`
+- `src/components/breed/BreedList.tsx`
+- `src/components/breed/BreedForm.tsx`
+- `src/components/service/ServiceBreedPricesSection.tsx`
+
+**Modificati:**
+- `src/lib/db/schema.ts`
+- `src/lib/queries/services.ts`
+- `src/lib/actions/services.ts`
+- `src/components/service/ServiceForm.tsx`
+- `src/components/layout/nav-items.ts`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+## Change Log
+
+| Data | Modifica |
+|------|----------|
+| 2026-04-26 | Implementazione completa story 2.6: schema DB breeds/serviceBreedPrices, validazioni, query, actions, componenti BreedList/BreedForm, pagina /breeds, ServiceBreedPricesSection nel ServiceForm, voce "Razze" in navigazione |
