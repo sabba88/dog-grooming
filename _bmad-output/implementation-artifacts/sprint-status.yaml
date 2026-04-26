@@ -48,27 +48,27 @@ development_status:
   epic-1-retrospective: optional
 
   # Epica 2: Configurazione del Salone
-  epic-2: in-progress  # CC-2026-04-26: riaperta per story 2.5 orari apertura sede
+  epic-2: done  # CC-2026-04-26: riaperta per story 2.5 orari apertura sede; CC-2026-04-26: chiusa - tutte le story completate
   2-1-gestione-listino-servizi: done
   2-2-gestione-sedi: done
   2-3-gestione-postazioni-con-servizi-abilitati: done  # CC-2026-03-14: semplificata (rimossi orari)
   2-4-assegnazione-collaboratori-sedi-calendario: done  # CC-2026-03-14: nuova story; CC-2026-04-26: rewrite completato - fasce per data di calendario
-  2-5-orari-apertura-sede: review  # CC-2026-04-26: nuova story - orari settimanali sede (2 fasce/giorno), prerequisito per agenda range dinamico
-  2-6-gestione-razze-canine: review  # CC-2026-04-26b: nuova story - CMS razze + prezzi per razza per servizio
+  2-5-orari-apertura-sede: done  # CC-2026-04-26: nuova story - orari settimanali sede (2 fasce/giorno), prerequisito per agenda range dinamico
+  2-6-gestione-razze-canine: done  # CC-2026-04-26b: nuova story - CMS razze + prezzi per razza per servizio
   epic-2-retrospective: optional
 
   # Epica 3: Gestione Clienti e Cani
   epic-3: in-progress  # CC-2026-04-26b: riaperta per story 3.3 razza nel profilo cane
   3-1-anagrafica-clienti: done
   3-2-anagrafica-cani: done
-  3-3-razza-nel-profilo-cane: backlog  # CC-2026-04-26b: nuova story - campo razza Combobox su cane, dipende da 2.6
+  3-3-razza-nel-profilo-cane: review  # CC-2026-04-26b: nuova story - campo razza Combobox su cane, dipende da 2.6
   epic-3-retrospective: optional
 
   # Epica 4: Agenda e Appuntamenti
   epic-4: in-progress
   4-1-vista-agenda-per-sede-e-persona: done                     # CC-2026-03-14: riscritta (agenda per persone); CC-2026-04-26: update completato - visualizzazione multi-fascia per data; CC-2026-04-26b: AC aggiornati - slot 15min + range dinamico (da implementare dopo story 2.5)
   4-2-creazione-appuntamento-rapido: done               # CC-2026-03-14: modifica (persona pre-compilata, postazione opzionale)
-  4-3-cancellazione-e-spostamento-appuntamenti: review         # CC-2026-03-14: modifica (spostamento tra persone); CC-2026-04-26: implementazione completata
+  4-3-cancellazione-e-spostamento-appuntamenti: done          # CC-2026-03-14: modifica (spostamento tra persone); CC-2026-04-26: implementazione completata
   4-4-note-prestazione: backlog
   4-5-prezzo-appuntamento-per-razza: backlog  # CC-2026-04-26b: nuova story - logica prezzo breed-aware, dipende da 3.3
   epic-4-retrospective: optional
