@@ -60,11 +60,11 @@ so that **il salone possa tariffeare ogni servizio in modo differenziato per raz
   - [x] 1.2 In `src/lib/db/schema.ts` aggiungere la tabella `serviceBreedPrices` dopo `breeds` (FK su services.id ON DELETE CASCADE, breeds.id ON DELETE CASCADE; unique su service_id + breed_id + tenant_id)
   - [x] 1.3 Eseguire `npx drizzle-kit push` per creare le due tabelle nel DB (operazione non distruttiva — aggiunge tabelle, non modifica esistenti)
 
-- [ ] Task 2: Validazioni Zod, query e server actions breeds (AC: #1–5)
-  - [ ] 2.1 Creare `src/lib/validations/breeds.ts` con `createBreedSchema`, `updateBreedSchema`, `deleteBreedSchema`, `upsertBreedPricesSchema`
-  - [ ] 2.2 Creare `src/lib/queries/breeds.ts` con `getBreeds` (nome + count prezzi), `getBreedById`, `getBreedWithPrices`
-  - [ ] 2.3 Creare `src/lib/actions/breeds.ts` con `createBreed`, `updateBreed`, `deleteBreed` (tutti con `authActionClient`, checkRole admin)
-  - [ ] 2.4 `createBreed` e `updateBreed`: dopo save breed, eseguire replace dei prezzi (delete all breed prices → insert solo quelli con price valorizzato) — NO db.transaction() (driver neon-http incompatibile)
+- [x] Task 2: Validazioni Zod, query e server actions breeds (AC: #1–5)
+  - [x] 2.1 Creare `src/lib/validations/breeds.ts` con `createBreedSchema`, `updateBreedSchema`, `deleteBreedSchema`, `upsertBreedPricesSchema`
+  - [x] 2.2 Creare `src/lib/queries/breeds.ts` con `getBreeds` (nome + count prezzi), `getBreedById`, `getBreedWithPrices`
+  - [x] 2.3 Creare `src/lib/actions/breeds.ts` con `createBreed`, `updateBreed`, `deleteBreed` (tutti con `authActionClient`, checkRole admin)
+  - [x] 2.4 `createBreed` e `updateBreed`: dopo save breed, eseguire replace dei prezzi (delete all breed prices → insert solo quelli con price valorizzato) — NO db.transaction() (driver neon-http incompatibile)
 
 - [ ] Task 3: Query e action per prezzi-per-razza dal lato servizio (AC: #6–8)
   - [ ] 3.1 Aggiungere `getServiceWithBreedPrices(serviceId, tenantId)` in `src/lib/queries/services.ts` — join con `serviceBreedPrices` e `breeds`
