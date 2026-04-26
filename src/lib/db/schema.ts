@@ -74,10 +74,19 @@ export const clientNotes = pgTable('client_notes', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+// CC-2026-04-26b: Catalogo razze canine — CMS gestito dall'Amministratore.
+export const breeds = pgTable('breeds', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
 export const dogs = pgTable('dogs', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
-  breed: text('breed'),
+  breedId: uuid('breed_id').references(() => breeds.id, { onDelete: 'set null' }),
   size: text('size'),
   dateOfBirth: timestamp('date_of_birth'),
   sex: text('sex'),
@@ -115,15 +124,6 @@ export const locationBusinessHours = pgTable('location_business_hours', {
   dayOfWeek: integer('day_of_week').notNull(), // 0=Lunedi' (ISO 8601), 6=Domenica
   openTime: text('open_time').notNull(),   // "HH:mm"
   closeTime: text('close_time').notNull(), // "HH:mm"
-  tenantId: uuid('tenant_id').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
-
-// CC-2026-04-26b: Catalogo razze canine — CMS gestito dall'Amministratore.
-export const breeds = pgTable('breeds', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
