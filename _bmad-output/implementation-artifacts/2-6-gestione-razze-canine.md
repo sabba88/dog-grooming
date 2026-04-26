@@ -66,9 +66,9 @@ so that **il salone possa tariffeare ogni servizio in modo differenziato per raz
   - [x] 2.3 Creare `src/lib/actions/breeds.ts` con `createBreed`, `updateBreed`, `deleteBreed` (tutti con `authActionClient`, checkRole admin)
   - [x] 2.4 `createBreed` e `updateBreed`: dopo save breed, eseguire replace dei prezzi (delete all breed prices → insert solo quelli con price valorizzato) — NO db.transaction() (driver neon-http incompatibile)
 
-- [ ] Task 3: Query e action per prezzi-per-razza dal lato servizio (AC: #6–8)
-  - [ ] 3.1 Aggiungere `getServiceWithBreedPrices(serviceId, tenantId)` in `src/lib/queries/services.ts` — join con `serviceBreedPrices` e `breeds`
-  - [ ] 3.2 Aggiungere `upsertServiceBreedPrices` action in `src/lib/actions/services.ts` — riceve `serviceId` + array `[{breedId, price?: number}]`, replace strategy: delete all per (serviceId, tenantId) poi insert quelli con price valorizzato
+- [x] Task 3: Query e action per prezzi-per-razza dal lato servizio (AC: #6–8)
+  - [x] 3.1 Aggiungere `getServiceWithBreedPrices(serviceId, tenantId)` in `src/lib/queries/services.ts` — join con `serviceBreedPrices` e `breeds`
+  - [x] 3.2 Aggiungere `upsertServiceBreedPrices` action in `src/lib/actions/services.ts` — riceve `serviceId` + array `[{breedId, price?: number}]`, replace strategy: delete all per (serviceId, tenantId) poi insert quelli con price valorizzato
 
 - [ ] Task 4: Componenti BreedList e BreedForm (AC: #1–5)
   - [ ] 4.1 Creare `src/components/breed/BreedList.tsx` — Client Component: lista razze con nome + count prezzi + pulsanti "Modifica" e "Elimina" (Alert Dialog per eliminazione). Admin-only UI.
