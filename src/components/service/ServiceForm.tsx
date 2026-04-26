@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/sheet'
 import { toast } from 'sonner'
 import { useAction } from 'next-safe-action/hooks'
+import { ServiceBreedPricesSection } from '@/components/service/ServiceBreedPricesSection'
 
 interface ServiceFormProps {
   open: boolean
@@ -160,6 +161,13 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
             ? 'Salva Modifiche'
             : 'Crea Servizio'}
       </Button>
+
+      {isEditing && service && (
+        <ServiceBreedPricesSection
+          serviceId={service.id}
+          serviceBasePrice={service.price}
+        />
+      )}
     </form>
   )
 

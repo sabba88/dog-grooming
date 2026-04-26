@@ -64,6 +64,17 @@ export const updateBreed = authActionClient
     return { breedId: id }
   })
 
+export const fetchBreeds = authActionClient
+  .schema(z.object({}))
+  .action(async ({ ctx }) => {
+    const result = await db
+      .select({ id: breeds.id, name: breeds.name })
+      .from(breeds)
+      .where(eq(breeds.tenantId, ctx.tenantId))
+      .orderBy(breeds.name)
+    return { breeds: result }
+  })
+
 export const fetchBreedWithPrices = authActionClient
   .schema(z.object({ id: z.string().uuid() }))
   .action(async ({ parsedInput: { id }, ctx }) => {

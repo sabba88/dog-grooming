@@ -8,8 +8,9 @@ import {
 } from '@/lib/validations/services'
 import { upsertServiceBreedPricesSchema } from '@/lib/validations/breeds'
 import { db } from '@/lib/db'
-import { services, serviceBreedPrices } from '@/lib/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { services, serviceBreedPrices, breeds } from '@/lib/db/schema'
+import { eq, and, asc } from 'drizzle-orm'
+import { z } from 'zod'
 
 export const createService = authActionClient
   .schema(createServiceSchema)
@@ -90,6 +91,25 @@ export const deleteService = authActionClient
     }
 
     return { service: deletedService }
+  })
+
+export const fetchServiceBreedPrices = authActionClient
+  .schema(z.object({ serviceId: z.string().uuid() }))
+  .action(async ({ parsedInput: { serviceId }, ctx }) => {
+    const prices = await db
+      .select({
+        breedId: serviceBreedPrices.breedId,
+        breedName: breeds.name,
+        price: serviceBreedPrices.price,
+      })
+      .from(serviceBreedPrices)
+      .innerJoin(breeds, eq(breeds.id, serviceBreedPrices.breedId))
+      .where(and(
+        eq(serviceBreedPrices.serviceId, serviceId),
+        eq(serviceBreedPrices.tenantId, ctx.tenantId),
+      ))
+      .orderBy(asc(breeds.name))
+    return { prices }
   })
 
 export const upsertServiceBreedPrices = authActionClient

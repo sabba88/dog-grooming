@@ -76,10 +76,10 @@ so that **il salone possa tariffeare ogni servizio in modo differenziato per raz
   - [x] 4.3 Creare `src/app/(auth)/breeds/page.tsx` — Server Component: `checkRole` admin (redirect se collaboratore), fetch `getBreeds` + `getServices`, render `<BreedList>` con i dati
   - [x] 4.4 Aggiungere voce "Razze" nella navigazione sidebar/bottom bar per il ruolo Admin
 
-- [ ] Task 5: Sezione "Prezzi per Razza" nel ServiceForm (AC: #6–8)
-  - [ ] 5.1 Creare `src/components/service/ServiceBreedPricesSection.tsx` — Client Component: riceve `serviceId`, `serviceBasePrice`, lista di `{breedId, breedName, currentPrice?}`. State locale per i prezzi, pulsante "Salva Prezzi Razza", usa `useAction(upsertServiceBreedPrices)`.
-  - [ ] 5.2 Aggiornare `ServiceForm.tsx`: quando `isEditing`, aggiungere `ServiceBreedPricesSection` sotto il form principale (sezione separata con heading "Prezzi per Razza"). Fetch `getServiceWithBreedPrices` via query TanStack Query al mount del form.
-  - [ ] 5.3 Aggiornare `src/app/(auth)/services/page.tsx`: passare la lista delle razze a `ServiceList` per consentire il fetch nella sezione prezzi (oppure `ServiceBreedPricesSection` fa il fetch internamente via TanStack Query).
+- [x] Task 5: Sezione "Prezzi per Razza" nel ServiceForm (AC: #6–8)
+  - [x] 5.1 Creare `src/components/service/ServiceBreedPricesSection.tsx` — Client Component: riceve `serviceId`, `serviceBasePrice`, lista di `{breedId, breedName, currentPrice?}`. State locale per i prezzi, pulsante "Salva Prezzi Razza", usa `useAction(upsertServiceBreedPrices)`.
+  - [x] 5.2 Aggiornare `ServiceForm.tsx`: quando `isEditing`, aggiungere `ServiceBreedPricesSection` sotto il form principale (sezione separata con heading "Prezzi per Razza"). Fetch `getServiceWithBreedPrices` via query TanStack Query al mount del form.
+  - [x] 5.3 `ServiceBreedPricesSection` fa il fetch internamente via TanStack Query (fetchBreeds + fetchServiceBreedPrices server actions) — nessuna modifica a `services/page.tsx` necessaria.
 
 ## Dev Notes
 
