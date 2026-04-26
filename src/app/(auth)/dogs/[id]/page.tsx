@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth/auth'
 import { getDogById, getDogNotes } from '@/lib/queries/dogs'
+import { getBreedsForSelect } from '@/lib/queries/breeds'
 import { DogDetail } from '@/components/dog/DogDetail'
 
 interface DogDetailPageProps {
@@ -20,7 +21,17 @@ export default async function DogDetailPage({ params }: DogDetailPageProps) {
     redirect('/clients')
   }
 
-  const notes = await getDogNotes(id, session.user.tenantId)
+  const [notes, breeds] = await Promise.all([
+    getDogNotes(id, session.user.tenantId),
+    getBreedsForSelect(session.user.tenantId),
+  ])
 
-  return <DogDetail dog={dog} notes={notes} />
+  return (
+    <DogDetail
+      dog={dog}
+      notes={notes}
+      breeds={breeds}
+      userRole={session.user.role as 'admin' | 'collaborator'}
+    />
+  )
 }

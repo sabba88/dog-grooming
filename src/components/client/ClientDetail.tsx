@@ -32,7 +32,8 @@ interface Note {
 interface Dog {
   id: string
   name: string
-  breed: string | null
+  breedId: string | null
+  breedName: string | null
   size: string | null
   dateOfBirth: Date | null
   sex: string | null
@@ -44,9 +45,11 @@ interface ClientDetailProps {
   client: Client
   notes: Note[]
   dogs: Dog[]
+  breeds: { id: string; name: string }[]
+  userRole: 'admin' | 'collaborator'
 }
 
-export function ClientDetail({ client, notes, dogs }: ClientDetailProps) {
+export function ClientDetail({ client, notes, dogs, breeds, userRole }: ClientDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
 
@@ -104,7 +107,7 @@ export function ClientDetail({ client, notes, dogs }: ClientDetailProps) {
       </div>
 
       {/* Cani Associati */}
-      <DogList clientId={client.id} dogs={dogs} />
+      <DogList clientId={client.id} dogs={dogs} breeds={breeds} userRole={userRole} />
 
       <Separator className="my-6" />
 

@@ -38,7 +38,7 @@ interface SelectedClient {
 interface Dog {
   id: string
   name: string
-  breed: string | null
+  breedName: string | null
 }
 
 interface Service {
@@ -281,7 +281,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
           ) : dogs.length === 1 ? (
             <div className="rounded-lg border p-2.5 text-sm">
               <span className="font-medium">{dogs[0].name}</span>
-              {dogs[0].breed && <span className="text-muted-foreground ml-1">({dogs[0].breed})</span>}
+              {dogs[0].breedName && <span className="text-muted-foreground ml-1">({dogs[0].breedName})</span>}
             </div>
           ) : (
             <Select value={selectedDogId ?? undefined} onValueChange={(val) => { setSelectedDogId(val); setBusinessError(null) }}>
@@ -291,7 +291,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
               <SelectContent>
                 {dogs.map((dog) => (
                   <SelectItem key={dog.id} value={dog.id}>
-                    {dog.name}{dog.breed ? ` (${dog.breed})` : ''}
+                    {dog.name}{dog.breedName ? ` (${dog.breedName})` : ''}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -35,16 +35,19 @@ import {
 } from '@/components/ui/sheet'
 import { toast } from 'sonner'
 import { useAction } from 'next-safe-action/hooks'
+import { BreedCombobox } from '@/components/dog/BreedCombobox'
 
 interface DogFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
   clientId: string
+  breeds: { id: string; name: string }[]
+  userRole: 'admin' | 'collaborator'
   dog?: {
     id: string
     name: string
-    breed: string | null
+    breedId: string | null
     size: string | null
     dateOfBirth: Date | null
     sex: string | null
@@ -57,7 +60,7 @@ function formatDateForInput(date: Date | null): string {
   return date.toISOString().split('T')[0]
 }
 
-export function DogForm({ open, onOpenChange, onSuccess, clientId, dog }: DogFormProps) {
+export function DogForm({ open, onOpenChange, onSuccess, clientId, breeds, userRole, dog }: DogFormProps) {
   const isMobile = useIsMobile()
   const isEditing = !!dog
 
@@ -67,13 +70,13 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, dog }: DogFor
       ? {
           id: dog.id,
           name: dog.name,
-          breed: dog.breed || '',
+          breedId: dog.breedId || null,
           size: (dog.size as 'piccola' | 'media' | 'grande') || '',
           dateOfBirth: formatDateForInput(dog.dateOfBirth),
           sex: (dog.sex as 'maschio' | 'femmina') || '',
           sterilized: dog.sterilized,
         }
-      : { name: '', breed: '', size: '', dateOfBirth: '', sex: '', sterilized: false, clientId },
+      : { name: '', breedId: null, size: '', dateOfBirth: '', sex: '', sterilized: false, clientId },
   })
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createDog, {
@@ -128,18 +131,19 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, dog }: DogFor
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="breed">Razza (opzionale)</Label>
-        <Input
-          id="breed"
-          placeholder="Es. Labrador"
-          {...form.register('breed')}
-          aria-invalid={!!form.formState.errors.breed}
+        <Label>Razza (opzionale)</Label>
+        <Controller
+          name="breedId"
+          control={form.control}
+          render={({ field }) => (
+            <BreedCombobox
+              value={field.value}
+              onChange={field.onChange}
+              breeds={breeds}
+              isAdmin={userRole === 'admin'}
+            />
+          )}
         />
-        {form.formState.errors.breed && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.breed.message}
-          </p>
-        )}
       </div>
 
       <div className="flex flex-col gap-2">

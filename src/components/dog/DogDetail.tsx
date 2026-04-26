@@ -11,7 +11,8 @@ import { ArrowLeft, Pencil } from 'lucide-react'
 interface Dog {
   id: string
   name: string
-  breed: string | null
+  breedId: string | null
+  breedName: string | null
   size: string | null
   dateOfBirth: Date | null
   sex: string | null
@@ -33,11 +34,13 @@ interface Note {
 interface DogDetailProps {
   dog: Dog
   notes: Note[]
+  breeds: { id: string; name: string }[]
+  userRole: 'admin' | 'collaborator'
 }
 
 const dateFormatter = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' })
 
-export function DogDetail({ dog, notes }: DogDetailProps) {
+export function DogDetail({ dog, notes, breeds, userRole }: DogDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
 
@@ -93,7 +96,7 @@ export function DogDetail({ dog, notes }: DogDetailProps) {
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Razza</p>
-            <p className="text-sm text-foreground">{dog.breed || '—'}</p>
+            <p className="text-sm text-foreground">{dog.breedName || '—'}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Taglia</p>
@@ -142,6 +145,8 @@ export function DogDetail({ dog, notes }: DogDetailProps) {
         onOpenChange={setFormOpen}
         onSuccess={handleSuccess}
         clientId={dog.clientId}
+        breeds={breeds}
+        userRole={userRole}
         dog={dog}
       />
     </>
