@@ -6,6 +6,7 @@ import {
   Scissors,
   LayoutDashboard,
   Settings,
+  Dog,
 } from 'lucide-react'
 import type { UserRole } from '@/lib/auth/permissions'
 import type { LucideIcon } from 'lucide-react'
@@ -23,6 +24,7 @@ export const mainNavItems: NavItem[] = [
   { label: 'Cani', href: '/dogs', icon: PawPrint, roles: ['admin', 'collaborator'] },
   { label: 'Servizi', href: '/services', icon: Scissors, roles: ['admin', 'collaborator'] },
   { label: 'Personale', href: '/staff', icon: UserCog, roles: ['admin'] },
+  { label: 'Razze', href: '/breeds', icon: Dog, roles: ['admin'] },
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'collaborator'] },
 ]
 
@@ -46,6 +48,7 @@ export const pageTitles: Record<string, string> = {
   '/clients': 'Clienti',
   '/dogs': 'Cani',
   '/services': 'Servizi',
+  '/breeds': 'Razze',
   '/dashboard': 'Dashboard',
   '/settings': 'Impostazioni',
   '/settings/users': 'Gestione Utenze',

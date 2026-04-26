@@ -70,11 +70,11 @@ so that **il salone possa tariffeare ogni servizio in modo differenziato per raz
   - [x] 3.1 Aggiungere `getServiceWithBreedPrices(serviceId, tenantId)` in `src/lib/queries/services.ts` — join con `serviceBreedPrices` e `breeds`
   - [x] 3.2 Aggiungere `upsertServiceBreedPrices` action in `src/lib/actions/services.ts` — riceve `serviceId` + array `[{breedId, price?: number}]`, replace strategy: delete all per (serviceId, tenantId) poi insert quelli con price valorizzato
 
-- [ ] Task 4: Componenti BreedList e BreedForm (AC: #1–5)
-  - [ ] 4.1 Creare `src/components/breed/BreedList.tsx` — Client Component: lista razze con nome + count prezzi + pulsanti "Modifica" e "Elimina" (Alert Dialog per eliminazione). Admin-only UI.
-  - [ ] 4.2 Creare `src/components/breed/BreedForm.tsx` — Client Component: Sheet mobile / Dialog desktop con campo nome + lista servizi con prezzi opzionali. Usa `useAction(createBreed)` o `useAction(updateBreed)`.
-  - [ ] 4.3 Creare `src/app/(auth)/breeds/page.tsx` — Server Component: `checkRole` admin (redirect se collaboratore), fetch `getBreeds` + `getServices`, render `<BreedList>` con i dati
-  - [ ] 4.4 Aggiungere voce "Razze" nella navigazione sidebar/bottom bar per il ruolo Admin
+- [x] Task 4: Componenti BreedList e BreedForm (AC: #1–5)
+  - [x] 4.1 Creare `src/components/breed/BreedList.tsx` — Client Component: lista razze con nome + count prezzi + pulsanti "Modifica" e "Elimina" (Alert Dialog per eliminazione). Admin-only UI.
+  - [x] 4.2 Creare `src/components/breed/BreedForm.tsx` — Client Component: Sheet mobile / Dialog desktop con campo nome + lista servizi con prezzi opzionali. Usa `useAction(createBreed)` o `useAction(updateBreed)`.
+  - [x] 4.3 Creare `src/app/(auth)/breeds/page.tsx` — Server Component: `checkRole` admin (redirect se collaboratore), fetch `getBreeds` + `getServices`, render `<BreedList>` con i dati
+  - [x] 4.4 Aggiungere voce "Razze" nella navigazione sidebar/bottom bar per il ruolo Admin
 
 - [ ] Task 5: Sezione "Prezzi per Razza" nel ServiceForm (AC: #6–8)
   - [ ] 5.1 Creare `src/components/service/ServiceBreedPricesSection.tsx` — Client Component: riceve `serviceId`, `serviceBasePrice`, lista di `{breedId, breedName, currentPrice?}`. State locale per i prezzi, pulsante "Salva Prezzi Razza", usa `useAction(upsertServiceBreedPrices)`.

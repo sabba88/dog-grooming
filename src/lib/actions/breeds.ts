@@ -5,6 +5,7 @@ import { createBreedSchema, updateBreedSchema, deleteBreedSchema } from '@/lib/v
 import { breeds, serviceBreedPrices } from '@/lib/db/schema'
 import { db } from '@/lib/db'
 import { eq, and } from 'drizzle-orm'
+import { z } from 'zod'
 
 // NOTA: driver neon-http non supporta db.transaction() — operazioni sequenziali (pattern da locations.ts)
 
@@ -61,6 +62,31 @@ export const updateBreed = authActionClient
     }
 
     return { breedId: id }
+  })
+
+export const fetchBreedWithPrices = authActionClient
+  .schema(z.object({ id: z.string().uuid() }))
+  .action(async ({ parsedInput: { id }, ctx }) => {
+    const [breed] = await db
+      .select({ id: breeds.id, name: breeds.name })
+      .from(breeds)
+      .where(and(eq(breeds.id, id), eq(breeds.tenantId, ctx.tenantId)))
+      .limit(1)
+
+    if (!breed) return { breed: null }
+
+    const prices = await db
+      .select({
+        serviceId: serviceBreedPrices.serviceId,
+        price: serviceBreedPrices.price,
+      })
+      .from(serviceBreedPrices)
+      .where(and(
+        eq(serviceBreedPrices.breedId, id),
+        eq(serviceBreedPrices.tenantId, ctx.tenantId),
+      ))
+
+    return { breed: { ...breed, servicePrices: prices } }
   })
 
 export const deleteBreed = authActionClient
