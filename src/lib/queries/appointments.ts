@@ -14,8 +14,7 @@ export async function getAppointmentById(id: string, tenantId: string) {
       dogId: appointments.dogId,
       clientId: appointments.clientId,
       stationId: appointments.stationId,
-      clientFirstName: clients.firstName,
-      clientLastName: clients.lastName,
+      clientNominativo: clients.nominativo,
       dogName: dogs.name,
       serviceName: services.name,
       serviceId: services.id,
@@ -54,8 +53,7 @@ export async function getAppointmentsByDateAndLocation(
       price: appointments.price,
       notes: appointments.notes,
       stationId: appointments.stationId,
-      clientFirstName: clients.firstName,
-      clientLastName: clients.lastName,
+      clientNominativo: clients.nominativo,
       dogName: dogs.name,
       serviceName: services.name,
       serviceId: services.id,
@@ -93,8 +91,7 @@ export async function getAppointmentsByDateAndLocationGroupedByUser(
       notes: appointments.notes,
       userId: appointments.userId,
       stationId: appointments.stationId,
-      clientFirstName: clients.firstName,
-      clientLastName: clients.lastName,
+      clientNominativo: clients.nominativo,
       dogName: dogs.name,
       serviceName: services.name,
       serviceId: services.id,
@@ -108,6 +105,35 @@ export async function getAppointmentsByDateAndLocationGroupedByUser(
         isNotNull(appointments.userId),
         gte(appointments.startTime, dayStart),
         lt(appointments.startTime, dayEnd),
+        eq(appointments.tenantId, tenantId),
+        isNull(clients.deletedAt)
+      )
+    )
+    .orderBy(asc(appointments.startTime))
+}
+
+export async function getWeeklyAppointmentsByPerson(
+  weekStart: string,
+  weekEnd: string,
+  tenantId: string
+): Promise<{ id: string; userId: string; startTime: Date; endTime: Date }[]> {
+  const start = new Date(weekStart + 'T00:00:00.000Z')
+  const end = new Date(weekEnd + 'T23:59:59.999Z')
+
+  return db
+    .select({
+      id: appointments.id,
+      userId: appointments.userId,
+      startTime: appointments.startTime,
+      endTime: appointments.endTime,
+    })
+    .from(appointments)
+    .innerJoin(clients, eq(appointments.clientId, clients.id))
+    .where(
+      and(
+        isNotNull(appointments.userId),
+        gte(appointments.startTime, start),
+        lt(appointments.startTime, end),
         eq(appointments.tenantId, tenantId),
         isNull(clients.deletedAt)
       )

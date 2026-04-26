@@ -1,3 +1,46 @@
+export interface TimeInterval {
+  start: number
+  end: number
+}
+
+export function computeGaps(
+  shifts: TimeInterval[],
+  appointments: TimeInterval[]
+): TimeInterval[] {
+  const gaps: TimeInterval[] = []
+
+  for (const shift of shifts) {
+    const covered = [...appointments]
+      .filter(a => a.end > shift.start && a.start < shift.end)
+      .map(a => ({
+        start: Math.max(a.start, shift.start),
+        end: Math.min(a.end, shift.end),
+      }))
+      .sort((a, b) => a.start - b.start)
+
+    let cursor = shift.start
+    for (const segment of covered) {
+      if (cursor < segment.start) {
+        gaps.push({ start: cursor, end: segment.start })
+      }
+      cursor = Math.max(cursor, segment.end)
+    }
+    if (cursor < shift.end) {
+      gaps.push({ start: cursor, end: shift.end })
+    }
+  }
+
+  return gaps
+}
+
+export function minutesToHoursLabel(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (m === 0) return `${h}h`
+  if (h === 0) return `${m}min`
+  return `${h}h ${m}min`
+}
+
 export const SLOT_HEIGHT_PX = 30
 export const MINUTES_PER_SLOT = 15
 

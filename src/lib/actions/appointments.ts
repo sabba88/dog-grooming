@@ -1,18 +1,46 @@
 'use server'
 
 import { authActionClient } from '@/lib/actions/client'
-import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema } from '@/lib/validations/appointments'
-import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog } from '@/lib/queries/appointments'
-import { getStaffStatusForDate } from '@/lib/queries/staff'
+import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema } from '@/lib/validations/appointments'
+import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog, getWeeklyAppointmentsByPerson } from '@/lib/queries/appointments'
+import { getStaffStatusForDate, getActiveUsers, getWeeklyStaffShifts } from '@/lib/queries/staff'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
 import { getDogsByClient } from '@/lib/queries/dogs'
 import { getStationsByLocation, getServicesForStation } from '@/lib/queries/stations'
 import { getServices, getServiceById, getBreedPriceForService } from '@/lib/queries/services'
 import { timeToMinutes } from '@/lib/utils/schedule'
+import { addDays, parseISO, format } from 'date-fns'
 import { z } from 'zod'
 import { db } from '@/lib/db'
 import { appointments, stationServices, userLocationAssignments } from '@/lib/db/schema'
 import { eq, and, lt, gt, gte, asc, ne } from 'drizzle-orm'
+
+export const fetchWeeklyAgendaData = authActionClient
+  .schema(fetchWeeklyAgendaDataSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { locationId, weekStart } = parsedInput
+    const weekEnd = format(addDays(parseISO(weekStart), 6), 'yyyy-MM-dd')
+
+    const [allUsers, staffShiftsRaw, allAppointments] = await Promise.all([
+      getActiveUsers(ctx.tenantId),
+      getWeeklyStaffShifts(weekStart, weekEnd, locationId, ctx.tenantId),
+      getWeeklyAppointmentsByPerson(weekStart, weekEnd, ctx.tenantId),
+    ])
+
+    const staffWithShifts = allUsers.filter(u => (staffShiftsRaw[u.id]?.length ?? 0) > 0)
+
+    const appointmentsByUser: Record<string, typeof allAppointments> = {}
+    for (const appt of allAppointments) {
+      if (!appointmentsByUser[appt.userId]) appointmentsByUser[appt.userId] = []
+      appointmentsByUser[appt.userId].push(appt)
+    }
+
+    return {
+      staff: staffWithShifts,
+      staffShifts: staffShiftsRaw,
+      appointments: appointmentsByUser,
+    }
+  })
 
 export const getAgendaData = authActionClient
   .schema(getAppointmentsQuerySchema)

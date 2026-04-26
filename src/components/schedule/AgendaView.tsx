@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { format, getDay } from 'date-fns'
+import { format, getDay, startOfWeek, addDays, addWeeks, subWeeks, parseISO } from 'date-fns'
+import { it } from 'date-fns/locale'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAction } from 'next-safe-action/hooks'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -10,9 +11,16 @@ import { DateNavigation } from './DateNavigation'
 import { DateStrip } from './DateStrip'
 import { ScheduleGrid } from './ScheduleGrid'
 import { ScheduleTimeline } from './ScheduleTimeline'
+import { WeeklyScheduleView } from './WeeklyScheduleView'
 import { AppointmentForm } from '@/components/appointment/AppointmentForm'
 import { AppointmentDetail } from '@/components/appointment/AppointmentDetail'
-import { getAgendaData, fetchAppointmentDetail, moveAppointment as moveAppointmentAction, deleteAppointment } from '@/lib/actions/appointments'
+import {
+  getAgendaData,
+  fetchAppointmentDetail,
+  moveAppointment as moveAppointmentAction,
+  deleteAppointment,
+  fetchWeeklyAgendaData,
+} from '@/lib/actions/appointments'
 import { computeAgendaRange } from '@/lib/utils/schedule'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -45,6 +53,8 @@ type ContextAction = 'detail' | 'add-note' | 'move' | 'delete'
 
 export function AgendaView({ locations }: AgendaViewProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date())
+  const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [appointmentSlot, setAppointmentSlot] = useState<{
     userId: string
     userName: string
@@ -86,6 +96,30 @@ export function AgendaView({ locations }: AgendaViewProps) {
     },
     enabled: !!selectedLocationId && isHydrated,
   })
+
+  const weekStartStr = format(weekStart, 'yyyy-MM-dd')
+  const { data: weeklyData, isLoading: isWeeklyLoading } = useQuery({
+    queryKey: ['agenda-weekly', selectedLocationId, weekStartStr],
+    queryFn: async () => {
+      if (!selectedLocationId) return null
+      const result = await fetchWeeklyAgendaData({
+        locationId: selectedLocationId,
+        weekStart: weekStartStr,
+      })
+      if (!result?.data) return null
+      return {
+        staff: result.data.staff,
+        staffShifts: result.data.staffShifts,
+        appointments: result.data.appointments,
+      }
+    },
+    enabled: !!selectedLocationId && isHydrated && viewMode === 'week',
+  })
+
+  const weekDates = Array.from({ length: 7 }, (_, i) =>
+    format(addDays(weekStart, i), 'yyyy-MM-dd')
+  )
+  const currentWeekLabel = `${format(weekStart, 'd MMM', { locale: it })}–${format(addDays(weekStart, 6), 'd MMM yyyy', { locale: it })}`
 
   const { execute: executeQuickDelete } = useAction(deleteAppointment, {
     onSuccess: () => {
@@ -201,15 +235,56 @@ export function AgendaView({ locations }: AgendaViewProps) {
     }
   }
 
-  // No staff assigned
-  if (isHydrated && selectedLocationId && data && staff.length === 0) {
+  const handleDayClick = (date: string) => {
+    setSelectedDate(parseISO(date))
+    setViewMode('day')
+  }
+
+  const handlePrevWeek = () => {
+    setWeekStart(prev => subWeeks(prev, 1))
+  }
+
+  const handleNextWeek = () => {
+    setWeekStart(prev => addWeeks(prev, 1))
+  }
+
+  const handleSwitchToWeek = () => {
+    setWeekStart(startOfWeek(selectedDate, { weekStartsOn: 1 }))
+    setMovingAppointment(null)
+    setViewMode('week')
+  }
+
+  const toggleGroup = (
+    <div className="flex items-center gap-1">
+      <Button
+        variant={viewMode === 'day' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => setViewMode('day')}
+      >
+        {isMobile ? 'G' : 'Giorno'}
+      </Button>
+      <Button
+        variant={viewMode === 'week' ? 'default' : 'outline'}
+        size="sm"
+        onClick={handleSwitchToWeek}
+      >
+        {isMobile ? 'S' : 'Settimana'}
+      </Button>
+    </div>
+  )
+
+  // No staff assigned (day mode only)
+  if (viewMode === 'day' && isHydrated && selectedLocationId && data && staff.length === 0) {
     return (
       <div className="flex flex-col gap-4">
-        {isMobile ? (
-          <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
-        ) : (
-          <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
-        )}
+        <div className="flex items-center justify-between gap-2">
+          {isMobile ? (
+            <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
+          ) : (
+            <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
+          )}
+          {toggleGroup}
+        </div>
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <Settings className="size-10 text-muted-foreground" />
           <p className="text-muted-foreground text-center">
@@ -228,8 +303,8 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Banner spostamento */}
-      {movingAppointment && (
+      {/* Banner spostamento — solo in modalità giornaliera */}
+      {viewMode === 'day' && movingAppointment && (
         <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
           <p className="text-sm text-amber-800">
             Tocca un nuovo slot per spostare &quot;{movingAppointment.serviceName}&quot;
@@ -246,36 +321,66 @@ export function AgendaView({ locations }: AgendaViewProps) {
         </div>
       )}
 
-      {isMobile ? (
-        <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
-      ) : (
-        <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
+      {/* Header navigazione + toggle */}
+      {viewMode === 'day' && (
+        <div className="flex items-center justify-between gap-2">
+          {isMobile ? (
+            <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
+          ) : (
+            <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
+          )}
+          {toggleGroup}
+        </div>
       )}
 
-      {isMobile ? (
-        <ScheduleTimeline
-          staff={staff}
-          appointments={appointments}
-          dateString={dateString}
-          globalOpen={globalOpen}
-          globalClose={globalClose}
-          onAppointmentClick={handleAppointmentClick}
-          onEmptySlotClick={handleEmptySlotClick}
-          movingAppointmentId={movingAppointment?.id}
-          onContextAction={handleContextAction}
-        />
-      ) : (
-        <ScheduleGrid
-          staff={staff}
-          appointments={appointments}
-          selectedDate={selectedDate}
-          dateString={dateString}
-          globalOpen={globalOpen}
-          globalClose={globalClose}
-          onAppointmentClick={handleAppointmentClick}
-          onEmptySlotClick={handleEmptySlotClick}
-          movingAppointmentId={movingAppointment?.id}
-          onContextAction={handleContextAction}
+      {viewMode === 'week' && (
+        <div className="flex items-center justify-end gap-2">
+          {toggleGroup}
+        </div>
+      )}
+
+      {/* Griglia giornaliera */}
+      {viewMode === 'day' && (
+        isMobile ? (
+          <ScheduleTimeline
+            staff={staff}
+            appointments={appointments}
+            dateString={dateString}
+            globalOpen={globalOpen}
+            globalClose={globalClose}
+            onAppointmentClick={handleAppointmentClick}
+            onEmptySlotClick={handleEmptySlotClick}
+            movingAppointmentId={movingAppointment?.id}
+            onContextAction={handleContextAction}
+          />
+        ) : (
+          <ScheduleGrid
+            staff={staff}
+            appointments={appointments}
+            selectedDate={selectedDate}
+            dateString={dateString}
+            globalOpen={globalOpen}
+            globalClose={globalClose}
+            onAppointmentClick={handleAppointmentClick}
+            onEmptySlotClick={handleEmptySlotClick}
+            movingAppointmentId={movingAppointment?.id}
+            onContextAction={handleContextAction}
+          />
+        )
+      )}
+
+      {/* Vista settimanale */}
+      {viewMode === 'week' && (
+        <WeeklyScheduleView
+          weekDates={weekDates}
+          staff={weeklyData?.staff ?? []}
+          staffShifts={weeklyData?.staffShifts ?? {}}
+          appointments={weeklyData?.appointments ?? {}}
+          onDayClick={handleDayClick}
+          onPrevWeek={handlePrevWeek}
+          onNextWeek={handleNextWeek}
+          currentWeekLabel={currentWeekLabel}
+          isLoading={isWeeklyLoading}
         />
       )}
 

@@ -71,6 +71,7 @@ development_status:
   4-3-cancellazione-e-spostamento-appuntamenti: done          # CC-2026-03-14: modifica (spostamento tra persone); CC-2026-04-26: implementazione completata
   4-4-note-prestazione: review
   4-5-prezzo-appuntamento-per-razza: review  # CC-2026-04-26b: nuova story - logica prezzo breed-aware, dipende da 3.3
+  4-6-vista-settimanale-agenda: review  # CC-2026-04-27: nuova story - vista settimanale con gap operatori evidenziati
   epic-4-retrospective: optional
 
   # Epica 5: Dashboard e Panoramica
