@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, boolean, integer, pgEnum, date } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, boolean, integer, pgEnum, date, uniqueIndex } from 'drizzle-orm/pg-core'
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'collaborator'])
 
@@ -119,6 +119,29 @@ export const locationBusinessHours = pgTable('location_business_hours', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
+
+// CC-2026-04-26b: Catalogo razze canine — CMS gestito dall'Amministratore.
+export const breeds = pgTable('breeds', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// CC-2026-04-26b: Prezzi specifici per razza per servizio.
+// Se non esiste una riga per (serviceId, breedId), il sistema usa services.price come fallback.
+export const serviceBreedPrices = pgTable('service_breed_prices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  serviceId: uuid('service_id').notNull().references(() => services.id, { onDelete: 'cascade' }),
+  breedId: uuid('breed_id').notNull().references(() => breeds.id, { onDelete: 'cascade' }),
+  price: integer('price').notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+},
+(t) => [uniqueIndex('unique_service_breed_tenant').on(t.serviceId, t.breedId, t.tenantId)]
+)
 
 export const appointments = pgTable('appointments', {
   id: uuid('id').primaryKey().defaultRandom(),
