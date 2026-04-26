@@ -2,6 +2,14 @@ import { db } from '@/lib/db'
 import { breeds, serviceBreedPrices } from '@/lib/db/schema'
 import { eq, and, asc, sql } from 'drizzle-orm'
 
+export async function getBreedsForSelect(tenantId: string) {
+  return db
+    .select({ id: breeds.id, name: breeds.name })
+    .from(breeds)
+    .where(eq(breeds.tenantId, tenantId))
+    .orderBy(asc(breeds.name))
+}
+
 export async function getBreeds(tenantId: string) {
   return db
     .select({
