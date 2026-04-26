@@ -32,6 +32,24 @@ export async function getServiceById(serviceId: string, tenantId: string) {
   return service ?? null
 }
 
+export async function getBreedPriceForService(
+  serviceId: string,
+  breedId: string,
+  tenantId: string
+): Promise<{ price: number; breedName: string } | null> {
+  const [result] = await db
+    .select({ price: serviceBreedPrices.price, breedName: breeds.name })
+    .from(serviceBreedPrices)
+    .innerJoin(breeds, eq(breeds.id, serviceBreedPrices.breedId))
+    .where(and(
+      eq(serviceBreedPrices.serviceId, serviceId),
+      eq(serviceBreedPrices.breedId, breedId),
+      eq(serviceBreedPrices.tenantId, tenantId)
+    ))
+    .limit(1)
+  return result ?? null
+}
+
 export async function getServiceWithBreedPrices(serviceId: string, tenantId: string) {
   return db
     .select({

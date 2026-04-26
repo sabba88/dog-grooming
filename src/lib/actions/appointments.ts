@@ -7,7 +7,7 @@ import { getStaffStatusForDate } from '@/lib/queries/staff'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
 import { getDogsByClient } from '@/lib/queries/dogs'
 import { getStationsByLocation, getServicesForStation } from '@/lib/queries/stations'
-import { getServices } from '@/lib/queries/services'
+import { getServices, getServiceById, getBreedPriceForService } from '@/lib/queries/services'
 import { timeToMinutes } from '@/lib/utils/schedule'
 import { z } from 'zod'
 import { db } from '@/lib/db'
@@ -101,6 +101,20 @@ export const fetchAllServices = authActionClient
   .action(async ({ ctx }) => {
     const allServices = await getServices(ctx.tenantId)
     return { services: allServices }
+  })
+
+export const fetchBreedPriceForService = authActionClient
+  .schema(z.object({ serviceId: z.string().uuid(), breedId: z.string().uuid() }))
+  .action(async ({ parsedInput, ctx }) => {
+    const [breedPrice, service] = await Promise.all([
+      getBreedPriceForService(parsedInput.serviceId, parsedInput.breedId, ctx.tenantId),
+      getServiceById(parsedInput.serviceId, ctx.tenantId),
+    ])
+    if (!service) throw new Error('Servizio non trovato')
+    if (breedPrice) {
+      return { price: breedPrice.price, breedName: breedPrice.breedName, isBreedPrice: true }
+    }
+    return { price: service.price, breedName: null, isBreedPrice: false }
   })
 
 export const createAppointment = authActionClient

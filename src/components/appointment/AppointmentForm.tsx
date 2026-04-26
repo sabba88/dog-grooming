@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAction } from 'next-safe-action/hooks'
 import { toast } from 'sonner'
-import { createAppointment, fetchDogsForClient, fetchAllServices, fetchStationsForLocation, fetchServicesForStation } from '@/lib/actions/appointments'
+import { createAppointment, fetchDogsForClient, fetchAllServices, fetchStationsForLocation, fetchServicesForStation, fetchBreedPriceForService } from '@/lib/actions/appointments'
 import { formatPrice, formatDuration } from '@/lib/utils/formatting'
 import { ClientSearch } from '@/components/appointment/ClientSearch'
 import { QuickClientForm } from '@/components/appointment/QuickClientForm'
@@ -38,6 +38,7 @@ interface SelectedClient {
 interface Dog {
   id: string
   name: string
+  breedId: string | null
   breedName: string | null
 }
 
@@ -59,6 +60,8 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [duration, setDuration] = useState<number>(0)
   const [priceEur, setPriceEur] = useState<string>('')
+  const [breedPriceLabel, setBreedPriceLabel] = useState<string | null>(null)
+  const isPriceManuallyEdited = useRef<boolean>(false)
   const [businessError, setBusinessError] = useState<{
     code: string
     message: string
@@ -72,6 +75,9 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
         setDogs(data.dogs)
         if (data.dogs.length === 1) {
           setSelectedDogId(data.dogs[0].id)
+          if (selectedServiceId) {
+            applyBreedAwarePrice(selectedServiceId, data.dogs[0])
+          }
         }
       }
     },
@@ -97,6 +103,16 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     onSuccess: ({ data }) => {
       if (data?.services) {
         setServices(data.services)
+      }
+    },
+  })
+
+  const { execute: loadBreedPrice } = useAction(fetchBreedPriceForService, {
+    onSuccess: ({ data }) => {
+      if (isPriceManuallyEdited.current) return
+      if (data) {
+        setPriceEur((data.price / 100).toFixed(2))
+        setBreedPriceLabel(data.breedName ?? null)
       }
     },
   })
@@ -134,12 +150,26 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     handleClientSelect(client)
   }
 
+  const applyBreedAwarePrice = (serviceId: string, dog: Dog) => {
+    isPriceManuallyEdited.current = false
+    if (dog.breedId) {
+      loadBreedPrice({ serviceId, breedId: dog.breedId })
+    } else {
+      const service = services.find((s) => s.id === serviceId)
+      if (service) {
+        setPriceEur((service.price / 100).toFixed(2))
+      }
+      setBreedPriceLabel(null)
+    }
+  }
+
   const handleStationChange = (value: string) => {
     const stationId = value === '__all__' ? null : value
     setSelectedStationId(stationId)
     setSelectedServiceId(null)
     setDuration(0)
     setPriceEur('')
+    setBreedPriceLabel(null)
     setBusinessError(null)
     if (stationId) {
       loadServicesForStation({ stationId })
@@ -154,6 +184,13 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     const service = services.find((s) => s.id === serviceId)
     if (service) {
       setDuration(service.duration)
+      if (selectedDogId) {
+        const dog = dogs.find((d) => d.id === selectedDogId)
+        if (dog) {
+          applyBreedAwarePrice(serviceId, dog)
+          return
+        }
+      }
       setPriceEur((service.price / 100).toFixed(2))
     }
   }
@@ -252,6 +289,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
                 setSelectedServiceId(null)
                 setDuration(0)
                 setPriceEur('')
+                setBreedPriceLabel(null)
                 setBusinessError(null)
                 loadServices({})
               }}
@@ -284,7 +322,14 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
               {dogs[0].breedName && <span className="text-muted-foreground ml-1">({dogs[0].breedName})</span>}
             </div>
           ) : (
-            <Select value={selectedDogId ?? undefined} onValueChange={(val) => { setSelectedDogId(val); setBusinessError(null) }}>
+            <Select value={selectedDogId ?? undefined} onValueChange={(val) => {
+              setSelectedDogId(val)
+              setBusinessError(null)
+              if (selectedServiceId) {
+                const dog = dogs.find((d) => d.id === val)
+                if (dog) applyBreedAwarePrice(selectedServiceId, dog)
+              }
+            }}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleziona cane" />
               </SelectTrigger>
@@ -379,8 +424,17 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
               min={0}
               step="0.01"
               value={priceEur}
-              onChange={(e) => setPriceEur(e.target.value)}
+              onChange={(e) => {
+                setPriceEur(e.target.value)
+                isPriceManuallyEdited.current = true
+                setBreedPriceLabel(null)
+              }}
             />
+            {breedPriceLabel && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                (prezzo razza: {breedPriceLabel})
+              </p>
+            )}
           </div>
         </div>
       )}
