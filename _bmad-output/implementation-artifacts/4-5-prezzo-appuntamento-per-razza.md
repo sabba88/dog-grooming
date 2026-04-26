@@ -352,3 +352,7 @@ claude-sonnet-4-6
 - `src/lib/actions/appointments.ts` — AGGIUNTO: `fetchBreedPriceForService`, import `getServiceById` e `getBreedPriceForService`
 - `src/components/appointment/AppointmentForm.tsx` — MODIFICATO: logica breed-aware pricing completa
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` — AGGIORNATO: status `in-progress` → `review`
+
+### Change Log
+
+- 2026-04-26: Implementazione completa story 4-5. Aggiunta query `getBreedPriceForService` (services.ts), server action `fetchBreedPriceForService` (appointments.ts), e logica breed-aware nel form appuntamento (AppointmentForm.tsx): pre-compilazione prezzo da `service_breed_prices` quando cane ha razza, etichetta "(prezzo razza: ...)", gestione override manuale con `useRef`.
