@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { appointments, clients, dogs, services, stations, users } from '@/lib/db/schema'
-import { eq, and, gte, lt, asc, isNull, isNotNull } from 'drizzle-orm'
+import { eq, and, gte, lt, asc, isNull, isNotNull, ne, desc } from 'drizzle-orm'
 
 export async function getAppointmentById(id: string, tenantId: string) {
   const [result] = await db
@@ -11,6 +11,8 @@ export async function getAppointmentById(id: string, tenantId: string) {
       price: appointments.price,
       notes: appointments.notes,
       userId: appointments.userId,
+      dogId: appointments.dogId,
+      clientId: appointments.clientId,
       stationId: appointments.stationId,
       clientFirstName: clients.firstName,
       clientLastName: clients.lastName,
@@ -111,6 +113,34 @@ export async function getAppointmentsByDateAndLocationGroupedByUser(
       )
     )
     .orderBy(asc(appointments.startTime))
+}
+
+export async function getServiceNotesByDog(
+  dogId: string,
+  excludeAppointmentId: string | null,
+  tenantId: string
+) {
+  const conditions = [
+    eq(appointments.dogId, dogId),
+    eq(appointments.tenantId, tenantId),
+    isNotNull(appointments.notes),
+    ne(appointments.notes, ''),
+  ]
+  if (excludeAppointmentId) {
+    conditions.push(ne(appointments.id, excludeAppointmentId))
+  }
+
+  return db
+    .select({
+      id: appointments.id,
+      startTime: appointments.startTime,
+      serviceName: services.name,
+      notes: appointments.notes,
+    })
+    .from(appointments)
+    .innerJoin(services, eq(appointments.serviceId, services.id))
+    .where(and(...conditions))
+    .orderBy(desc(appointments.startTime))
 }
 
 export async function getStationsWithScheduleForDay(

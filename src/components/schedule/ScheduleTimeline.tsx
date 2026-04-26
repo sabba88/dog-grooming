@@ -38,6 +38,7 @@ interface ScheduleTimelineProps {
   onAppointmentClick?: (id: string) => void
   onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
   movingAppointmentId?: string
+  onContextAction?: (action: 'detail' | 'add-note' | 'move' | 'delete', id: string) => void
 }
 
 const STATUS_DOT_COLOR: Record<StaffStatus, string> = {
@@ -56,6 +57,7 @@ function PersonTimeline({
   onAppointmentClick,
   onEmptySlotClick,
   movingAppointmentId,
+  onContextAction,
 }: {
   person: Person
   appointments: Appointment[]
@@ -66,6 +68,7 @@ function PersonTimeline({
   onAppointmentClick?: (id: string) => void
   onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
   movingAppointmentId?: string
+  onContextAction?: (action: 'detail' | 'add-note' | 'move' | 'delete', id: string) => void
 }) {
   const timeSlots = generateTimeSlots(globalOpen, globalClose)
 
@@ -104,6 +107,7 @@ function PersonTimeline({
                   variant="timeline"
                   onClick={onAppointmentClick}
                   isMoving={movingAppointmentId === appt.id}
+                  onContextAction={onContextAction}
                 />
               </div>
             </div>
@@ -140,6 +144,7 @@ export function ScheduleTimeline({
   onAppointmentClick,
   onEmptySlotClick,
   movingAppointmentId,
+  onContextAction,
 }: ScheduleTimelineProps) {
   const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
 
@@ -183,6 +188,7 @@ export function ScheduleTimeline({
                   onAppointmentClick={onAppointmentClick}
                   onEmptySlotClick={onEmptySlotClick}
                   movingAppointmentId={movingAppointmentId}
+                  onContextAction={onContextAction}
                 />
               </div>
             )
@@ -206,6 +212,7 @@ export function ScheduleTimeline({
               onAppointmentClick={onAppointmentClick}
               onEmptySlotClick={onEmptySlotClick}
               movingAppointmentId={movingAppointmentId}
+              onContextAction={onContextAction}
             />
           </TabsContent>
         )

@@ -47,6 +47,7 @@ interface ScheduleGridProps {
   onAppointmentClick?: (id: string) => void
   onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
   movingAppointmentId?: string
+  onContextAction?: (action: 'detail' | 'add-note' | 'move' | 'delete', id: string) => void
 }
 
 export function ScheduleGrid({
@@ -59,6 +60,7 @@ export function ScheduleGrid({
   onAppointmentClick,
   onEmptySlotClick,
   movingAppointmentId,
+  onContextAction,
 }: ScheduleGridProps) {
   if (staff.length === 0) return null
 
@@ -228,6 +230,7 @@ export function ScheduleGrid({
                     }}
                     onClick={onAppointmentClick}
                     isMoving={movingAppointmentId === appt.id}
+                    onContextAction={onContextAction}
                   />
                 )
               })}

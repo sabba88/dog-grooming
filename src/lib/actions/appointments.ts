@@ -1,8 +1,8 @@
 'use server'
 
 import { authActionClient } from '@/lib/actions/client'
-import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema } from '@/lib/validations/appointments'
-import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById } from '@/lib/queries/appointments'
+import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema } from '@/lib/validations/appointments'
+import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog } from '@/lib/queries/appointments'
 import { getStaffStatusForDate } from '@/lib/queries/staff'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
 import { getDogsByClient } from '@/lib/queries/dogs'
@@ -242,6 +242,33 @@ export const deleteAppointment = authActionClient
       )
 
     return { success: true }
+  })
+
+export const saveAppointmentNote = authActionClient
+  .schema(saveAppointmentNoteSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const [existing] = await db
+      .select({ id: appointments.id })
+      .from(appointments)
+      .where(and(eq(appointments.id, parsedInput.id), eq(appointments.tenantId, ctx.tenantId)))
+      .limit(1)
+    if (!existing) throw new Error('Appuntamento non trovato')
+    await db
+      .update(appointments)
+      .set({ notes: parsedInput.notes || null, updatedAt: new Date() })
+      .where(and(eq(appointments.id, parsedInput.id), eq(appointments.tenantId, ctx.tenantId)))
+    return { success: true }
+  })
+
+export const fetchServiceNotesByDog = authActionClient
+  .schema(fetchServiceNotesByDogSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const serviceNotes = await getServiceNotesByDog(
+      parsedInput.dogId,
+      parsedInput.excludeAppointmentId ?? null,
+      ctx.tenantId
+    )
+    return { serviceNotes }
   })
 
 export const moveAppointment = authActionClient

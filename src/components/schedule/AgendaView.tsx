@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { format, getDay } from 'date-fns'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAction } from 'next-safe-action/hooks'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useLocationSelector } from '@/hooks/useLocationSelector'
 import { DateNavigation } from './DateNavigation'
@@ -11,10 +12,20 @@ import { ScheduleGrid } from './ScheduleGrid'
 import { ScheduleTimeline } from './ScheduleTimeline'
 import { AppointmentForm } from '@/components/appointment/AppointmentForm'
 import { AppointmentDetail } from '@/components/appointment/AppointmentDetail'
-import { getAgendaData, fetchAppointmentDetail, moveAppointment as moveAppointmentAction } from '@/lib/actions/appointments'
+import { getAgendaData, fetchAppointmentDetail, moveAppointment as moveAppointmentAction, deleteAppointment } from '@/lib/actions/appointments'
 import { computeAgendaRange } from '@/lib/utils/schedule'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Settings, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -30,6 +41,8 @@ interface AgendaViewProps {
   locations: Location[]
 }
 
+type ContextAction = 'detail' | 'add-note' | 'move' | 'delete'
+
 export function AgendaView({ locations }: AgendaViewProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [appointmentSlot, setAppointmentSlot] = useState<{
@@ -40,6 +53,8 @@ export function AgendaView({ locations }: AgendaViewProps) {
     locationId: string
   } | null>(null)
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null)
+  const [autoFocusNotes, setAutoFocusNotes] = useState(false)
+  const [deletingAppointmentId, setDeletingAppointmentId] = useState<string | null>(null)
   const [movingAppointment, setMovingAppointment] = useState<{
     id: string
     duration: number
@@ -72,6 +87,17 @@ export function AgendaView({ locations }: AgendaViewProps) {
     enabled: !!selectedLocationId && isHydrated,
   })
 
+  const { execute: executeQuickDelete } = useAction(deleteAppointment, {
+    onSuccess: () => {
+      toast.success('Appuntamento cancellato')
+      setDeletingAppointmentId(null)
+      queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
+    },
+    onError: () => {
+      toast.error('Errore durante la cancellazione')
+    },
+  })
+
   if (!isHydrated) return null
 
   const appointments = data?.appointments ?? []
@@ -82,7 +108,8 @@ export function AgendaView({ locations }: AgendaViewProps) {
     : { globalOpen: '08:00', globalClose: '20:00' }
 
   const handleAppointmentClick = (id: string) => {
-    if (movingAppointment) return // Ignorare click durante modalita' spostamento
+    if (movingAppointment) return
+    setAutoFocusNotes(false)
     setSelectedAppointmentId(id)
   }
 
@@ -150,6 +177,30 @@ export function AgendaView({ locations }: AgendaViewProps) {
     queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
   }
 
+  const handleDetailClose = () => {
+    setSelectedAppointmentId(null)
+    setAutoFocusNotes(false)
+  }
+
+  const handleContextAction = (action: ContextAction, id: string) => {
+    switch (action) {
+      case 'detail':
+        setAutoFocusNotes(false)
+        setSelectedAppointmentId(id)
+        break
+      case 'add-note':
+        setAutoFocusNotes(true)
+        setSelectedAppointmentId(id)
+        break
+      case 'move':
+        handleMoveStart(id)
+        break
+      case 'delete':
+        setDeletingAppointmentId(id)
+        break
+    }
+  }
+
   // No staff assigned
   if (isHydrated && selectedLocationId && data && staff.length === 0) {
     return (
@@ -211,6 +262,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
           onAppointmentClick={handleAppointmentClick}
           onEmptySlotClick={handleEmptySlotClick}
           movingAppointmentId={movingAppointment?.id}
+          onContextAction={handleContextAction}
         />
       ) : (
         <ScheduleGrid
@@ -223,12 +275,13 @@ export function AgendaView({ locations }: AgendaViewProps) {
           onAppointmentClick={handleAppointmentClick}
           onEmptySlotClick={handleEmptySlotClick}
           movingAppointmentId={movingAppointment?.id}
+          onContextAction={handleContextAction}
         />
       )}
 
       {/* Dettaglio appuntamento — Dialog desktop / Sheet mobile */}
       {isMobile ? (
-        <Sheet open={!!selectedAppointmentId} onOpenChange={() => setSelectedAppointmentId(null)}>
+        <Sheet open={!!selectedAppointmentId} onOpenChange={(open) => { if (!open) handleDetailClose() }}>
           <SheetContent side="bottom" className="h-auto max-h-[80vh] overflow-y-auto">
             <SheetHeader>
               <SheetTitle>Dettaglio Appuntamento</SheetTitle>
@@ -236,15 +289,16 @@ export function AgendaView({ locations }: AgendaViewProps) {
             {selectedAppointmentId && (
               <AppointmentDetail
                 appointmentId={selectedAppointmentId}
-                onClose={() => setSelectedAppointmentId(null)}
+                onClose={handleDetailClose}
                 onMove={handleMoveStart}
                 onDeleted={handleAppointmentDeleted}
+                autoFocusNotes={autoFocusNotes}
               />
             )}
           </SheetContent>
         </Sheet>
       ) : (
-        <Dialog open={!!selectedAppointmentId} onOpenChange={() => setSelectedAppointmentId(null)}>
+        <Dialog open={!!selectedAppointmentId} onOpenChange={(open) => { if (!open) handleDetailClose() }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Dettaglio Appuntamento</DialogTitle>
@@ -252,14 +306,43 @@ export function AgendaView({ locations }: AgendaViewProps) {
             {selectedAppointmentId && (
               <AppointmentDetail
                 appointmentId={selectedAppointmentId}
-                onClose={() => setSelectedAppointmentId(null)}
+                onClose={handleDetailClose}
                 onMove={handleMoveStart}
                 onDeleted={handleAppointmentDeleted}
+                autoFocusNotes={autoFocusNotes}
               />
             )}
           </DialogContent>
         </Dialog>
       )}
+
+      {/* AlertDialog cancellazione rapida da context menu */}
+      <AlertDialog
+        open={deletingAppointmentId !== null}
+        onOpenChange={(open) => { if (!open) setDeletingAppointmentId(null) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancellare l&apos;appuntamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              L&apos;azione è irreversibile.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingAppointmentId) {
+                  executeQuickDelete({ id: deletingAppointmentId })
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Cancella
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Form appuntamento — Dialog desktop / Sheet mobile */}
       {isMobile ? (

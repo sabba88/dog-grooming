@@ -7,6 +7,8 @@ import { Separator } from '@/components/ui/separator'
 import { DogForm } from '@/components/dog/DogForm'
 import { DogNotes } from '@/components/dog/DogNotes'
 import { ArrowLeft, Pencil } from 'lucide-react'
+import { format } from 'date-fns'
+import { it } from 'date-fns/locale'
 
 interface Dog {
   id: string
@@ -31,16 +33,24 @@ interface Note {
   authorName: string
 }
 
+interface ServiceNote {
+  id: string
+  startTime: Date
+  serviceName: string
+  notes: string | null
+}
+
 interface DogDetailProps {
   dog: Dog
   notes: Note[]
   breeds: { id: string; name: string }[]
+  serviceNotes: ServiceNote[]
   userRole: 'admin' | 'collaborator'
 }
 
 const dateFormatter = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' })
 
-export function DogDetail({ dog, notes, breeds, userRole }: DogDetailProps) {
+export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
 
@@ -132,12 +142,26 @@ export function DogDetail({ dog, notes, breeds, userRole }: DogDetailProps) {
 
       <Separator className="my-6" />
 
-      {/* Storico Note Prestazione — placeholder per Epica 4 */}
+      {/* Storico Note Prestazione */}
       <div className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Storico Note Prestazione</h2>
-        <p className="text-sm text-muted-foreground">
-          Nessuna nota prestazione registrata — Le note verranno aggiunte durante gli appuntamenti
-        </p>
+        {serviceNotes.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nessuna nota prestazione registrata</p>
+        ) : (
+          <div className="flex flex-col">
+            {serviceNotes.map((note, index) => (
+              <div key={note.id}>
+                {index > 0 && <Separator className="my-3" />}
+                <div className="flex flex-col gap-1">
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(note.startTime), 'd MMM yyyy', { locale: it })} · {note.serviceName}
+                  </p>
+                  <p className="text-sm text-foreground">{note.notes}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <DogForm
