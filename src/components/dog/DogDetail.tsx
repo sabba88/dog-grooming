@@ -7,11 +7,14 @@ import { Separator } from '@/components/ui/separator'
 import { DogForm } from '@/components/dog/DogForm'
 import { DogNotes } from '@/components/dog/DogNotes'
 import { ArrowLeft, Pencil } from 'lucide-react'
+import { format } from 'date-fns'
+import { it } from 'date-fns/locale'
 
 interface Dog {
   id: string
   name: string
-  breed: string | null
+  breedId: string | null
+  breedName: string | null
   size: string | null
   dateOfBirth: Date | null
   sex: string | null
@@ -19,8 +22,7 @@ interface Dog {
   clientId: string
   createdAt: Date | null
   updatedAt: Date | null
-  clientFirstName: string
-  clientLastName: string
+  clientNominativo: string
 }
 
 interface Note {
@@ -30,14 +32,24 @@ interface Note {
   authorName: string
 }
 
+interface ServiceNote {
+  id: string
+  startTime: Date
+  serviceName: string
+  notes: string | null
+}
+
 interface DogDetailProps {
   dog: Dog
   notes: Note[]
+  breeds: { id: string; name: string }[]
+  serviceNotes: ServiceNote[]
+  userRole: 'admin' | 'collaborator'
 }
 
 const dateFormatter = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' })
 
-export function DogDetail({ dog, notes }: DogDetailProps) {
+export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
 
@@ -71,7 +83,7 @@ export function DogDetail({ dog, notes }: DogDetailProps) {
           className="text-muted-foreground hover:text-foreground"
           onClick={() => router.push(`/clients/${dog.clientId}`)}
         >
-          {dog.clientFirstName} {dog.clientLastName}
+          {dog.clientNominativo}
         </Button>
         <span className="text-muted-foreground">/</span>
         <span className="text-sm font-medium text-foreground">{dog.name}</span>
@@ -93,7 +105,7 @@ export function DogDetail({ dog, notes }: DogDetailProps) {
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Razza</p>
-            <p className="text-sm text-foreground">{dog.breed || '—'}</p>
+            <p className="text-sm text-foreground">{dog.breedName || '—'}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Taglia</p>
@@ -129,12 +141,26 @@ export function DogDetail({ dog, notes }: DogDetailProps) {
 
       <Separator className="my-6" />
 
-      {/* Storico Note Prestazione — placeholder per Epica 4 */}
+      {/* Storico Note Prestazione */}
       <div className="rounded-lg border border-border bg-card p-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">Storico Note Prestazione</h2>
-        <p className="text-sm text-muted-foreground">
-          Nessuna nota prestazione registrata — Le note verranno aggiunte durante gli appuntamenti
-        </p>
+        {serviceNotes.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nessuna nota prestazione registrata</p>
+        ) : (
+          <div className="flex flex-col">
+            {serviceNotes.map((note, index) => (
+              <div key={note.id}>
+                {index > 0 && <Separator className="my-3" />}
+                <div className="flex flex-col gap-1">
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(note.startTime), 'd MMM yyyy', { locale: it })} · {note.serviceName}
+                  </p>
+                  <p className="text-sm text-foreground">{note.notes}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <DogForm
@@ -142,6 +168,8 @@ export function DogDetail({ dog, notes }: DogDetailProps) {
         onOpenChange={setFormOpen}
         onSuccess={handleSuccess}
         clientId={dog.clientId}
+        breeds={breeds}
+        userRole={userRole}
         dog={dog}
       />
     </>

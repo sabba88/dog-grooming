@@ -34,7 +34,7 @@ export const createDog = authActionClient
       .insert(dogs)
       .values({
         name: parsedInput.name,
-        breed: parsedInput.breed || null,
+        breedId: parsedInput.breedId || null,
         size: parsedInput.size || null,
         dateOfBirth: parsedInput.dateOfBirth ? new Date(parsedInput.dateOfBirth) : null,
         sex: parsedInput.sex || null,
@@ -54,7 +54,7 @@ export const updateDog = authActionClient
       .update(dogs)
       .set({
         name: parsedInput.name,
-        breed: parsedInput.breed || null,
+        breedId: parsedInput.breedId || null,
         size: parsedInput.size || null,
         dateOfBirth: parsedInput.dateOfBirth ? new Date(parsedInput.dateOfBirth) : null,
         sex: parsedInput.sex || null,

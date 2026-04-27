@@ -97,7 +97,7 @@ NFR12: L'architettura non introduce vincoli che impediscano l'evoluzione verso m
 - Componenti custom critici: ScheduleGrid (desktop), ScheduleTimeline (mobile), AppointmentBlock, EmptySlot, AppointmentForm, ClientSearch, DateStrip, DashboardCard
 - Touch target minimi 44x44px per tutti gli elementi interattivi
 - Font: Inter, scala tipografica definita (H1 24px → Caption 11px)
-- Palette colori: verde salvia primary (#4A7C6F), palette neutra, semantica e pastello per blocchi agenda
+- Palette colori: teal Baum House primary (#4BBFC8) e coral (#E05C6B), palette neutra, semantica e pastello per blocchi agenda
 - Breakpoint critici: md (768px) switch timeline/grid e Sheet/Dialog, lg (1024px) sidebar espansa
 - Navigazione: Sidebar desktop (220px, collassabile), Bottom Tab Bar mobile (4-5 voci)
 - Form in Sheet (mobile) o Dialog (desktop)
@@ -118,7 +118,7 @@ FR4: Epica 1 - Limiti funzionalita' per ruolo (RBAC)
 FR5: Epica 2 - Creazione e configurazione sedi
 FR6: Epica 2 - Creazione postazioni per sede
 FR7: Epica 2 - Assegnazione servizi abilitati a postazione
-FR8: Epica 2 - Definizione orari apertura/chiusura postazione
+FR8: Epica 2 - Definizione orari apertura/chiusura sede (2 fasce/giorno settimanali)
 FR9: Epica 2 - Creazione servizi con nome, tariffa, tempo
 FR10: Epica 2 - Modifica ed eliminazione servizi
 FR11: Epica 2 - Consultazione listino in sola lettura (Collaboratore)
@@ -136,7 +136,8 @@ FR22: Epica 4 - Cancellazione appuntamento
 FR23: Epica 4 - Spostamento appuntamento
 FR24: Epica 4 - Note prestazione post-appuntamento
 FR25: Epica 4 - Calcolo automatico durata da servizio
-FR26: Epica 4 - Vista agenda giornaliera per sede e postazione
+FR26: Epica 4 - Vista agenda giornaliera per sede e persona (slot 15 min, range dinamico)
+FR36: Epica 4 - Range agenda ristretto agli orari apertura sede ±1h, fallback 08:00-20:00
 FR27: Epica 4 - Navigazione agenda tra giorni
 FR28: Epica 4 - Agenda mostra cliente, cane, servizio per appuntamento
 FR29: Epica 4 - Identificazione visiva slot liberi e occupati
@@ -152,7 +153,7 @@ Marco e Sara possono accedere al sistema in sicurezza, ciascuno con il proprio r
 **FRs coperti:** FR1, FR2, FR3, FR4
 
 ### Epica 2: Configurazione del Salone
-Marco (Amministratore) configura completamente il suo salone: crea sedi, postazioni con orari e servizi abilitati, definisce il listino con tariffe e tempi. Sara (Collaboratore) consulta il listino in sola lettura. Al termine, il salone e' pronto per operare. Copre il Journey 1 — Setup del Salone.
+Marco (Amministratore) configura completamente il suo salone: crea sedi con orari di apertura settimanali, postazioni con servizi abilitati, definisce il listino con tariffe e tempi. Sara (Collaboratore) consulta il listino in sola lettura. Al termine, il salone e' pronto per operare. Copre il Journey 1 — Setup del Salone.
 **FRs coperti:** FR5, FR6, FR7, FR8, FR9, FR10, FR11
 
 ### Epica 3: Gestione Clienti e Cani
@@ -218,12 +219,13 @@ So that **possa lavorare in modo efficiente senza confusione**.
 **Given** un utente autenticato accede all'applicazione su desktop (>= 1024px)
 **When** la pagina viene renderizzata
 **Then** viene mostrata una Sidebar a sinistra (220px) con le voci di navigazione (Agenda, Clienti, Cani, Servizi, Dashboard) e Impostazioni in fondo
-**And** la voce attiva ha sfondo #E8F0ED con bordo sinistro primary
+**And** la voce attiva ha sfondo #E5F7F9 con bordo sinistro primary
 
 **Given** un utente autenticato accede all'applicazione su mobile (< 768px)
 **When** la pagina viene renderizzata
 **Then** viene mostrata una Bottom Tab Bar con le voci principali (Agenda, Clienti, Cani, Home)
-**And** la voce attiva e' in colore primary #4A7C6F
+**And** la voce attiva e' in colore primary #4BBFC8
+**And** il logo Baum House e' visibile nel footer della sidebar, sopra la voce Impostazioni, in versione compatta quando la sidebar e' collassata
 
 **Given** un utente con ruolo Collaboratore
 **When** naviga nell'applicazione
@@ -314,6 +316,17 @@ So that **possa definire l'offerta del salone e i collaboratori possano consulta
 **When** la pagina viene renderizzata
 **Then** vede la lista dei servizi in sola lettura, senza opzioni di creazione, modifica o eliminazione
 
+**Given** un Amministratore visualizza il dettaglio di un servizio
+**When** accede alla sezione "Prezzi per Razza"
+**Then** vede la lista di tutte le razze esistenti con il prezzo specifico per questo servizio (se configurato)
+**And** le razze senza prezzo specifico mostrano "Usa prezzo base"
+**And** puo' aggiungere, modificare o rimuovere il prezzo specifico per ogni razza
+
+**Given** un Amministratore aggiunge o modifica un prezzo per razza nella sezione del servizio
+**When** salva
+**Then** il prezzo viene aggiornato in service_breed_prices
+**And** mostra un toast "Prezzo aggiornato"
+
 ### Story 2.2: Gestione Sedi
 
 As a **Amministratore**,
@@ -376,6 +389,90 @@ So that **il salone sia completamente configurato e pronto per prendere appuntam
 **Given** una postazione non ha servizi abilitati o orari definiti
 **When** un utente visualizza l'agenda
 **Then** la postazione non mostra slot prenotabili fino a completamento della configurazione
+
+### Story 2.5: Orari di Apertura Sede
+
+As a **Amministratore**,
+I want **configurare gli orari di apertura settimanali della sede con fino a 2 fasce orarie per giorno**,
+So that **l'agenda mostri solo le ore lavorative e non l'intera giornata**.
+
+**Acceptance Criteria:**
+
+**Given** un Amministratore e' nella pagina dettaglio di una sede
+**When** accede alla sezione Orari di Apertura
+**Then** vede una riga per ogni giorno della settimana (Lunedi'–Domenica)
+**And** ogni riga mostra le fasce orarie configurate o "Chiuso" se nessuna fascia e' presente
+
+**Given** un Amministratore vuole configurare un giorno
+**When** aggiunge una fascia oraria con orario di apertura e chiusura
+**Then** la fascia viene salvata per quel giorno della settimana
+**And** mostra un toast "Orari aggiornati"
+
+**Given** un Amministratore vuole aggiungere una pausa
+**When** aggiunge una seconda fascia allo stesso giorno (es. 09:00-13:00 e 15:00-19:00)
+**Then** entrambe le fasce vengono salvate
+**And** il sistema valida che le fasce non si sovrappongano
+
+**Given** un giorno non ha fasce configurate
+**When** l'utente visualizza gli orari
+**Then** il giorno e' mostrato come "Chiuso"
+
+**Given** una sede ha orari configurati
+**When** l'agenda carica per quella sede in un determinato giorno della settimana
+**Then** il range orario dell'agenda e' ristretto a [prima apertura - 1h, ultima chiusura + 1h]
+
+**Given** una sede non ha orari configurati
+**When** l'agenda carica per quella sede
+**Then** viene usato il range di fallback 08:00–20:00
+
+### Story 2.6: Gestione Razze Canine
+
+As a **Amministratore**,
+I want **creare e gestire un catalogo di razze canine con prezzi specifici per servizio**,
+So that **il salone possa tariffeare ogni servizio in modo differenziato per razza e il prezzo degli appuntamenti si pre-compili correttamente**.
+
+**Acceptance Criteria:**
+
+**Given** un Amministratore accede alla pagina Razze
+**When** la pagina viene renderizzata
+**Then** viene mostrata la lista delle razze con nome e numero di prezzi per servizio configurati
+**And** l'accesso e' limitato al ruolo Amministratore (checkRole)
+
+**Given** un Amministratore clicca su "Nuova Razza"
+**When** il form si apre (Sheet mobile / Dialog desktop)
+**Then** vede un campo per il nome della razza e la lista completa dei servizi esistenti, ciascuno con un campo prezzo opzionale (placeholder: "Usa prezzo base")
+
+**Given** un Amministratore compila il nome e facoltativamente uno o piu' prezzi per servizio
+**When** clicca "Salva"
+**Then** la razza viene creata e i prezzi compilati vengono salvati in service_breed_prices
+**And** mostra un toast "Razza creata"
+
+**Given** un Amministratore seleziona una razza esistente
+**When** modifica nome o prezzi per servizio e salva
+**Then** le modifiche vengono salvate (upsert su service_breed_prices)
+**And** mostra un toast "Razza aggiornata"
+
+**Given** un Amministratore clicca "Elimina" su una razza
+**When** viene mostrato Alert Dialog "Eliminare la razza [nome]? I cani associati perderanno la razza."
+**Then** dopo conferma la razza viene eliminata
+**And** i cani con quella razza hanno breedId impostato a null (ON DELETE SET NULL)
+**And** i prezzi in service_breed_prices vengono eliminati (ON DELETE CASCADE)
+**And** mostra un toast "Razza eliminata"
+
+**Given** un Amministratore e' nel dettaglio di un servizio (pagina Servizi)
+**When** accede alla sezione "Prezzi per Razza"
+**Then** vede la lista di tutte le razze con il prezzo specifico configurato per questo servizio (se presente)
+**And** le razze senza prezzo specifico mostrano "Usa prezzo base (€ X,XX)"
+**And** puo' aggiungere, modificare o rimuovere il prezzo specifico per ogni razza
+
+**Given** un Amministratore aggiunge o modifica un prezzo per razza dalla vista servizio
+**When** salva
+**Then** il prezzo viene aggiornato in service_breed_prices
+**And** mostra un toast "Prezzo aggiornato"
+
+**Given** viene creato un nuovo servizio dopo che esistono gia' delle razze
+**When** l'Amministratore apre il form di una razza esistente
+**Then** il nuovo servizio appare nella lista con il campo prezzo vuoto (usa prezzo base)
 
 ## Epica 3: Gestione Clienti e Cani
 
@@ -457,6 +554,37 @@ So that **possa conoscere ogni cane e offrire un servizio personalizzato basato 
 **Then** vengono mostrate tutte le note delle prestazioni precedenti in ordine cronologico inverso
 **And** ogni nota mostra data, servizio effettuato e testo della nota
 
+### Story 3.3: Razza nel Profilo Cane
+
+As a **Amministratore o Collaboratore**,
+I want **associare una razza a ogni cane dal catalogo razze**,
+So that **il prezzo degli appuntamenti si pre-compili correttamente in base alla razza del cane**.
+
+**Acceptance Criteria:**
+
+**Given** un utente crea o modifica un cane
+**When** accede al campo "Razza" nel form
+**Then** vede un Combobox con ricerca sul catalogo razze configurato dall'Amministratore (sostituisce il campo testo libero)
+**And** il campo e' opzionale — un cane puo' non avere razza associata
+
+**Given** un utente seleziona una razza dal Combobox e salva
+**When** il cane viene salvato
+**Then** il campo breedId viene persistito
+**And** mostra un toast "Cane aggiornato" / "Cane creato"
+
+**Given** un utente visualizza il dettaglio di un cane
+**When** il cane ha una razza associata
+**Then** la razza viene mostrata nel profilo del cane
+
+**Given** una razza viene eliminata dal catalogo
+**When** un cane aveva quella razza associata
+**Then** il campo razza del cane risulta vuoto senza errori
+
+**Given** non esistono razze nel catalogo
+**When** un utente apre il campo razza nel form cane
+**Then** il Combobox mostra "Nessuna razza configurata"
+**And** se l'utente e' Amministratore, viene mostrato un link a "Gestione Razze"
+
 ## Epica 4: Agenda e Appuntamenti
 
 Il cuore del prodotto. Marco prende appuntamenti in meno di 30 secondi dall'agenda, sposta e cancella con facilita', aggiunge note alle prestazioni. L'agenda mostra la giornata organizzata per sede e postazione con slot liberi e occupati visibili a colpo d'occhio. Copre i Journey 2 (Presa Appuntamento), 3 (Spostamento) e 4 (Giornata Collaboratrice).
@@ -527,7 +655,9 @@ So that **possa prenotare velocemente anche durante una telefonata con le mani o
 
 **Given** l'utente ha selezionato cliente e cane
 **When** seleziona un servizio dalla lista dei servizi abilitati sulla postazione
-**Then** la durata e il prezzo si pre-compilano automaticamente dal listino
+**Then** la durata si pre-compila automaticamente dal listino
+**And** il prezzo si pre-compila usando il prezzo specifico per la razza del cane (se configurato in service_breed_prices), con fallback al prezzo base del servizio
+**And** se viene applicato un prezzo per razza, il form mostra "(prezzo razza: [nome razza])"
 **And** l'utente puo' modificare durata e prezzo manualmente se necessario
 
 **Given** l'utente ha compilato tutti i campi
@@ -613,43 +743,125 @@ So that **lo storico del cane si arricchisca di informazioni utili per le visite
 **When** long-press o right-click sull'appuntamento nell'agenda
 **Then** appare un Dropdown Menu contestuale con le azioni rapide: "Dettaglio", "Aggiungi Nota", "Sposta", "Cancella"
 
-## Epica 5: Dashboard e Panoramica
-
-Marco e Sara accedono a una vista d'insieme dell'attivita' del salone con le metriche chiave della giornata.
-
-### Story 5.1: Dashboard Riassuntiva
+### Story 4.5: Prezzo Appuntamento Differenziato per Razza
 
 As a **Amministratore o Collaboratore**,
-I want **accedere a una dashboard riassuntiva con le metriche chiave della giornata**,
-So that **possa avere una visione d'insieme dell'attivita' del salone in un colpo d'occhio**.
+I want **che il prezzo dell'appuntamento si pre-compili automaticamente in base alla razza del cane e al servizio selezionato**,
+So that **la tariffa proposta rifletta le tariffe reali del salone senza richiedere inserimento manuale**.
+
+**Acceptance Criteria:**
+
+**Given** l'utente ha selezionato cliente, cane (con razza associata) e servizio nel form appuntamento
+**When** il servizio viene selezionato
+**Then** il prezzo si pre-compila con il prezzo specifico per quella razza e quel servizio (da service_breed_prices)
+**And** il form mostra sotto il campo prezzo: "(prezzo razza: [nome razza])"
+
+**Given** l'utente ha selezionato cliente, cane (senza razza o con razza senza prezzo specifico per quel servizio) e servizio
+**When** il servizio viene selezionato
+**Then** il prezzo si pre-compila con il prezzo base del servizio
+**And** non viene mostrata nessuna etichetta aggiuntiva (comportamento invariato)
+
+**Given** il prezzo e' stato pre-compilato (con o senza prezzo per razza)
+**When** l'utente modifica manualmente il prezzo
+**Then** il valore modificato viene usato senza sovrascrittura
+
+**Given** l'utente cambia il cane selezionato
+**When** il nuovo cane ha una razza diversa o nessuna razza
+**Then** il prezzo si aggiorna automaticamente ricalcolando con la logica breed-aware
+
+### Story 4.6: Vista Settimanale Agenda con Evidenza Buchi Operatori
+
+As a **Amministratore o Collaboratore**,
+I want **visualizzare l'agenda in formato settimanale con i buchi di ogni operatore evidenziati per ogni giorno**,
+So that **possa identificare immediatamente le fasce disponibili e ottimizzare il carico di lavoro senza navigare giorno per giorno**.
+
+**Acceptance Criteria:**
+
+**Given** un utente e' sull'agenda giornaliera
+**When** clicca sul toggle "Settimana" nell'header dell'agenda
+**Then** la vista passa alla visualizzazione settimanale (WeeklyScheduleView)
+**And** sono visibili i 7 giorni della settimana corrente come colonne
+**And** ogni operatore della sede corrente occupa una riga
+
+**Given** un operatore ha turni configurati per una data della settimana
+**When** la vista settimanale viene renderizzata
+**Then** la cella mostra una barra proporzionale con zona coperta (ore con appuntamenti, grigio scuro) e zona buco (ore turno libere, pattern diagonale primary)
+**And** sotto la barra viene mostrato il totale ore di buco (es. "3h buco")
+
+**Given** un operatore non ha turni configurati per una data
+**When** la vista settimanale viene renderizzata
+**Then** la cella mostra "Non asseg." con sfondo grigio chiaro
+
+**Given** un utente vede la vista settimanale
+**When** clicca su una cella specifica (persona x giorno)
+**Then** la vista passa alla giornata giornaliera per quella data
+
+**Given** un utente e' in vista settimanale
+**When** clicca le frecce di navigazione
+**Then** la vista avanza o retrocede di 7 giorni (settimana precedente / successiva)
+
+**Given** un utente e' su mobile (< 768px) e in vista settimanale
+**When** la pagina viene renderizzata
+**Then** le persone sono elencate verticalmente con i 7 giorni in formato compatto (badge orizzontali)
+**And** tap su giorno → navigazione alla vista giornaliera
+
+## Epica 5: Dashboard e Panoramica
+
+Marco e Sara accedono a una vista d'insieme gestionale del salone: KPI mensili con delta, grafici di tendenza e distribuzione servizi.
+
+### Story 5.1: Dashboard KPI con Delta Mensile e Grafici
+
+**CC-2026-04-27: Ridisegnata rispetto alla versione originale (v1 era 4 card giornaliere statiche).**
+
+As a **Amministratore o Collaboratore**,
+I want **accedere a una dashboard con KPI mensili confrontati al mese precedente e grafici di andamento**,
+So that **possa valutare la performance del salone e prendere decisioni gestionali informate**.
 
 **Acceptance Criteria:**
 
 **Given** un utente accede alla pagina Dashboard
 **When** la pagina viene renderizzata
-**Then** vengono mostrate card riassuntive (DashboardCard) con le metriche della giornata corrente:
-- Appuntamenti di oggi (conteggio totale)
-- Prossimo appuntamento (cliente, cane, servizio, ora)
-- Slot liberi rimanenti (conteggio)
-- Incasso previsto della giornata (somma prezzi appuntamenti, formattato in EUR)
+**Then** vengono mostrate 4 KPI card con il mese corrente:
+- Appuntamenti mese corrente + delta % vs mese precedente
+- Incasso confermato mese (appuntamenti passati) + delta % vs mese precedente
+- Previsione incasso mese (tutti gli appuntamenti del mese) + delta % vs mese precedente
+- Nuovi clienti mese + delta assoluto vs mese precedente
+**And** un KPI separato "Appuntamenti oggi" (conteggio rapido)
+
+**Given** il delta vs mese precedente e' positivo
+**When** il badge viene renderizzato
+**Then** il badge mostra un'icona freccia su + valore in verde (es. ▲ +15%)
+
+**Given** il delta vs mese precedente e' negativo
+**When** il badge viene renderizzato
+**Then** il badge mostra un'icona freccia giu' + valore in rosso (es. ▼ -8%)
+
+**Given** un utente accede alla Dashboard
+**When** i grafici vengono renderizzati
+**Then** e' visibile un BarChart con gli appuntamenti per settimana nelle ultime 8 settimane
+**And** e' visibile un PieChart con la distribuzione dei servizi per count nel mese corrente (top 5)
+**And** e' visibile un AreaChart con i ricavi mensili negli ultimi 6 mesi
 
 **Given** un utente accede alla Dashboard su desktop (>= 1024px)
-**When** le card vengono renderizzate
-**Then** sono disposte in griglia 2x2
+**When** la pagina viene renderizzata
+**Then** le 4 KPI card sono in griglia 4 colonne
+**And** il BarChart e il PieChart sono affiancati (2/3 + 1/3)
+**And** l'AreaChart e' a piena larghezza sotto
 
 **Given** un utente accede alla Dashboard su mobile (< 768px)
-**When** le card vengono renderizzate
-**Then** sono impilate verticalmente con scroll
+**When** la pagina viene renderizzata
+**Then** tutti i componenti sono impilati verticalmente con scroll
 
-**Given** non ci sono appuntamenti per la giornata corrente
+**Given** non ci sono dati per il mese corrente o il periodo selezionato
 **When** la Dashboard viene renderizzata
-**Then** le card mostrano valori zero o stato vuoto con messaggio appropriato ("Nessun appuntamento oggi")
+**Then** i KPI mostrano "0" con badge neutro
+**And** i grafici mostrano un messaggio "Nessun dato disponibile"
 **And** nessun errore visivo o layout rotto
 
 **Given** un utente consulta la Dashboard
 **When** i dati vengono caricati
-**Then** il caricamento avviene senza indicatori di caricamento visibili (NFR1)
-**And** i dati sono aggregati dalla sede corrente selezionata nell'Header
+**Then** il caricamento avviene senza indicatori di caricamento visibili (NFR1 — Server Component con pre-fetch)
+**And** i dati sono aggregati a livello tenant (tutti le sedi combinate)
 
 ## Epica 6: Privacy e Conformita' GDPR
 

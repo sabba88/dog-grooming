@@ -12,18 +12,14 @@ import {
   SLOT_HEIGHT_PX,
   MINUTES_PER_SLOT,
 } from '@/lib/utils/schedule'
-import type { StaffStatus } from '@/lib/queries/staff'
+import type { StaffStatus, ShiftInfo } from '@/lib/queries/staff'
 
 interface Person {
   id: string
   name: string
   role: 'admin' | 'collaborator'
-  status: StaffStatus
-  assignment: {
-    startTime: string
-    endTime: string
-    locationId: string
-  } | null
+  overallStatus: StaffStatus
+  shifts: ShiftInfo[]
 }
 
 interface Appointment {
@@ -34,8 +30,7 @@ interface Appointment {
   notes: string | null
   userId: string
   stationId: string | null
-  clientFirstName: string
-  clientLastName: string
+  clientNominativo: string
   dogName: string
   serviceName: string
   serviceId: string
@@ -46,26 +41,31 @@ interface ScheduleGridProps {
   appointments: Appointment[]
   selectedDate: Date
   dateString: string
+  globalOpen: string
+  globalClose: string
   onAppointmentClick?: (id: string) => void
   onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
+  movingAppointmentId?: string
+  onContextAction?: (action: 'detail' | 'add-note' | 'move' | 'delete', id: string) => void
 }
-
-const GLOBAL_OPEN = '00:00'
-const GLOBAL_CLOSE = '23:30'
 
 export function ScheduleGrid({
   staff,
   appointments,
   selectedDate,
   dateString,
+  globalOpen,
+  globalClose,
   onAppointmentClick,
   onEmptySlotClick,
+  movingAppointmentId,
+  onContextAction,
 }: ScheduleGridProps) {
   if (staff.length === 0) return null
 
-  const timeSlots = generateTimeSlots(GLOBAL_OPEN, GLOBAL_CLOSE)
-  const dayStartMinutes = timeToMinutes(GLOBAL_OPEN)
-  const totalMinutes = timeToMinutes(GLOBAL_CLOSE) - dayStartMinutes
+  const timeSlots = generateTimeSlots(globalOpen, globalClose)
+  const dayStartMinutes = timeToMinutes(globalOpen)
+  const totalMinutes = timeToMinutes(globalClose) - dayStartMinutes
   const totalHeight = (totalMinutes / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
 
   const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
@@ -78,7 +78,7 @@ export function ScheduleGrid({
   const currentTimeTop = ((currentMinutes - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
 
   return (
-    <div className="overflow-auto">
+    <div>
       {/* Header row */}
       <div
         className="grid sticky top-0 z-20 border-b border-border"
@@ -92,10 +92,8 @@ export function ScheduleGrid({
             <PersonHeader
               name={person.name}
               role={person.role}
-              status={person.status}
-              locationName={person.status === 'elsewhere' && person.assignment ? undefined : undefined}
-              startTime={person.status === 'active' && person.assignment ? person.assignment.startTime : undefined}
-              endTime={person.status === 'active' && person.assignment ? person.assignment.endTime : undefined}
+              overallStatus={person.overallStatus}
+              shifts={person.shifts}
             />
           </div>
         ))}
@@ -131,15 +129,7 @@ export function ScheduleGrid({
             (a) => a.userId === person.id
           )
 
-          const isDimmed = person.status === 'elsewhere' || person.status === 'unassigned'
-
-          // Active person shift range
-          const shiftStart = person.status === 'active' && person.assignment
-            ? timeToMinutes(person.assignment.startTime)
-            : null
-          const shiftEnd = person.status === 'active' && person.assignment
-            ? timeToMinutes(person.assignment.endTime)
-            : null
+          const isDimmed = person.overallStatus !== 'active'
 
           return (
             <div
@@ -163,39 +153,22 @@ export function ScheduleGrid({
                 )
               })}
 
-              {/* Shift highlight + out-of-shift areas for active persons */}
-              {shiftStart !== null && shiftEnd !== null && (
-                <>
-                  {/* Active shift zone — green highlight */}
+              {/* Shift bands: active (green) and elsewhere (amber) */}
+              {person.shifts.map((shift, i) => {
+                const shiftStart = timeToMinutes(shift.startTime)
+                const shiftEnd = timeToMinutes(shift.endTime)
+                return (
                   <div
+                    key={i}
                     className="absolute inset-x-0"
                     style={{
                       top: `${((shiftStart - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
                       height: `${((shiftEnd - shiftStart) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
-                      backgroundColor: '#E8F0ED',
+                      backgroundColor: shift.status === 'active' ? '#E5F7F9' : '#FEF3C7',
                     }}
                   />
-                  {/* Out-of-shift areas */}
-                  {shiftStart > dayStartMinutes && (
-                    <div
-                      className="absolute inset-x-0 bg-muted/20"
-                      style={{
-                        top: 0,
-                        height: `${((shiftStart - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
-                      }}
-                    />
-                  )}
-                  {shiftEnd < dayStartMinutes + totalMinutes && (
-                    <div
-                      className="absolute inset-x-0 bg-muted/20"
-                      style={{
-                        top: `${((shiftEnd - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
-                        height: `${((dayStartMinutes + totalMinutes - shiftEnd) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
-                      }}
-                    />
-                  )}
-                </>
-              )}
+                )
+              })}
 
               {/* Empty slots */}
               {timeSlots.map((slot) => {
@@ -224,6 +197,7 @@ export function ScheduleGrid({
                       height: `${SLOT_HEIGHT_PX}px`,
                     }}
                     onClick={onEmptySlotClick}
+                    isMovingTarget={!!movingAppointmentId && person.overallStatus === 'active'}
                   />
                 )
               })}
@@ -241,7 +215,7 @@ export function ScheduleGrid({
                   <AppointmentBlock
                     key={appt.id}
                     id={appt.id}
-                    clientName={`${appt.clientFirstName} ${appt.clientLastName}`}
+                    clientName={appt.clientNominativo}
                     dogName={appt.dogName}
                     serviceName={appt.serviceName}
                     price={appt.price}
@@ -254,6 +228,8 @@ export function ScheduleGrid({
                       height: `${position.height}px`,
                     }}
                     onClick={onAppointmentClick}
+                    isMoving={movingAppointmentId === appt.id}
+                    onContextAction={onContextAction}
                   />
                 )
               })}

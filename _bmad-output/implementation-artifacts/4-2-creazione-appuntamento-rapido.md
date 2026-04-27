@@ -371,3 +371,4 @@ Nessun problema di debug significativo riscontrato.
 ## Change Log
 
 - 2026-03-15: Implementazione completa Story 4-2 — selettore postazione opzionale, filtro servizi, validazione turno persona, fix Dialog stacking QuickClientForm
+- 2026-04-26: CC-2026-04-26 — `createAppointment` aggiornato: validazione turno usa `date` specifico invece di `dayOfWeek`/`getIsoDayOfWeek`. Query shift per data trova la fascia che copre l'orario dell'appuntamento.

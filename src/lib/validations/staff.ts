@@ -1,21 +1,11 @@
 import { z } from 'zod'
 
-export const DAYS_OF_WEEK = [
-  { value: 0, label: 'Lunedì' },
-  { value: 1, label: 'Martedì' },
-  { value: 2, label: 'Mercoledì' },
-  { value: 3, label: 'Giovedì' },
-  { value: 4, label: 'Venerdì' },
-  { value: 5, label: 'Sabato' },
-  { value: 6, label: 'Domenica' },
-] as const
-
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/
 
 export const assignUserToLocationSchema = z.object({
   userId: z.string().uuid('ID utente non valido'),
   locationId: z.string().uuid('ID sede non valido'),
-  dayOfWeek: z.number().int().min(0).max(6, 'Giorno non valido'),
+  date: z.string().date('Data non valida (YYYY-MM-DD)'),
   startTime: z.string().regex(timePattern, 'Formato orario non valido (HH:mm)'),
   endTime: z.string().regex(timePattern, 'Formato orario non valido (HH:mm)'),
 }).refine(
@@ -43,9 +33,8 @@ export const removeAssignmentSchema = z.object({
 
 export type RemoveAssignmentFormData = z.infer<typeof removeAssignmentSchema>
 
-const weeklyAssignmentItemSchema = z.object({
+const shiftItemSchema = z.object({
   locationId: z.string().uuid('ID sede non valido'),
-  dayOfWeek: z.number().int().min(0).max(6, 'Giorno non valido'),
   startTime: z.string().regex(timePattern, 'Formato orario non valido (HH:mm)'),
   endTime: z.string().regex(timePattern, 'Formato orario non valido (HH:mm)'),
 }).refine(
@@ -53,9 +42,10 @@ const weeklyAssignmentItemSchema = z.object({
   { message: "L'orario di fine deve essere successivo all'orario di inizio", path: ['endTime'] }
 )
 
-export const saveWeeklyCalendarSchema = z.object({
+export const saveDayShiftsSchema = z.object({
   userId: z.string().uuid('ID utente non valido'),
-  assignments: z.array(weeklyAssignmentItemSchema),
+  date: z.string().date('Data non valida (YYYY-MM-DD)'),
+  shifts: z.array(shiftItemSchema),
 })
 
-export type SaveWeeklyCalendarFormData = z.infer<typeof saveWeeklyCalendarSchema>
+export type SaveDayShiftsFormData = z.infer<typeof saveDayShiftsSchema>

@@ -13,15 +13,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { CalendarDays } from 'lucide-react'
-import { StaffScheduleCalendar } from './StaffScheduleCalendar'
-import { DAYS_OF_WEEK } from '@/lib/validations/staff'
+import { StaffCalendarEditor } from './StaffCalendarEditor'
 
 interface Assignment {
   id: string
   userId: string
   locationId: string
   locationName: string | null
-  dayOfWeek: number
+  date: string
   startTime: string
   endTime: string
 }
@@ -58,18 +57,19 @@ export function StaffList({ users, locations }: StaffListProps) {
     router.refresh()
   }
 
-  function getDayBadge(user: StaffUser, dayOfWeek: number) {
-    const assignment = user.assignments.find(a => a.dayOfWeek === dayOfWeek)
-    if (!assignment) {
+  function getShiftsSummary(user: StaffUser) {
+    const uniqueDates = new Set(user.assignments.map(a => a.date))
+    const count = uniqueDates.size
+    if (count === 0) {
       return (
         <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200 text-xs">
-          —
+          Nessun turno
         </Badge>
       )
     }
     return (
       <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50 text-xs">
-        {assignment.locationName ?? '—'}
+        {count} {count === 1 ? 'giorno' : 'giorni'}
       </Badge>
     )
   }
@@ -91,11 +91,7 @@ export function StaffList({ users, locations }: StaffListProps) {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>Ruolo</TableHead>
-              {DAYS_OF_WEEK.map(day => (
-                <TableHead key={day.value} className="text-center text-xs">
-                  {day.label.slice(0, 3)}
-                </TableHead>
-              ))}
+              <TableHead>Turni configurati</TableHead>
               <TableHead className="text-right">Azioni</TableHead>
             </TableRow>
           </TableHeader>
@@ -108,11 +104,7 @@ export function StaffList({ users, locations }: StaffListProps) {
                     {user.role === 'admin' ? 'Admin' : 'Collaboratore'}
                   </Badge>
                 </TableCell>
-                {DAYS_OF_WEEK.map(day => (
-                  <TableCell key={day.value} className="text-center">
-                    {getDayBadge(user, day.value)}
-                  </TableCell>
-                ))}
+                <TableCell>{getShiftsSummary(user)}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
@@ -137,30 +129,14 @@ export function StaffList({ users, locations }: StaffListProps) {
             key={user.id}
             className="rounded-lg border border-border bg-card p-4"
           >
-            <div className="flex items-start justify-between mb-2">
+            <div className="flex items-start justify-between mb-3">
               <div>
                 <p className="font-medium text-foreground">{user.name}</p>
                 <p className="text-xs text-muted-foreground">
                   {user.role === 'admin' ? 'Amministratore' : 'Collaboratore'}
                 </p>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-1 mb-3">
-              {DAYS_OF_WEEK.map(day => {
-                const assignment = user.assignments.find(a => a.dayOfWeek === day.value)
-                if (!assignment) return null
-                return (
-                  <Badge
-                    key={day.value}
-                    className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50 text-xs"
-                  >
-                    {day.label.slice(0, 3)}: {assignment.locationName ?? '—'}
-                  </Badge>
-                )
-              })}
-              {user.assignments.length === 0 && (
-                <span className="text-xs text-muted-foreground">Nessuna assegnazione</span>
-              )}
+              {getShiftsSummary(user)}
             </div>
             <Button
               variant="outline"
@@ -176,7 +152,7 @@ export function StaffList({ users, locations }: StaffListProps) {
       </div>
 
       {selectedUser && (
-        <StaffScheduleCalendar
+        <StaffCalendarEditor
           key={selectedUser.id}
           open={calendarOpen}
           onOpenChange={setCalendarOpen}

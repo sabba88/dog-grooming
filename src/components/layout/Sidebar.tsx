@@ -42,17 +42,12 @@ export function AppSidebar({ userRole, userName }: AppSidebarProps) {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-primary text-white text-sm font-bold">
-            DG
-          </div>
-          {!isCollapsed && (
-            <span className="text-sm font-semibold text-brand-text-primary">
-              Dog Grooming
-            </span>
-          )}
-        </div>
+      <SidebarHeader className="p-3">
+        {!isCollapsed && (
+          <span className="text-xs font-medium text-brand-text-muted uppercase tracking-wide px-1">
+            Gestionale
+          </span>
+        )}
       </SidebarHeader>
 
       <SidebarSeparator />
@@ -89,6 +84,14 @@ export function AppSidebar({ userRole, userName }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter>
+        <div className={`bg-black rounded-lg mx-2 mb-1 flex items-center justify-center ${isCollapsed ? 'p-1.5' : 'p-3'}`}>
+          <img
+            src="/logo-baum-house.webp"
+            alt="Baum House"
+            className={`object-contain ${isCollapsed ? 'h-8 w-8' : 'h-16 w-auto'}`}
+          />
+        </div>
+
         {visibleFooterItems.length > 0 && (
           <>
             <SidebarSeparator />

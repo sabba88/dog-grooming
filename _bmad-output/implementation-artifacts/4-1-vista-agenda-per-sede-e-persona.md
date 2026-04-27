@@ -567,3 +567,4 @@ Claude Opus 4.6
 ### Change Log
 
 - 2026-03-15: Implementazione completa — migrazione da postazione a persona, vista 24h, stati visivi, aggiornamento form appuntamento. Build e TypeScript verificati senza errori.
+- 2026-04-26: CC-2026-04-26 — ScheduleGrid aggiornato per multi-banda (verde attivo, ambra altrove) con `overallStatus`+`shifts[]`. PersonHeader aggiornato: mostra fasce attive "HH:mm-HH:mm • HH:mm-HH:mm". ScheduleTimeline: fix `overallStatus` per `isMovingTarget`. AgendaView: rimossa enrichment locationName. TypeScript clean.

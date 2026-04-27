@@ -7,109 +7,93 @@ Status: review
 ## Story
 
 As a **Amministratore**,
-I want **assegnare collaboratori e amministratori alle sedi con un calendario settimanale di disponibilita'**,
-so that **l'agenda mostri le persone giuste per ogni sede e giorno, e il team sappia dove lavorare**.
+I want **definire per ogni collaboratore le fasce lavorative giorno per giorno sul calendario, assegnando a ciascuna fascia una sede specifica**,
+so that **l'agenda mostri le persone giuste per ogni sede e fascia oraria, e il team sappia dove e quando lavorare in ogni giornata**.
+
+> **CC-2026-04-26:** Story riscritta. Il modello settimanale ripetitivo (`dayOfWeek`) e' sostituito da pianificazione per data specifica con fasce multiple per giorno, ciascuna con sede indipendente.
 
 ## Acceptance Criteria
 
 1. **Given** un Amministratore accede alla pagina Gestione Personale
    **When** la pagina viene renderizzata
-   **Then** viene mostrata la lista degli utenti attivi con le loro assegnazioni settimanali
+   **Then** viene mostrata la lista degli utenti attivi
 
-2. **Given** un Amministratore seleziona un utente
-   **When** configura il calendario settimanale assegnando sede e fascia oraria per ogni giorno della settimana
-   **Then** le assegnazioni vengono salvate nella tabella `user_location_assignments` con tenantId
-   **And** mostra un toast "Calendario aggiornato"
+2. **Given** un Amministratore seleziona un utente e clicca su una data nel calendario mensile
+   **When** la data viene selezionata
+   **Then** viene mostrato il pannello turni per quella data specifica con le fasce gia' configurate (se presenti)
 
-3. **Given** un Amministratore assegna un utente a una sede per un giorno
-   **When** l'utente e' gia' assegnato a un'altra sede nello stesso giorno
-   **Then** il sistema impedisce l'operazione e mostra un messaggio "L'utente e' gia' assegnato a [nome sede] per questo giorno"
+3. **Given** un Amministratore sta visualizzando i turni di una data
+   **When** aggiunge una nuova fascia specificando sede, ora inizio e ora fine
+   **Then** la fascia viene salvata nella tabella `user_location_assignments` per quella data specifica con tenantId
+   **And** mostra un toast "Turni aggiornati"
 
-4. **Given** un Amministratore modifica l'assegnazione di un utente
-   **When** cambia sede o fascia oraria per un giorno specifico
-   **Then** le modifiche vengono salvate
-   **And** l'agenda riflette la nuova assegnazione
+4. **Given** un Amministratore aggiunge una fascia per una data
+   **When** la fascia si sovrappone temporalmente a una fascia gia' esistente per lo stesso utente e stessa data
+   **Then** il sistema impedisce l'operazione e mostra "Fascia oraria sovrapposta a un turno esistente"
 
-5. **Given** un Amministratore rimuove l'assegnazione di un utente per un giorno
-   **When** conferma la rimozione
-   **Then** l'utente risulta "non assegnato" per quel giorno
-   **And** nell'agenda la sua colonna mostra lo stato neutro (non assegnato)
+5. **Given** un Amministratore sta visualizzando i turni di una data
+   **When** rimuove una fascia esistente
+   **Then** la fascia viene eliminata
+   **And** se era l'unica fascia, la data non mostra piu' indicatori nel calendario mensile
 
-6. **Given** il calendario settimanale e' configurato
+6. **Given** piu' fasce sono configurate per la stessa data (es. 09:00-13:00 Sede A e 15:00-18:00 Sede B)
+   **When** un utente visualizza il calendario Staff
+   **Then** la data mostra un indicatore con il numero di fasce configurate
+
+7. **Given** i turni per data sono configurati
    **When** un utente visualizza l'agenda per una sede
-   **Then** le colonne mostrano le persone associate alla sede con i rispettivi stati visivi:
-   - Colore pieno (#E8F0ED): persona attiva sulla sede per quel giorno
-   - Colore chiaro (#FEF3C7): persona assegnata ad altra sede per quel giorno
-   - Stato neutro (#F9FAFB): persona non assegnata per quel giorno
+   **Then** le colonne mostrano le persone con i rispettivi stati visivi per fascia oraria:
+   - Colore pieno (#E8F0ED): persona ha una fascia attiva su questa sede in quell'orario
+   - Colore chiaro (#FEF3C7): persona ha una fascia su altra sede in quell'orario
+   - Stato neutro (#F9FAFB): persona non ha fasce per quella data
 
 ## Tasks / Subtasks
 
-- [x] Task 1: Creare tabella `user_location_assignments` nello schema Drizzle (AC: #1, #2, #6)
-  - [x] 1.1 Aggiungere tabella `user_location_assignments` in `src/lib/db/schema.ts` con campi: id (uuid PK), userId (uuid, not null), locationId (uuid, not null), dayOfWeek (integer 0-6, not null), startTime (text "HH:mm", not null), endTime (text "HH:mm", not null), tenantId (uuid, not null), createdAt, updatedAt
-  - [x] 1.2 Eseguire `npx drizzle-kit push` per applicare lo schema al database di sviluppo
+> **CC-2026-04-26 — Rewrite:** Tasks 1-10 erano implementati con modello `dayOfWeek`. Tasks 1R-5R sostituiscono il modello con `date` (data specifica). Tasks 6-10 (struttura pagina, navigazione) rimangono invariati e restano completati.
 
-- [x] Task 2: Creare schemi Zod per validazione assegnazioni (AC: #2, #3, #4, #5)
-  - [x] 2.1 Creare `src/lib/validations/staff.ts` — `assignUserToLocationSchema` con userId (uuid), locationId (uuid), dayOfWeek (0-6), startTime ("HH:mm"), endTime ("HH:mm")
-  - [x] 2.2 Creare `updateAssignmentSchema` — id (uuid) + locationId (uuid), startTime, endTime
-  - [x] 2.3 Creare `removeAssignmentSchema` — id (uuid)
-  - [x] 2.4 Aggiungere refine: endTime > startTime
-  - [x] 2.5 Riutilizzare costante DAYS_OF_WEEK da `validations/stations.ts` oppure estrarla in un file condiviso
-  - [x] 2.6 Esportare tipi inferiti per tutti gli schemi
+- [x] Task 1 (COMPLETATO — da aggiornare): Schema Drizzle `user_location_assignments` con `dayOfWeek`
+- [x] Task 1R: Aggiornare schema — sostituire `dayOfWeek` con `date` (AC: #3, #7)
+  - [x] 1R.1 In `src/lib/db/schema.ts`: rimuovere `dayOfWeek: integer('day_of_week').notNull()`, aggiungere `date: date('date').notNull()`
+  - [x] 1R.2 Migration applicata direttamente via script Node.js + @neondatabase/serverless (drizzle-kit push richiede prompt interattivo per rename colonna)
 
-- [x] Task 3: Creare Server Actions per gestione assegnazioni (AC: #2, #3, #4, #5)
-  - [x] 3.1 Creare `src/lib/actions/staff.ts` con `authActionClient`
-  - [x] 3.2 Implementare `assignUserToLocation` — checkRole admin, verifica che l'utente NON sia gia' assegnato a un'altra sede nello stesso dayOfWeek (AC #3), insert con tenantId
-  - [x] 3.3 Implementare `updateAssignment` — checkRole admin, verifica ownership (tenantId), aggiornamento sede/orari
-  - [x] 3.4 Implementare `removeAssignment` — checkRole admin, verifica ownership, delete
-  - [x] 3.5 Implementare `saveWeeklyCalendar` — checkRole admin, replace strategy per tutte le assegnazioni di un utente (delete all + insert new in transazione)
+- [x] Task 2 (COMPLETATO — da aggiornare): Schemi Zod con `dayOfWeek`
+- [x] Task 2R: Aggiornare validazioni Zod (AC: #3, #4)
+  - [x] 2R.1 In `src/lib/validations/staff.ts`: in `assignUserToLocationSchema` sostituire `dayOfWeek` con `date: z.string().date()`
+  - [x] 2R.2 Creato `saveDayShiftsSchema` — `{ userId: uuid, date: string.date(), shifts: [{ locationId: uuid, startTime: HH:mm, endTime: HH:mm }] }`
+  - [x] 2R.3 Rimosso `saveWeeklyCalendarSchema` (sostituito da `saveDayShiftsSchema`)
+  - [x] 2R.4 Rimosso `dayOfWeek` da `updateAssignmentSchema`
+  - [x] 2R.5 Rimossa costante `DAYS_OF_WEEK` da `staff.ts`
 
-- [x] Task 4: Creare query functions per assegnazioni (AC: #1, #6)
-  - [x] 4.1 Creare `src/lib/queries/staff.ts` — `getStaffByLocation(locationId, tenantId)`: utenti attivi associati alla sede con le loro assegnazioni settimanali
-  - [x] 4.2 Creare `getUserAssignments(userId, tenantId)`: tutte le assegnazioni settimanali di un utente (con nome sede in JOIN)
-  - [x] 4.3 Creare `getActiveUsers(tenantId)`: lista utenti attivi del tenant
-  - [x] 4.4 Creare `getStaffStatusForDate(locationId, date, tenantId)`: stato assegnazione di ogni persona per una data specifica (per l'agenda, AC #6)
+- [x] Task 3 (COMPLETATO — da aggiornare): Server Actions con `saveWeeklyCalendar`
+- [x] Task 3R: Aggiornare Server Actions (AC: #3, #4, #5)
+  - [x] 3R.1 In `src/lib/actions/staff.ts`: aggiunto `saveDayShifts` — checkRole admin, replace strategy DELETE WHERE userId+date+tenantId + INSERT shifts
+  - [x] 3R.2 Aggiornato `assignUserToLocation` — parametro `date` invece di `dayOfWeek`, validazione sovrapposizione per stessa data
+  - [x] 3R.3 Rimosso `saveWeeklyCalendar`
 
-- [x] Task 5: Aggiungere route `/staff` alle route admin-only (AC: #1)
-  - [x] 5.1 Aggiungere `'/staff'` all'array `adminOnlyRoutes` in `src/lib/auth/permissions.ts`
-  - [x] 5.2 Aggiungere permesso `manageStaff: ['admin']` all'oggetto `permissions`
+- [x] Task 4 (COMPLETATO — da aggiornare): Query con `dayOfWeek` e `getIsoDayOfWeek`
+- [x] Task 4R: Aggiornare query functions (AC: #7)
+  - [x] 4R.1 In `src/lib/queries/staff.ts`: aggiornato `getStaffStatusForDate` — filtro `WHERE date = specificDate`
+  - [x] 4R.2 Aggiornato tipo di ritorno: `shifts: ShiftInfo[]` + `overallStatus: StaffStatus`
+  - [x] 4R.3 Eliminato helper `getIsoDayOfWeek`
+  - [x] 4R.4 Aggiornato `getUserAssignments` — ordine per `date` invece di `dayOfWeek`
 
-- [x] Task 6: Creare componente StaffList per lista utenti con assegnazioni (AC: #1)
-  - [x] 6.1 Creare `src/components/staff/StaffList.tsx` — Client Component
-  - [x] 6.2 Lista utenti attivi con nome, ruolo, riepilogo assegnazioni settimanali (badge per ogni giorno con nome sede)
-  - [x] 6.3 Per ogni utente: bottone "Modifica Calendario" che apre il calendario settimanale
-  - [x] 6.4 Desktop: tabella con colonne Nome, Ruolo, Lun, Mar, Mer, Gio, Ven, Sab, Dom, Azioni
-  - [x] 6.5 Mobile: card con nome, ruolo e badge giorni assegnati
-  - [x] 6.6 Stato vuoto: "Nessun utente attivo" (caso improbabile ma gestito)
+- [x] Task 5 (COMPLETATO — da sostituire): UI `StaffScheduleCalendar` griglia settimanale
+- [x] Task 5R: Creare componente `StaffCalendarEditor` per pianificazione per data (AC: #2, #3, #4, #5, #6)
+  - [x] 5R.1 Creato `src/components/staff/StaffCalendarEditor.tsx` — sostituisce `StaffScheduleCalendar.tsx` (eliminato)
+  - [x] 5R.2 Calendario mensile (shadcn/ui `Calendar`) con `modifiersStyles` per giorni con fasce (grassetto + sottolineatura puntata)
+  - [x] 5R.3 Click su data → pannello "Turni per [data in italiano]"
+  - [x] 5R.4 Pannello turni: shift cards (sede + HH:mm – HH:mm + bottone × rimuovi)
+  - [x] 5R.5 Bottone "+ Aggiungi fascia" apre `AssignmentForm` con `date`
+  - [x] 5R.6 Salvataggio via `saveDayShifts` — replace per la data selezionata
+  - [x] 5R.7 Dialog (desktop) / Sheet (mobile) con `useIsMobile()`
+  - [x] 5R.8 Aggiornato `AssignmentForm.tsx` — `date: string` + `existingShifts` per overlap check
+  - [x] 5R.9 Aggiornato `StaffList.tsx` — usa `StaffCalendarEditor`, badge "X giorni"
 
-- [x] Task 7: Creare componente StaffScheduleCalendar per calendario settimanale (AC: #2, #3, #4, #5)
-  - [x] 7.1 Creare `src/components/staff/StaffScheduleCalendar.tsx` — Client Component
-  - [x] 7.2 Griglia 7 giorni (Lunedi' → Domenica) — ogni cella mostra: sede assegnata (nome), fascia oraria (HH:mm - HH:mm), oppure "Non assegnato"
-  - [x] 7.3 Celle vuote toccabili/cliccabili per aggiungere assegnazione — apre AssignmentForm
-  - [x] 7.4 Celle con assegnazione: azioni "Modifica" e "Rimuovi"
-  - [x] 7.5 Pre-compilare con assegnazioni esistenti dell'utente selezionato
-  - [x] 7.6 Si apre in Dialog (desktop >= 768px) o Sheet (mobile < 768px) — usare `useIsMobile()` hook
-  - [x] 7.7 Header con nome utente e ruolo
-  - [x] 7.8 Bottone "Salva Calendario" che usa la saveWeeklyCalendar action (replace strategy)
-
-- [x] Task 8: Creare componente AssignmentForm per assegnazione singolo giorno (AC: #2, #3)
-  - [x] 8.1 Creare `src/components/staff/AssignmentForm.tsx` — Client Component con React Hook Form + Zod
-  - [x] 8.2 Select per sede (lista sedi del tenant)
-  - [x] 8.3 Input orario inizio (HH:mm) e fine (HH:mm)
-  - [x] 8.4 Validazione: endTime > startTime, formato HH:mm
-  - [x] 8.5 Validazione conflitto: se l'utente ha gia' un'assegnazione per quel giorno su un'altra sede, mostrare errore (AC #3)
-  - [x] 8.6 Si apre in Dialog/Sheet responsive
-  - [x] 8.7 Bottone "Assegna" / "Salva Modifiche"
-
-- [x] Task 9: Creare pagina Gestione Personale (AC: #1)
-  - [x] 9.1 Creare `src/app/(auth)/staff/page.tsx` — Server Component che carica utenti attivi + assegnazioni + sedi
-  - [x] 9.2 Header: "Gestione Personale" con descrizione
-  - [x] 9.3 Render StaffList con dati dal server
-  - [x] 9.4 `checkPermission('manageStaff')` con redirect se non admin
-
-- [x] Task 10: Aggiungere voce "Personale" alla navigazione (AC: #1)
-  - [x] 10.1 Aggiungere voce "Personale" nella Sidebar desktop (dopo "Servizi", solo per admin)
-  - [x] 10.2 Aggiungere icona Users da lucide-react
-  - [x] 10.3 Verificare che il Collaboratore NON veda la voce "Personale"
+- [x] Task 6 (COMPLETATO — invariato): Route `/staff` admin-only
+- [x] Task 7 (COMPLETATO — invariato): Lista utenti StaffList (solo bottone da aggiornare al Task 5R.9)
+- [x] Task 8 (COMPLETATO — aggiornare al Task 5R.8): AssignmentForm
+- [x] Task 9 (COMPLETATO — invariato): Pagina `/staff/page.tsx`
+- [x] Task 10 (COMPLETATO — invariato): Voce "Personale" nella navigazione
 
 ## Dev Notes
 
@@ -181,52 +165,61 @@ export const createLocation = authActionClient
 // Icone da lucide-react
 ```
 
-### Design della Tabella `user_location_assignments`
+### Design della Tabella `user_location_assignments` (CC-2026-04-26)
 
 ```typescript
+// Una riga = una fascia lavorativa per una data specifica.
+// Fasce multiple per lo stesso giorno = piu' righe con stesso userId + date.
+// Ogni fascia puo' avere una sede diversa.
 export const userLocationAssignments = pgTable('user_location_assignments', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull(),           // FK logica a users
-  locationId: uuid('location_id').notNull(),   // FK logica a locations
-  dayOfWeek: integer('day_of_week').notNull(), // 0=Lunedi', 1=Martedi', ..., 6=Domenica (ISO 8601)
+  locationId: uuid('location_id').notNull(),   // FK logica a locations — sede di questa fascia
+  date: date('date').notNull(),                // CC-2026-04-26: data specifica YYYY-MM-DD (non dayOfWeek ripetuto)
   startTime: text('start_time').notNull(),     // es. "09:00"
-  endTime: text('end_time').notNull(),         // es. "18:00"
+  endTime: text('end_time').notNull(),         // es. "13:00"
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 ```
 
-**ATTENZIONE dayOfWeek:** L'architettura doc specifica `// 0=dom, 1=lun, ..., 6=sab` (convenzione JavaScript), MA il codice esistente in `validations/stations.ts` usa la convenzione ISO 8601 (0=Lunedi', 6=Domenica). **SEGUIRE la convenzione ISO 8601 (0=Monday)** per coerenza con il codice esistente e con la cultura italiana (lunedi' e' il primo giorno della settimana). Riutilizzare la costante `DAYS_OF_WEEK` gia' definita in `validations/stations.ts`.
+**Perche' `date` e non `dayOfWeek`:**
+- Ogni salone ha giornate diverse: festivi, chiusure, turni speciali. Il modello settimanale non li cattura.
+- Le fasce multiple per lo stesso giorno sono supportate nativamente (piu' righe con stesso userId+date).
+- La sede per fascia e' gia' nella struttura (ogni riga ha il suo `locationId`).
+
+**ELIMINATO:** `dayOfWeek INTEGER` e costante `DAYS_OF_WEEK` — non piu' necessari.
 
 **Nota orari come testo:** Salvare gli orari come stringhe "HH:mm" — gli orari di disponibilita' sono indipendenti dal timezone e dalla data. Pattern identico a `station_schedules`.
 
-**Vincolo di business (AC #3):** Un utente NON puo' essere assegnato a piu' sedi nello stesso giorno. La validazione deve essere eseguita:
-1. **Server-side:** Nella Server Action, verificare che non esista gia' un'assegnazione per lo stesso userId + dayOfWeek su una locationId diversa
-2. **Client-side:** Nel form, quando l'utente seleziona una sede per un giorno gia' assegnato, mostrare l'errore immediatamente
+**Vincolo di business (AC #4):** Le fasce lavorative dello stesso utente nella stessa data NON possono sovrapporsi. Un utente PUO' essere assegnato a sedi diverse nello stesso giorno, purche' le fasce non si sovrappongano (es. 09:00-13:00 Sede A + 15:00-18:00 Sede B = OK; 09:00-13:00 + 11:00-14:00 = ERRORE). La validazione deve essere eseguita:
+1. **Server-side:** In `assignUserToLocation` e `saveDayShifts`, verificare che le fasce del batch non si sovrappongano tra loro e con quelle esistenti per lo stesso userId+date
+2. **Client-side:** In `AssignmentForm`, validare in tempo reale prima del submit
 
-### Strategia Replace per Calendario Completo
+### Strategia Replace per Turni di una Data Specifica (CC-2026-04-26)
 
-Per salvare il calendario settimanale completo di un utente, usare la strategia "delete all + insert new" dentro una transazione Drizzle (stessa strategia usata in Story 2.3 per `station_services` e `station_schedules`):
+Per salvare i turni di un utente per una data specifica, usare la strategia "delete by userId+date + insert new" dentro una transazione Drizzle:
 
 ```typescript
-// saveWeeklyCalendar — replace strategy
+// saveDayShifts — replace strategy per userId+date
 await db.transaction(async (tx) => {
-  // 1. Elimina tutte le assegnazioni attuali dell'utente
+  // 1. Elimina le fasce per questo utente in questa data specifica
   await tx.delete(userLocationAssignments)
     .where(and(
       eq(userLocationAssignments.userId, userId),
+      eq(userLocationAssignments.date, date),
       eq(userLocationAssignments.tenantId, tenantId)
     ))
-  // 2. Inserisci le nuove assegnazioni
-  if (assignments.length > 0) {
+  // 2. Inserisci le nuove fasce
+  if (shifts.length > 0) {
     await tx.insert(userLocationAssignments).values(
-      assignments.map(a => ({
+      shifts.map(s => ({
         userId,
-        locationId: a.locationId,
-        dayOfWeek: a.dayOfWeek,
-        startTime: a.startTime,
-        endTime: a.endTime,
+        locationId: s.locationId,
+        date,
+        startTime: s.startTime,
+        endTime: s.endTime,
         tenantId,
       }))
     )
@@ -234,49 +227,46 @@ await db.transaction(async (tx) => {
 })
 ```
 
-**Motivazione:** Max 7 righe per utente (una per giorno). Replace e' piu' semplice e prevedibile di un merge/diff.
+**Motivazione:** Replace per data e' atomico e prevedibile. Non richiede merge/diff. Salva solo la data toccata, non l'intera storia dell'utente.
 
-### Query per Stato Persona nell'Agenda (AC #6)
+### Query per Stato Persona nell'Agenda (AC #7) — CC-2026-04-26
 
-La query `getStaffStatusForDate` deve determinare lo stato di ogni persona per una data specifica su una sede:
+La query `getStaffStatusForDate` deve determinare lo stato di ogni persona per una data specifica su una sede, supportando fasce multiple per giorno:
 
 ```typescript
-// Pseudocodice
-export async function getStaffStatusForDate(locationId: string, date: Date, tenantId: string) {
-  const dayOfWeek = getIsoDayOfWeek(date) // 0=Lun, 6=Dom
-
+// Pseudocodice — ritorna array di shift per ogni utente
+export async function getStaffStatusForDate(locationId: string, date: string, tenantId: string) {
   // Tutti gli utenti attivi del tenant
   const allActiveUsers = await getActiveUsers(tenantId)
 
-  // Tutte le assegnazioni per il dayOfWeek corrente
-  const todayAssignments = await db.select(...)
+  // Tutte le fasce per la data specifica (non dayOfWeek!)
+  const dateShifts = await db.select({ ...userLocationAssignments, locationName: locations.name })
     .from(userLocationAssignments)
+    .leftJoin(locations, eq(userLocationAssignments.locationId, locations.id))
     .where(and(
       eq(userLocationAssignments.tenantId, tenantId),
-      eq(userLocationAssignments.dayOfWeek, dayOfWeek)
+      eq(userLocationAssignments.date, date)  // filtro per data specifica
     ))
 
-  // Per ogni utente, determinare lo stato rispetto alla sede selezionata:
-  // - "active": assegnato a QUESTA sede per questo giorno → #E8F0ED
-  // - "elsewhere": assegnato a UN'ALTRA sede per questo giorno → #FEF3C7
-  // - "unassigned": nessuna assegnazione per questo giorno → #F9FAFB
-  return allActiveUsers.map(user => ({
-    ...user,
-    status: determineStatus(user.id, locationId, todayAssignments),
-    assignment: findAssignment(user.id, todayAssignments),
-  }))
+  // Per ogni utente, classificare le sue fasce rispetto alla sede corrente
+  return allActiveUsers.map(user => {
+    const userShifts = dateShifts.filter(s => s.userId === user.id)
+    const shifts = userShifts.map(s => ({
+      locationId: s.locationId,
+      locationName: s.locationName,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      status: s.locationId === locationId ? 'active' : 'elsewhere',
+    }))
+    const overallStatus = shifts.length === 0 ? 'unassigned'
+      : shifts.some(s => s.status === 'active') ? 'active'
+      : 'elsewhere'
+    return { ...user, overallStatus, shifts }
+  })
 }
 ```
 
-**IMPORTANTE:** La funzione `getIsoDayOfWeek(date)` deve convertire il giorno JavaScript (0=Dom) in ISO (0=Lun):
-```typescript
-// JavaScript: new Date().getDay() → 0=Dom, 1=Lun, ..., 6=Sab
-// ISO 8601 / DB: 0=Lun, 1=Mar, ..., 6=Dom
-export function getIsoDayOfWeek(date: Date): number {
-  const jsDay = date.getDay() // 0=Dom, 1=Lun, ..., 6=Sab
-  return jsDay === 0 ? 6 : jsDay - 1 // Converti: Dom→6, Lun→0, Mar→1, ...
-}
-```
+**ELIMINATO:** Helper `getIsoDayOfWeek` — non piu' necessario con il filtro per data specifica.
 
 ### UX Pattern da Seguire
 
@@ -491,16 +481,21 @@ Nessun debug necessario. Implementazione completata senza blocchi.
 ### Change Log
 
 - 2026-03-15: Implementazione completa Story 2.4 — Assegnazione collaboratori a sedi con calendario settimanale di disponibilita'. 10 task completati.
+- 2026-04-26: CC-2026-04-26 — Rewrite completato. Modello `dayOfWeek` sostituito con `date` (data specifica). Fasce multiple per giorno con sede per fascia. Tasks 1R-5R implementati. Agenda (ScheduleGrid, ScheduleTimeline, PersonHeader, AgendaView) aggiornata per multi-fascia. TypeScript clean.
 
 ### File List
 
-- `src/lib/db/schema.ts` — Modificato: aggiunta tabella `userLocationAssignments`
-- `src/lib/validations/staff.ts` — Nuovo: schemi Zod per assegnazioni, costante DAYS_OF_WEEK
-- `src/lib/actions/staff.ts` — Nuovo: Server Actions (assign, update, remove, saveWeeklyCalendar)
-- `src/lib/queries/staff.ts` — Nuovo: query functions (getActiveUsers, getUserAssignments, getAllUsersWithAssignments, getStaffByLocation, getStaffStatusForDate)
+- `src/lib/db/schema.ts` — Modificato: `userLocationAssignments` con `date` (CC-2026-04-26)
+- `src/lib/validations/staff.ts` — Modificato: `saveDayShiftsSchema` + `date` al posto di `dayOfWeek`, rimosso `DAYS_OF_WEEK`
+- `src/lib/actions/staff.ts` — Modificato: `saveDayShifts` replace-per-data, rimosso `saveWeeklyCalendar`
+- `src/lib/queries/staff.ts` — Modificato: `getStaffStatusForDate` con `shifts[]` + `overallStatus`, rimosso `getIsoDayOfWeek`
 - `src/lib/auth/permissions.ts` — Modificato: aggiunta '/staff' a adminOnlyRoutes, 'manageStaff' a permissions
-- `src/components/staff/StaffList.tsx` — Nuovo: componente lista utenti con assegnazioni
-- `src/components/staff/StaffScheduleCalendar.tsx` — Nuovo: calendario settimanale per utente
-- `src/components/staff/AssignmentForm.tsx` — Nuovo: form assegnazione singolo giorno
-- `src/app/(auth)/staff/page.tsx` — Nuovo: pagina Gestione Personale
+- `src/components/staff/StaffList.tsx` — Modificato: usa `StaffCalendarEditor`, badge "X giorni"
+- `src/components/staff/StaffCalendarEditor.tsx` — Nuovo: calendario mensile per data, fasce multiple per giorno (sostituisce StaffScheduleCalendar)
+- `src/components/staff/AssignmentForm.tsx` — Modificato: `date: string` + `existingShifts` per overlap check
+- `src/app/(auth)/staff/page.tsx` — Modificato: descrizione aggiornata
 - `src/components/layout/nav-items.ts` — Modificato: aggiunta voce "Personale" con icona UserCog
+- `src/components/schedule/ScheduleGrid.tsx` — Modificato: multi-fascia rendering, `overallStatus` + `shifts[]`
+- `src/components/schedule/ScheduleTimeline.tsx` — Modificato: `overallStatus` per `isMovingTarget`
+- `src/components/schedule/PersonHeader.tsx` — Modificato: mostra fasce attive multiple "HH:mm-HH:mm • HH:mm-HH:mm"
+- `src/components/schedule/AgendaView.tsx` — Modificato: rimossa enrichment locationName (ora in `shifts[]`)

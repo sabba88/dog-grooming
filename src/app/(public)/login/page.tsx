@@ -98,7 +98,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full min-h-[44px] text-white"
-              style={{ backgroundColor: '#4A7C6F' }}
+              style={{ backgroundColor: '#4BBFC8' }}
               disabled={isLoading}
             >
               {isLoading ? 'Accesso in corso...' : 'Accedi'}

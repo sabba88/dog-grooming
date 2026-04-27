@@ -338,7 +338,8 @@ export const appointments = pgTable('appointments', {
   clientId: uuid('client_id').notNull(),
   dogId: uuid('dog_id').notNull(),
   serviceId: uuid('service_id').notNull(),
-  stationId: uuid('station_id').notNull(),
+  userId: uuid('user_id').notNull(),         // CC-2026-03-14: persona responsabile appuntamento
+  stationId: uuid('station_id'),             // CC-2026-03-14: reso opzionale (postazione non sempre rilevante)
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time').notNull(),
   price: integer('price').notNull(), // centesimi
@@ -346,7 +347,89 @@ export const appointments = pgTable('appointments', {
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 })
+
+// CC-2026-04-26b: Orari apertura sede — una riga per fascia oraria per giorno della settimana.
+// Piu' righe per stesso (locationId, dayOfWeek) = piu' fasce (max 2). Giorno senza righe = chiuso.
+// Usato da AgendaView per calcolare globalOpen/globalClose dinamicamente.
+export const locationBusinessHours = pgTable('location_business_hours', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  locationId: uuid('location_id').notNull(),
+  dayOfWeek: integer('day_of_week').notNull(), // 0=Lunedi' (ISO 8601), 6=Domenica
+  openTime: text('open_time').notNull(),   // "HH:mm"
+  closeTime: text('close_time').notNull(), // "HH:mm"
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// CC-2026-03-14 + CC-2026-04-26: Turni collaboratori per data di calendario
+// Una riga = una fascia lavorativa. Piu' righe per stesso (userId, date) = piu' fasce nello stesso giorno.
+// Ogni fascia puo' avere una sede diversa.
+export const userLocationAssignments = pgTable('user_location_assignments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  locationId: uuid('location_id').notNull(),
+  date: date('date').notNull(),              // CC-2026-04-26: data specifica (non dayOfWeek ripetuto)
+  startTime: text('start_time').notNull(),   // es. "09:00"
+  endTime: text('end_time').notNull(),       // es. "13:00"
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// CC-2026-04-26b: Catalogo razze canine — CMS gestito dall'Amministratore.
+export const breeds = pgTable('breeds', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// CC-2026-04-26b: Prezzi specifici per razza per servizio.
+// Se non esiste una riga per (serviceId, breedId), il sistema usa services.price come fallback.
+// Unique constraint su (service_id, breed_id, tenant_id).
+// ON DELETE CASCADE da entrambi i lati (service eliminato o breed eliminata rimuove il prezzo).
+// dogs.breedId: uuid('breed_id').references(() => breeds.id, { onDelete: 'set null' }) — nullable, retrocompatibile.
+export const serviceBreedPrices = pgTable('service_breed_prices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  serviceId: uuid('service_id').notNull().references(() => services.id, { onDelete: 'cascade' }),
+  breedId: uuid('breed_id').notNull().references(() => breeds.id, { onDelete: 'cascade' }),
+  price: integer('price').notNull(), // centesimi, come services.price
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
 ```
+
+**Note `locationBusinessHours` (CC-2026-04-26b):**
+- Query `getLocationBusinessHours(locationId, tenantId)` → `{ dayOfWeek, openTime, closeTime }[]`
+- Action `upsertLocationBusinessHours(locationId, dayOfWeek, slots[])` — replace strategy per giorno
+- `computeAgendaRange(businessHours, dayOfWeek)` in `AgendaView` → `{ globalOpen, globalClose }`
+- Fallback se nessun orario: `{ globalOpen: '08:00', globalClose: '20:00' }`
+- `MINUTES_PER_SLOT = 15` (da 30), `SLOT_HEIGHT_PX = 30` (da 60) — proporzione visiva invariata
+
+**Note query `getStaffStatusForDate` (CC-2026-04-26):**
+- Filtro: `WHERE userId = ? AND tenantId = ? AND date = specificDate` (non piu' `dayOfWeek`)
+- Tipo di ritorno: `{ userId, overallStatus, shifts: [{ locationId, startTime, endTime, status }] }` — array di fasce, non piu' fascia singola
+- `status` per fascia: `'active'` (questa sede), `'elsewhere'` (altra sede)
+- `overallStatus`: `'active'` se almeno una fascia e' su questa sede, `'elsewhere'` se tutte le fasce sono su altre sedi, `'unassigned'` se nessuna fascia per questa data
+- Eliminato helper `getIsoDayOfWeek` (non piu' necessario)
+
+**Note vista settimanale (CC-2026-04-27 — Story 4-6):**
+- Nuova query `getWeeklyAppointmentsByPerson(weekStart, weekEnd, locationId, tenantId)` in `queries/appointments.ts`
+  → `Record<userId, Appointment[]>` — tutti gli appuntamenti della settimana raggruppati per persona
+- Nuova query `getWeeklyStaffShifts(weekStart, weekEnd, locationId, tenantId)` in `queries/staff.ts`
+  → `Record<userId, { date: string, shifts: { startTime: string, endTime: string }[] }[]>` — turni per persona per ogni giorno della settimana (da `userLocationAssignments` filtrando per `date BETWEEN weekStart AND weekEnd`)
+- Nuova utility `computeGaps(shifts: TimeInterval[], appointments: TimeInterval[]): TimeInterval[]` in `utils/schedule.ts`
+  → algoritmo di sottrazione di insiemi di intervalli ordinati: restituisce le fasce del turno non coperte da alcun appuntamento
+- Nuovi componenti in `components/schedule/`:
+  - `WeeklyScheduleView.tsx` — orchestratore vista settimanale (righe: persone, colonne: 7 giorni)
+  - `WeeklyPersonRow.tsx` — riga singola persona con 7 celle giorno
+  - `WeeklyDayCell.tsx` — cella (persona × giorno): barra proporzionale turno/copertura/buco + label "Xh buco"
+- Aggiornamento `AgendaView.tsx`: toggle "Giorno | Settimana" nell'header; navigazione settimanale (settimana prec./succ.)
+- Design tokens buchi: sfondo `#E5F7F9` con pattern diagonale, bordo `#4BBFC8` tratteggiato
+- Nessuna modifica allo schema DB — usa dati gia' presenti in `appointments` e `userLocationAssignments`
 
 **Code Naming Conventions (TypeScript/React):**
 
@@ -613,6 +696,8 @@ dog-grooming/
 │   │   │   │   └── page.tsx        # FR9-FR11: Gestione listino servizi
 │   │   │   ├── locations/
 │   │   │   │   └── page.tsx        # FR5-FR8: Gestione sedi e postazioni
+│   │   │   ├── breeds/
+│   │   │   │   └── page.tsx        # FR37-FR40: CMS Razze canine (solo Admin)
 │   │   │   ├── users/
 │   │   │   │   └── page.tsx        # FR1-FR2: Gestione utenze (solo Admin)
 │   │   │   ├── settings/
@@ -665,8 +750,11 @@ dog-grooming/
 │   │   │   ├── DogForm.tsx          # Form creazione/modifica cane
 │   │   │   ├── DogDetail.tsx        # Dettaglio cane con storico
 │   │   │   └── DogNotes.tsx         # Note cane + storico prestazioni (FR18-FR19)
+│   │   ├── breed/
+│   │   │   ├── BreedForm.tsx        # Form creazione/modifica razza con prezzi per servizio (Admin) (nuovo)
+│   │   │   └── BreedList.tsx        # Lista razze (Admin) (nuovo)
 │   │   ├── service/
-│   │   │   ├── ServiceForm.tsx      # Form creazione/modifica servizio (Admin)
+│   │   │   ├── ServiceForm.tsx      # Form creazione/modifica servizio (Admin) + sezione prezzi per razza
 │   │   │   └── ServiceList.tsx      # Lista servizi (lettura per Collaboratore)
 │   │   ├── location/
 │   │   │   ├── LocationForm.tsx     # Form sede (Admin)
@@ -693,20 +781,23 @@ dog-grooming/
 │   │   │   ├── services.ts         # Server Actions: create, update, delete
 │   │   │   ├── locations.ts        # Server Actions: create, update sedi + postazioni + orari
 │   │   │   ├── users.ts            # Server Actions: create, update, deactivate utenze
+│   │   │   ├── breeds.ts           # Server Actions: createBreed, updateBreed, deleteBreed, upsertBreedServicePrices (FR37-FR40)
 │   │   │   └── gdpr.ts             # Server Actions: exportClientData, deleteClientData (FR31-FR33)
 │   │   ├── validations/
 │   │   │   ├── appointments.ts     # Schema Zod: createAppointmentSchema, updateAppointmentSchema
 │   │   │   ├── clients.ts          # Schema Zod: createClientSchema, updateClientSchema
-│   │   │   ├── dogs.ts             # Schema Zod: createDogSchema, updateDogSchema
-│   │   │   ├── services.ts         # Schema Zod: createServiceSchema, updateServiceSchema
+│   │   │   ├── dogs.ts             # Schema Zod: createDogSchema, updateDogSchema (+ breedId opzionale)
+│   │   │   ├── services.ts         # Schema Zod: createServiceSchema, updateServiceSchema (+ breedPrices array)
 │   │   │   ├── locations.ts        # Schema Zod: createLocationSchema, createStationSchema
+│   │   │   ├── breeds.ts           # Schema Zod: createBreedSchema, updateBreedSchema (nuovo)
 │   │   │   └── users.ts            # Schema Zod: createUserSchema, updateUserSchema
 │   │   ├── queries/
 │   │   │   ├── appointments.ts     # Query functions: getAppointments, getByDate, getByStation
 │   │   │   ├── clients.ts          # Query functions: searchClients, getClientById
-│   │   │   ├── dogs.ts             # Query functions: getDogsByClient, getDogById
-│   │   │   ├── services.ts         # Query functions: getServices
+│   │   │   ├── dogs.ts             # Query functions: getDogsByClient, getDogById (+ join breeds)
+│   │   │   ├── services.ts         # Query functions: getServices (+ join service_breed_prices)
 │   │   │   ├── locations.ts        # Query functions: getLocations, getStations
+│   │   │   ├── breeds.ts           # Query functions: getBreeds, getBreedById, getBreedWithPrices (nuovo)
 │   │   │   └── dashboard.ts        # Query functions: getDashboardStats
 │   │   ├── utils/
 │   │   │   ├── dates.ts            # Utility date/ora: formatDate, formatTime, isSlotAvailable
@@ -764,6 +855,7 @@ dog-grooming/
 | **Agenda (FR26-FR29)** | `agenda/page.tsx` | — | — | `schedule/ScheduleGrid.tsx`, `ScheduleTimeline.tsx`, `DayNavigator.tsx`, `StationColumn.tsx`, `TimeSlot.tsx`, `AppointmentBlock.tsx` | `appointments.ts` |
 | **Dashboard (FR30)** | `dashboard/page.tsx` | — | — | `dashboard/DashboardSummary.tsx`, `DashboardStats.tsx` | `dashboard.ts` |
 | **GDPR (FR31-FR33)** | `clients/[id]/page.tsx` (azioni) | `gdpr.ts` | — | Azioni nel `ClientDetail.tsx` | — |
+| **Razze (FR37–FR40)** | `breeds/page.tsx` | `breeds.ts` (nuovo) | `breeds.ts` (nuovo) | `breed/BreedForm.tsx`, `BreedList.tsx` | `breeds.ts` (nuovo) |
 
 ### Cross-Cutting Concerns Mapping
 

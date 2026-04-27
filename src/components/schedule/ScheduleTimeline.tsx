@@ -4,18 +4,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { AppointmentBlock } from './AppointmentBlock'
 import { EmptySlot } from './EmptySlot'
 import { generateTimeSlots, getServiceColor } from '@/lib/utils/schedule'
-import type { StaffStatus } from '@/lib/queries/staff'
+import type { StaffStatus, ShiftInfo } from '@/lib/queries/staff'
 
 interface Person {
   id: string
   name: string
   role: 'admin' | 'collaborator'
-  status: StaffStatus
-  assignment: {
-    startTime: string
-    endTime: string
-    locationId: string
-  } | null
+  overallStatus: StaffStatus
+  shifts: ShiftInfo[]
 }
 
 interface Appointment {
@@ -26,8 +22,7 @@ interface Appointment {
   notes: string | null
   userId: string
   stationId: string | null
-  clientFirstName: string
-  clientLastName: string
+  clientNominativo: string
   dogName: string
   serviceName: string
   serviceId: string
@@ -37,12 +32,13 @@ interface ScheduleTimelineProps {
   staff: Person[]
   appointments: Appointment[]
   dateString: string
+  globalOpen: string
+  globalClose: string
   onAppointmentClick?: (id: string) => void
   onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
+  movingAppointmentId?: string
+  onContextAction?: (action: 'detail' | 'add-note' | 'move' | 'delete', id: string) => void
 }
-
-const GLOBAL_OPEN = '00:00'
-const GLOBAL_CLOSE = '23:30'
 
 const STATUS_DOT_COLOR: Record<StaffStatus, string> = {
   active: '#22C55E',
@@ -55,17 +51,25 @@ function PersonTimeline({
   appointments,
   allServiceIds,
   dateString,
+  globalOpen,
+  globalClose,
   onAppointmentClick,
   onEmptySlotClick,
+  movingAppointmentId,
+  onContextAction,
 }: {
   person: Person
   appointments: Appointment[]
   allServiceIds: string[]
   dateString: string
+  globalOpen: string
+  globalClose: string
   onAppointmentClick?: (id: string) => void
   onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
+  movingAppointmentId?: string
+  onContextAction?: (action: 'detail' | 'add-note' | 'move' | 'delete', id: string) => void
 }) {
-  const timeSlots = generateTimeSlots(GLOBAL_OPEN, GLOBAL_CLOSE)
+  const timeSlots = generateTimeSlots(globalOpen, globalClose)
 
   return (
     <div className="flex flex-col gap-2">
@@ -92,7 +96,7 @@ function PersonTimeline({
               <div className="flex-1">
                 <AppointmentBlock
                   id={appt.id}
-                  clientName={`${appt.clientFirstName} ${appt.clientLastName}`}
+                  clientName={appt.clientNominativo}
                   dogName={appt.dogName}
                   serviceName={appt.serviceName}
                   price={appt.price}
@@ -101,6 +105,8 @@ function PersonTimeline({
                   color={color}
                   variant="timeline"
                   onClick={onAppointmentClick}
+                  isMoving={movingAppointmentId === appt.id}
+                  onContextAction={onContextAction}
                 />
               </div>
             </div>
@@ -118,6 +124,7 @@ function PersonTimeline({
                 time={slot}
                 variant="timeline"
                 onClick={onEmptySlotClick}
+                isMovingTarget={!!movingAppointmentId && person.overallStatus === 'active'}
               />
             </div>
           </div>
@@ -131,8 +138,12 @@ export function ScheduleTimeline({
   staff,
   appointments,
   dateString,
+  globalOpen,
+  globalClose,
   onAppointmentClick,
   onEmptySlotClick,
+  movingAppointmentId,
+  onContextAction,
 }: ScheduleTimelineProps) {
   const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
 
@@ -144,7 +155,7 @@ export function ScheduleTimeline({
           <TabsTrigger key={person.id} value={person.id} className="gap-1.5">
             <span
               className="size-2 rounded-full inline-block shrink-0"
-              style={{ backgroundColor: STATUS_DOT_COLOR[person.status] }}
+              style={{ backgroundColor: STATUS_DOT_COLOR[person.overallStatus] }}
             />
             {person.name}
           </TabsTrigger>
@@ -162,7 +173,7 @@ export function ScheduleTimeline({
                 <div className="flex items-center gap-2 mb-2">
                   <span
                     className="size-2 rounded-full inline-block shrink-0"
-                    style={{ backgroundColor: STATUS_DOT_COLOR[person.status] }}
+                    style={{ backgroundColor: STATUS_DOT_COLOR[person.overallStatus] }}
                   />
                   <h3 className="text-sm font-semibold text-foreground">{person.name}</h3>
                 </div>
@@ -171,8 +182,12 @@ export function ScheduleTimeline({
                   appointments={personAppointments}
                   allServiceIds={allServiceIds}
                   dateString={dateString}
+                  globalOpen={globalOpen}
+                  globalClose={globalClose}
                   onAppointmentClick={onAppointmentClick}
                   onEmptySlotClick={onEmptySlotClick}
+                  movingAppointmentId={movingAppointmentId}
+                  onContextAction={onContextAction}
                 />
               </div>
             )
@@ -191,8 +206,12 @@ export function ScheduleTimeline({
               appointments={personAppointments}
               allServiceIds={allServiceIds}
               dateString={dateString}
+              globalOpen={globalOpen}
+              globalClose={globalClose}
               onAppointmentClick={onAppointmentClick}
               onEmptySlotClick={onEmptySlotClick}
+              movingAppointmentId={movingAppointmentId}
+              onContextAction={onContextAction}
             />
           </TabsContent>
         )

@@ -1,39 +1,68 @@
 import { db } from '@/lib/db'
-import { clients, clientNotes, users, dogs } from '@/lib/db/schema'
-import { eq, and, asc, desc, isNull, ilike, or, count } from 'drizzle-orm'
+import { clients, clientNotes, users, dogs, appointments, services } from '@/lib/db/schema'
+import { eq, and, asc, desc, isNull, ilike, or, count, max, min, gt } from 'drizzle-orm'
 
 export async function getClients(tenantId: string) {
+  const now = new Date()
+
+  const lastAppt = db
+    .select({
+      clientId: appointments.clientId,
+      lastAt: max(appointments.startTime).as('last_at'),
+    })
+    .from(appointments)
+    .where(and(eq(appointments.tenantId, tenantId)))
+    .groupBy(appointments.clientId)
+    .as('last_appt')
+
+  const nextAppt = db
+    .select({
+      clientId: appointments.clientId,
+      nextAt: min(appointments.startTime).as('next_at'),
+    })
+    .from(appointments)
+    .where(and(eq(appointments.tenantId, tenantId), gt(appointments.startTime, now)))
+    .groupBy(appointments.clientId)
+    .as('next_appt')
+
   return db
     .select({
       id: clients.id,
-      firstName: clients.firstName,
-      lastName: clients.lastName,
+      nominativo: clients.nominativo,
       phone: clients.phone,
       email: clients.email,
       createdAt: clients.createdAt,
       dogsCount: count(dogs.id),
+      lastAppointmentAt: lastAppt.lastAt,
+      nextAppointmentAt: nextAppt.nextAt,
     })
     .from(clients)
     .leftJoin(dogs, eq(dogs.clientId, clients.id))
+    .leftJoin(lastAppt, eq(lastAppt.clientId, clients.id))
+    .leftJoin(nextAppt, eq(nextAppt.clientId, clients.id))
     .where(and(eq(clients.tenantId, tenantId), isNull(clients.deletedAt)))
     .groupBy(
       clients.id,
-      clients.firstName,
-      clients.lastName,
+      clients.nominativo,
       clients.phone,
       clients.email,
-      clients.createdAt
+      clients.createdAt,
+      lastAppt.lastAt,
+      nextAppt.nextAt,
     )
-    .orderBy(asc(clients.lastName), asc(clients.firstName))
+    .orderBy(asc(clients.nominativo))
 }
 
 export async function getClientById(clientId: string, tenantId: string) {
   const [client] = await db
     .select({
       id: clients.id,
-      firstName: clients.firstName,
-      lastName: clients.lastName,
+      nominativo: clients.nominativo,
       phone: clients.phone,
+      owner2: clients.owner2,
+      phone2: clients.phone2,
+      owner3: clients.owner3,
+      phone3: clients.phone3,
       email: clients.email,
       createdAt: clients.createdAt,
     })
@@ -69,13 +98,30 @@ export async function getClientNotes(clientId: string, tenantId: string) {
     .orderBy(desc(clientNotes.createdAt))
 }
 
+export async function getClientAppointments(clientId: string, tenantId: string) {
+  return db
+    .select({
+      id: appointments.id,
+      startTime: appointments.startTime,
+      endTime: appointments.endTime,
+      price: appointments.price,
+      notes: appointments.notes,
+      dogName: dogs.name,
+      serviceName: services.name,
+    })
+    .from(appointments)
+    .innerJoin(dogs, eq(appointments.dogId, dogs.id))
+    .innerJoin(services, eq(appointments.serviceId, services.id))
+    .where(and(eq(appointments.clientId, clientId), eq(appointments.tenantId, tenantId)))
+    .orderBy(desc(appointments.startTime))
+}
+
 export async function searchClients(query: string, tenantId: string) {
   const searchPattern = `%${query}%`
   return db
     .select({
       id: clients.id,
-      firstName: clients.firstName,
-      lastName: clients.lastName,
+      nominativo: clients.nominativo,
       phone: clients.phone,
       email: clients.email,
     })
@@ -85,12 +131,11 @@ export async function searchClients(query: string, tenantId: string) {
         eq(clients.tenantId, tenantId),
         isNull(clients.deletedAt),
         or(
-          ilike(clients.firstName, searchPattern),
-          ilike(clients.lastName, searchPattern),
+          ilike(clients.nominativo, searchPattern),
           ilike(clients.phone, searchPattern)
         )
       )
     )
-    .orderBy(asc(clients.lastName), asc(clients.firstName))
+    .orderBy(asc(clients.nominativo))
     .limit(10)
 }

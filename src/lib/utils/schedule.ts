@@ -1,5 +1,48 @@
-export const SLOT_HEIGHT_PX = 60
-export const MINUTES_PER_SLOT = 30
+export interface TimeInterval {
+  start: number
+  end: number
+}
+
+export function computeGaps(
+  shifts: TimeInterval[],
+  appointments: TimeInterval[]
+): TimeInterval[] {
+  const gaps: TimeInterval[] = []
+
+  for (const shift of shifts) {
+    const covered = [...appointments]
+      .filter(a => a.end > shift.start && a.start < shift.end)
+      .map(a => ({
+        start: Math.max(a.start, shift.start),
+        end: Math.min(a.end, shift.end),
+      }))
+      .sort((a, b) => a.start - b.start)
+
+    let cursor = shift.start
+    for (const segment of covered) {
+      if (cursor < segment.start) {
+        gaps.push({ start: cursor, end: segment.start })
+      }
+      cursor = Math.max(cursor, segment.end)
+    }
+    if (cursor < shift.end) {
+      gaps.push({ start: cursor, end: shift.end })
+    }
+  }
+
+  return gaps
+}
+
+export function minutesToHoursLabel(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (m === 0) return `${h}h`
+  if (h === 0) return `${m}min`
+  return `${h}h ${m}min`
+}
+
+export const SLOT_HEIGHT_PX = 30
+export const MINUTES_PER_SLOT = 15
 
 export const SERVICE_COLORS = [
   { bg: '#DBEAFE', border: '#93C5FD', label: 'Azzurro' },
@@ -92,4 +135,27 @@ export function toDayOfWeek(dateFnsDay: number): number {
 export function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number)
   return h * 60 + m
+}
+
+function subtractOneHour(time: string): string {
+  const [h, m] = time.split(':').map(Number)
+  const total = Math.max(0, h * 60 + m - 60)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
+function addOneHour(time: string): string {
+  const [h, m] = time.split(':').map(Number)
+  const total = Math.min(23 * 60 + 45, h * 60 + m + 60)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
+export function computeAgendaRange(
+  businessHours: { dayOfWeek: number; openTime: string; closeTime: string }[],
+  dayOfWeek: number,
+): { globalOpen: string; globalClose: string } {
+  const todaySlots = businessHours.filter(h => h.dayOfWeek === dayOfWeek)
+  if (todaySlots.length === 0) return { globalOpen: '08:00', globalClose: '20:00' }
+  const minOpen = todaySlots.reduce((min, s) => s.openTime < min ? s.openTime : min, '23:59')
+  const maxClose = todaySlots.reduce((max, s) => s.closeTime > max ? s.closeTime : max, '00:00')
+  return { globalOpen: subtractOneHour(minOpen), globalClose: addOneHour(maxClose) }
 }

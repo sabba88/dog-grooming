@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { dogs, dogNotes, clients, users } from '@/lib/db/schema'
+import { dogs, dogNotes, clients, users, breeds } from '@/lib/db/schema'
 import { eq, and, asc, desc, isNull } from 'drizzle-orm'
 
 export async function getDogsByClient(clientId: string, tenantId: string) {
@@ -7,7 +7,8 @@ export async function getDogsByClient(clientId: string, tenantId: string) {
     .select({
       id: dogs.id,
       name: dogs.name,
-      breed: dogs.breed,
+      breedId: dogs.breedId,
+      breedName: breeds.name,
       size: dogs.size,
       dateOfBirth: dogs.dateOfBirth,
       sex: dogs.sex,
@@ -15,6 +16,7 @@ export async function getDogsByClient(clientId: string, tenantId: string) {
       createdAt: dogs.createdAt,
     })
     .from(dogs)
+    .leftJoin(breeds, eq(dogs.breedId, breeds.id))
     .innerJoin(
       clients,
       and(eq(dogs.clientId, clients.id), isNull(clients.deletedAt))
@@ -28,7 +30,8 @@ export async function getDogById(dogId: string, tenantId: string) {
     .select({
       id: dogs.id,
       name: dogs.name,
-      breed: dogs.breed,
+      breedId: dogs.breedId,
+      breedName: breeds.name,
       size: dogs.size,
       dateOfBirth: dogs.dateOfBirth,
       sex: dogs.sex,
@@ -36,10 +39,10 @@ export async function getDogById(dogId: string, tenantId: string) {
       clientId: dogs.clientId,
       createdAt: dogs.createdAt,
       updatedAt: dogs.updatedAt,
-      clientFirstName: clients.firstName,
-      clientLastName: clients.lastName,
+      clientNominativo: clients.nominativo,
     })
     .from(dogs)
+    .leftJoin(breeds, eq(dogs.breedId, breeds.id))
     .innerJoin(
       clients,
       and(eq(dogs.clientId, clients.id), isNull(clients.deletedAt))
@@ -71,14 +74,14 @@ export async function getAllDogs(tenantId: string) {
     .select({
       id: dogs.id,
       name: dogs.name,
-      breed: dogs.breed,
+      breedName: breeds.name,
       size: dogs.size,
       sex: dogs.sex,
-      clientFirstName: clients.firstName,
-      clientLastName: clients.lastName,
+      clientNominativo: clients.nominativo,
       clientId: dogs.clientId,
     })
     .from(dogs)
+    .leftJoin(breeds, eq(dogs.breedId, breeds.id))
     .innerJoin(
       clients,
       and(eq(dogs.clientId, clients.id), isNull(clients.deletedAt))

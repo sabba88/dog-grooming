@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth/auth'
 import { checkPermission } from '@/lib/auth/permissions'
-import { getLocationById } from '@/lib/queries/locations'
+import { getLocationById, getLocationBusinessHours } from '@/lib/queries/locations'
 import { getStationsByLocation } from '@/lib/queries/stations'
 import { getServices } from '@/lib/queries/services'
 import { getStationServices } from '@/lib/queries/stations'
 import { StationList } from '@/components/location/StationList'
+import { BusinessHoursEditor } from '@/components/location/BusinessHoursEditor'
 
 interface LocationDetailPageProps {
   params: Promise<{ id: string }>
@@ -29,9 +30,10 @@ export default async function LocationDetailPage({ params }: LocationDetailPageP
     redirect('/settings/locations')
   }
 
-  const [stations, allServices] = await Promise.all([
+  const [stations, allServices, businessHours] = await Promise.all([
     getStationsByLocation(locationId, tenantId),
     getServices(tenantId),
+    getLocationBusinessHours(locationId, tenantId),
   ])
 
   // Get enabled service IDs for each station
@@ -44,12 +46,21 @@ export default async function LocationDetailPage({ params }: LocationDetailPageP
   )
 
   return (
-    <StationList
-      stations={stations}
-      locationId={locationId}
-      locationName={location.name}
-      allServices={allServices}
-      stationEnabledServices={stationEnabledServices}
-    />
+    <div className="flex flex-col gap-8">
+      <StationList
+        stations={stations}
+        locationId={locationId}
+        locationName={location.name}
+        allServices={allServices}
+        stationEnabledServices={stationEnabledServices}
+      />
+      <section className="flex flex-col gap-4">
+        <h2 className="text-lg font-semibold">Orari di Apertura</h2>
+        <BusinessHoursEditor
+          locationId={locationId}
+          initialHours={businessHours}
+        />
+      </section>
+    </div>
   )
 }

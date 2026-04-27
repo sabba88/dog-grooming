@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, boolean, integer, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, boolean, integer, pgEnum, date, uniqueIndex } from 'drizzle-orm/pg-core'
 
 export const userRoleEnum = pgEnum('user_role', ['admin', 'collaborator'])
 
@@ -53,9 +53,12 @@ export const stationServices = pgTable('station_services', {
 
 export const clients = pgTable('clients', {
   id: uuid('id').primaryKey().defaultRandom(),
-  firstName: text('first_name').notNull(),
-  lastName: text('last_name').notNull(),
+  nominativo: text('nominativo').notNull(),
   phone: text('phone').notNull(),
+  owner2: text('owner2'),
+  phone2: text('phone2'),
+  owner3: text('owner3'),
+  phone3: text('phone3'),
   email: text('email'),
   consentGivenAt: timestamp('consent_given_at').notNull(),
   consentVersion: text('consent_version').notNull().default('1.0'),
@@ -74,10 +77,19 @@ export const clientNotes = pgTable('client_notes', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
+// CC-2026-04-26b: Catalogo razze canine — CMS gestito dall'Amministratore.
+export const breeds = pgTable('breeds', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
 export const dogs = pgTable('dogs', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
-  breed: text('breed'),
+  breedId: uuid('breed_id').references(() => breeds.id, { onDelete: 'set null' }),
   size: text('size'),
   dateOfBirth: timestamp('date_of_birth'),
   sex: text('sex'),
@@ -101,13 +113,38 @@ export const userLocationAssignments = pgTable('user_location_assignments', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull(),
   locationId: uuid('location_id').notNull(),
-  dayOfWeek: integer('day_of_week').notNull(), // 0=Lunedi', 1=Martedi', ..., 6=Domenica (ISO 8601)
+  date: date('date').notNull(), // YYYY-MM-DD — data specifica di calendario (CC-2026-04-26)
   startTime: text('start_time').notNull(), // "HH:mm"
   endTime: text('end_time').notNull(), // "HH:mm"
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
+
+export const locationBusinessHours = pgTable('location_business_hours', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  locationId: uuid('location_id').notNull(),
+  dayOfWeek: integer('day_of_week').notNull(), // 0=Lunedi' (ISO 8601), 6=Domenica
+  openTime: text('open_time').notNull(),   // "HH:mm"
+  closeTime: text('close_time').notNull(), // "HH:mm"
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// CC-2026-04-26b: Prezzi specifici per razza per servizio.
+// Se non esiste una riga per (serviceId, breedId), il sistema usa services.price come fallback.
+export const serviceBreedPrices = pgTable('service_breed_prices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  serviceId: uuid('service_id').notNull().references(() => services.id, { onDelete: 'cascade' }),
+  breedId: uuid('breed_id').notNull().references(() => breeds.id, { onDelete: 'cascade' }),
+  price: integer('price').notNull(),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+},
+(t) => [uniqueIndex('unique_service_breed_tenant').on(t.serviceId, t.breedId, t.tenantId)]
+)
 
 export const appointments = pgTable('appointments', {
   id: uuid('id').primaryKey().defaultRandom(),

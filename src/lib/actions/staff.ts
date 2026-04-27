@@ -5,11 +5,12 @@ import {
   assignUserToLocationSchema,
   updateAssignmentSchema,
   removeAssignmentSchema,
-  saveWeeklyCalendarSchema,
+  saveDayShiftsSchema,
 } from '@/lib/validations/staff'
 import { db } from '@/lib/db'
 import { userLocationAssignments, users, locations } from '@/lib/db/schema'
-import { eq, and, ne } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
+import { timeToMinutes } from '@/lib/utils/schedule'
 
 export const assignUserToLocation = authActionClient
   .schema(assignUserToLocationSchema)
@@ -18,49 +19,37 @@ export const assignUserToLocation = authActionClient
       throw new Error('Non autorizzato')
     }
 
-    // Verifica che userId appartenga al tenant
     const [user] = await db
       .select({ id: users.id })
       .from(users)
       .where(and(eq(users.id, parsedInput.userId), eq(users.tenantId, ctx.tenantId), eq(users.isActive, true)))
       .limit(1)
 
-    if (!user) {
-      throw new Error('Utente non trovato')
-    }
+    if (!user) throw new Error('Utente non trovato')
 
-    // Verifica che locationId appartenga al tenant
     const [location] = await db
       .select({ id: locations.id })
       .from(locations)
       .where(and(eq(locations.id, parsedInput.locationId), eq(locations.tenantId, ctx.tenantId)))
       .limit(1)
 
-    if (!location) {
-      throw new Error('Sede non trovata')
-    }
+    if (!location) throw new Error('Sede non trovata')
 
-    // Verifica vincolo: utente non già assegnato a un'altra sede nello stesso giorno (AC #3)
-    const [existingAssignment] = await db
-      .select({ id: userLocationAssignments.id, locationId: userLocationAssignments.locationId })
+    // Check time overlap with existing shifts for same userId + date
+    const existingForDate = await db
+      .select({ startTime: userLocationAssignments.startTime, endTime: userLocationAssignments.endTime })
       .from(userLocationAssignments)
       .where(and(
         eq(userLocationAssignments.userId, parsedInput.userId),
-        eq(userLocationAssignments.dayOfWeek, parsedInput.dayOfWeek),
-        eq(userLocationAssignments.tenantId, ctx.tenantId),
-        ne(userLocationAssignments.locationId, parsedInput.locationId)
+        eq(userLocationAssignments.date, parsedInput.date),
+        eq(userLocationAssignments.tenantId, ctx.tenantId)
       ))
-      .limit(1)
 
-    if (existingAssignment) {
-      // Recupera il nome della sede per il messaggio
-      const [conflictLocation] = await db
-        .select({ name: locations.name })
-        .from(locations)
-        .where(eq(locations.id, existingAssignment.locationId))
-        .limit(1)
-
-      throw new Error(`L'utente è già assegnato a ${conflictLocation?.name ?? 'un\'altra sede'} per questo giorno`)
+    const hasOverlap = existingForDate.some(s =>
+      parsedInput.startTime < s.endTime && parsedInput.endTime > s.startTime
+    )
+    if (hasOverlap) {
+      throw new Error('Fascia oraria sovrapposta a un turno esistente')
     }
 
     const [result] = await db
@@ -68,7 +57,7 @@ export const assignUserToLocation = authActionClient
       .values({
         userId: parsedInput.userId,
         locationId: parsedInput.locationId,
-        dayOfWeek: parsedInput.dayOfWeek,
+        date: parsedInput.date,
         startTime: parsedInput.startTime,
         endTime: parsedInput.endTime,
         tenantId: ctx.tenantId,
@@ -81,20 +70,15 @@ export const assignUserToLocation = authActionClient
 export const updateAssignment = authActionClient
   .schema(updateAssignmentSchema)
   .action(async ({ parsedInput, ctx }) => {
-    if (ctx.role !== 'admin') {
-      throw new Error('Non autorizzato')
-    }
+    if (ctx.role !== 'admin') throw new Error('Non autorizzato')
 
-    // Verifica che locationId appartenga al tenant
     const [location] = await db
       .select({ id: locations.id })
       .from(locations)
       .where(and(eq(locations.id, parsedInput.locationId), eq(locations.tenantId, ctx.tenantId)))
       .limit(1)
 
-    if (!location) {
-      throw new Error('Sede non trovata')
-    }
+    if (!location) throw new Error('Sede non trovata')
 
     const [updated] = await db
       .update(userLocationAssignments)
@@ -110,9 +94,7 @@ export const updateAssignment = authActionClient
       ))
       .returning({ id: userLocationAssignments.id })
 
-    if (!updated) {
-      throw new Error('Assegnazione non trovata')
-    }
+    if (!updated) throw new Error('Assegnazione non trovata')
 
     return { assignment: updated }
   })
@@ -120,9 +102,7 @@ export const updateAssignment = authActionClient
 export const removeAssignment = authActionClient
   .schema(removeAssignmentSchema)
   .action(async ({ parsedInput, ctx }) => {
-    if (ctx.role !== 'admin') {
-      throw new Error('Non autorizzato')
-    }
+    if (ctx.role !== 'admin') throw new Error('Non autorizzato')
 
     const [deleted] = await db
       .delete(userLocationAssignments)
@@ -132,75 +112,64 @@ export const removeAssignment = authActionClient
       ))
       .returning({ id: userLocationAssignments.id })
 
-    if (!deleted) {
-      throw new Error('Assegnazione non trovata')
-    }
+    if (!deleted) throw new Error('Assegnazione non trovata')
 
     return { success: true }
   })
 
-export const saveWeeklyCalendar = authActionClient
-  .schema(saveWeeklyCalendarSchema)
+export const saveDayShifts = authActionClient
+  .schema(saveDayShiftsSchema)
   .action(async ({ parsedInput, ctx }) => {
-    if (ctx.role !== 'admin') {
-      throw new Error('Non autorizzato')
-    }
+    if (ctx.role !== 'admin') throw new Error('Non autorizzato')
 
-    // Verifica che userId appartenga al tenant
     const [user] = await db
       .select({ id: users.id })
       .from(users)
       .where(and(eq(users.id, parsedInput.userId), eq(users.tenantId, ctx.tenantId), eq(users.isActive, true)))
       .limit(1)
 
-    if (!user) {
-      throw new Error('Utente non trovato')
-    }
+    if (!user) throw new Error('Utente non trovato')
 
-    // Verifica che tutte le locationId appartengano al tenant
-    const uniqueLocationIds = [...new Set(parsedInput.assignments.map(a => a.locationId))]
-    if (uniqueLocationIds.length > 0) {
+    if (parsedInput.shifts.length > 0) {
+      const uniqueLocationIds = [...new Set(parsedInput.shifts.map(s => s.locationId))]
       const validLocations = await db
         .select({ id: locations.id })
         .from(locations)
-        .where(and(
-          eq(locations.tenantId, ctx.tenantId)
-        ))
+        .where(eq(locations.tenantId, ctx.tenantId))
 
       const validLocationIds = new Set(validLocations.map(l => l.id))
       for (const locId of uniqueLocationIds) {
-        if (!validLocationIds.has(locId)) {
-          throw new Error('Sede non trovata')
+        if (!validLocationIds.has(locId)) throw new Error('Sede non trovata')
+      }
+
+      // Validate no overlap between shifts being saved
+      for (let i = 0; i < parsedInput.shifts.length; i++) {
+        for (let j = i + 1; j < parsedInput.shifts.length; j++) {
+          const a = parsedInput.shifts[i]
+          const b = parsedInput.shifts[j]
+          if (timeToMinutes(a.startTime) < timeToMinutes(b.endTime) && timeToMinutes(a.endTime) > timeToMinutes(b.startTime)) {
+            throw new Error('Le fasce orarie non possono sovrapporsi')
+          }
         }
       }
     }
 
-    // Verifica vincolo: un utente non può avere due sedi diverse nello stesso giorno
-    const dayLocationMap = new Map<number, string>()
-    for (const a of parsedInput.assignments) {
-      const existing = dayLocationMap.get(a.dayOfWeek)
-      if (existing && existing !== a.locationId) {
-        throw new Error("Un utente non può essere assegnato a più sedi nello stesso giorno")
-      }
-      dayLocationMap.set(a.dayOfWeek, a.locationId)
-    }
-
-    // Replace strategy: delete all + insert new
-    // Nota: neon-http non supporta transazioni native, usiamo delete + insert sequenziale
+    // Replace strategy: delete existing for userId+date, insert new
     await db.delete(userLocationAssignments)
       .where(and(
         eq(userLocationAssignments.userId, parsedInput.userId),
+        eq(userLocationAssignments.date, parsedInput.date),
         eq(userLocationAssignments.tenantId, ctx.tenantId)
       ))
 
-    if (parsedInput.assignments.length > 0) {
+    if (parsedInput.shifts.length > 0) {
       await db.insert(userLocationAssignments).values(
-        parsedInput.assignments.map(a => ({
+        parsedInput.shifts.map(s => ({
           userId: parsedInput.userId,
-          locationId: a.locationId,
-          dayOfWeek: a.dayOfWeek,
-          startTime: a.startTime,
-          endTime: a.endTime,
+          locationId: s.locationId,
+          date: parsedInput.date,
+          startTime: s.startTime,
+          endTime: s.endTime,
           tenantId: ctx.tenantId,
         }))
       )

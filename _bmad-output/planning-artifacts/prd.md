@@ -251,13 +251,20 @@ Alta produttivita' con AI ma singolo punto di fallimento. Mitigazione: scope con
 - **FR5:** L'Amministratore puo' creare e configurare sedi
 - **FR6:** L'Amministratore puo' creare postazioni per ciascuna sede
 - **FR7:** L'Amministratore puo' assegnare i servizi abilitati a ciascuna postazione
-- **FR8:** L'Amministratore puo' definire gli orari di apertura e chiusura per ciascuna postazione
+- **FR8:** L'Amministratore puo' definire gli orari di apertura e chiusura per ciascuna sede, con fino a 2 fasce orarie per ogni giorno della settimana (es. mattina + pomeriggio)
 
 ### Gestione Listino Servizi
 
-- **FR9:** L'Amministratore puo' creare servizi specificando nome, tariffa e tempo di esecuzione
+- **FR9:** L'Amministratore puo' creare servizi specificando nome, tariffa base e tempo di esecuzione; la tariffa base e' il prezzo di fallback quando non e' configurato un prezzo specifico per razza (vedi FR37–FR40)
 - **FR10:** L'Amministratore puo' modificare ed eliminare servizi dal listino
 - **FR11:** Il Collaboratore puo' consultare il listino servizi in sola lettura
+
+### Gestione Razze Canine
+
+- **FR37:** L'Amministratore puo' creare, modificare ed eliminare razze canine nel sistema
+- **FR38:** Durante la creazione o modifica di una razza, l'Amministratore puo' impostare un prezzo specifico per ciascun servizio presente nel listino al momento della configurazione; i servizi senza prezzo specifico utilizzano il prezzo base del servizio (FR9)
+- **FR39:** Ogni cane puo' essere opzionalmente associato a una razza dal catalogo razze
+- **FR40:** Il sistema pre-compila il prezzo dell'appuntamento usando il prezzo specifico per la razza del cane per quel servizio; in assenza di prezzo specifico, usa il prezzo base del servizio
 
 ### Anagrafica Clienti
 
@@ -268,7 +275,7 @@ Alta produttivita' con AI ma singolo punto di fallimento. Mitigazione: scope con
 
 ### Anagrafica Cani
 
-- **FR16:** L'Amministratore e il Collaboratore possono aggiungere cani associati a un cliente (relazione uno-a-molti)
+- **FR16:** L'Amministratore e il Collaboratore possono aggiungere cani associati a un cliente (relazione uno-a-molti); ogni cane puo' essere associato opzionalmente a una razza dal catalogo (FR39)
 - **FR17:** L'Amministratore e il Collaboratore possono modificare i dati di un cane esistente
 - **FR18:** L'Amministratore e il Collaboratore possono aggiungere e consultare note libere su un cane
 - **FR19:** L'Amministratore e il Collaboratore possono visualizzare lo storico delle note prestazione associate a un cane
@@ -280,12 +287,12 @@ Alta produttivita' con AI ma singolo punto di fallimento. Mitigazione: scope con
 - **FR22:** L'Amministratore e il Collaboratore possono cancellare un appuntamento esistente
 - **FR23:** L'Amministratore e il Collaboratore possono spostare un appuntamento a una nuova fascia oraria o data
 - **FR24:** L'Amministratore e il Collaboratore possono aggiungere note alla prestazione al termine di un appuntamento
-- **FR25:** Il sistema calcola automaticamente la durata dell'appuntamento in base al tempo di esecuzione del servizio selezionato
+- **FR25:** Il sistema calcola automaticamente la durata dell'appuntamento in base al tempo di esecuzione del servizio selezionato e pre-compila il prezzo usando il prezzo specifico per razza del cane (se configurato), con fallback al prezzo base del servizio (FR40)
 
 ### Agenda e Visualizzazione
 
-- **FR26:** L'Amministratore e il Collaboratore possono visualizzare l'agenda giornaliera organizzata per sede e postazione
-- **FR27:** L'Amministratore e il Collaboratore possono navigare l'agenda tra giorni diversi
+- **FR26:** L'Amministratore e il Collaboratore possono visualizzare l'agenda in due modalita': (1) **vista giornaliera** — organizzata per sede e persona, con slot da 15 minuti e range orario ristretto agli orari di apertura della sede; (2) **vista settimanale** — panoramica dei 7 giorni con per ogni operatore la sintesi giornaliera di turno, ore coperte da appuntamenti e ore di buco visivamente evidenziate
+- **FR27:** L'Amministratore e il Collaboratore possono navigare l'agenda tra giorni diversi (vista giornaliera) e tra settimane diverse (vista settimanale)
 - **FR28:** L'agenda mostra per ogni appuntamento il cliente, il cane e il servizio previsto
 - **FR29:** L'Amministratore e il Collaboratore possono identificare visivamente gli slot liberi e occupati
 
@@ -298,6 +305,12 @@ Alta produttivita' con AI ma singolo punto di fallimento. Mitigazione: scope con
 - **FR31:** Il sistema gestisce i dati personali dei clienti in conformita' GDPR
 - **FR32:** Il sistema supporta il diritto all'oblio — cancellazione dati cliente su richiesta
 - **FR33:** Il sistema supporta la portabilita' dei dati — esportazione dati cliente
+- **FR36:** L'agenda mostra solo il range orario ristretto della sede (prima apertura – 1h, ultima chiusura + 1h) con slot da 15 minuti; se nessun orario e' configurato, usa il range di fallback 08:00–20:00
+
+### Pianificazione Turni Collaboratori
+
+- **FR34:** L'Amministratore puo' definire per ogni collaboratore/amministratore piu' fasce lavorative per ciascun giorno di calendario specifico, ciascuna con una sede diversa assegnata — senza vincolo di ripetizione settimanale
+- **FR35:** L'agenda mostra visivamente per ogni persona il suo stato di assegnazione per fascia oraria: attiva nella sede visualizzata, presente in altra sede, non assegnata
 
 ## Requisiti Non-Funzionali
 

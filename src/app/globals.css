@@ -117,9 +117,10 @@
 }
 
 @theme inline {
-  --color-brand-primary: #4A7C6F;
-  --color-brand-primary-light: #E8F0ED;
-  --color-brand-primary-dark: #345A50;
+  --color-brand-primary: #4BBFC8;
+  --color-brand-primary-light: #E5F7F9;
+  --color-brand-primary-dark: #347D85;
+  --color-brand-coral: #E05C6B;
   --color-brand-surface: #F8FAFB;
   --color-brand-border: #E2E8F0;
   --color-brand-text-primary: #1A202C;

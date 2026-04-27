@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const createDogSchema = z.object({
   name: z.string().min(2, 'Il nome deve avere almeno 2 caratteri'),
-  breed: z.string().optional().or(z.literal('')),
+  breedId: z.string().uuid().nullable().optional(),
   size: z.enum(['piccola', 'media', 'grande']).optional().or(z.literal('')),
   dateOfBirth: z.string().optional().or(z.literal('')),
   sex: z.enum(['maschio', 'femmina']).optional().or(z.literal('')),
@@ -15,7 +15,7 @@ export type CreateDogFormData = z.infer<typeof createDogSchema>
 export const updateDogSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(2, 'Il nome deve avere almeno 2 caratteri'),
-  breed: z.string().optional().or(z.literal('')),
+  breedId: z.string().uuid().nullable().optional(),
   size: z.enum(['piccola', 'media', 'grande']).optional().or(z.literal('')),
   dateOfBirth: z.string().optional().or(z.literal('')),
   sex: z.enum(['maschio', 'femmina']).optional().or(z.literal('')),

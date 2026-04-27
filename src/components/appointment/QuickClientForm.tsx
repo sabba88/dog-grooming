@@ -13,7 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, ArrowLeft } from 'lucide-react'
 
 interface QuickClientFormProps {
-  onCreated: (client: { id: string; firstName: string; lastName: string }) => void
+  onCreated: (client: { id: string; nominativo: string }) => void
   onCancel: () => void
 }
 
@@ -21,8 +21,7 @@ export function QuickClientForm({ onCreated, onCancel }: QuickClientFormProps) {
   const form = useForm<CreateClientFormData>({
     resolver: zodResolver(createClientSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
+      nominativo: '',
       phone: '',
       email: '',
       consent: false,
@@ -62,17 +61,10 @@ export function QuickClientForm({ onCreated, onCancel }: QuickClientFormProps) {
       </div>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         <div>
-          <Label htmlFor="qc-firstName">Nome</Label>
-          <Input id="qc-firstName" {...form.register('firstName')} autoFocus />
-          {form.formState.errors.firstName && (
-            <p className="text-destructive mt-1 text-xs">{form.formState.errors.firstName.message}</p>
-          )}
-        </div>
-        <div>
-          <Label htmlFor="qc-lastName">Cognome</Label>
-          <Input id="qc-lastName" {...form.register('lastName')} />
-          {form.formState.errors.lastName && (
-            <p className="text-destructive mt-1 text-xs">{form.formState.errors.lastName.message}</p>
+          <Label htmlFor="qc-nominativo">Nominativo</Label>
+          <Input id="qc-nominativo" {...form.register('nominativo')} autoFocus />
+          {form.formState.errors.nominativo && (
+            <p className="text-destructive mt-1 text-xs">{form.formState.errors.nominativo.message}</p>
           )}
         </div>
         <div>

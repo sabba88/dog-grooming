@@ -13,11 +13,10 @@ import {
 interface Dog {
   id: string
   name: string
-  breed: string | null
+  breedName: string | null
   size: string | null
   sex: string | null
-  clientFirstName: string
-  clientLastName: string
+  clientNominativo: string
   clientId: string
 }
 
@@ -71,16 +70,14 @@ export function DogsPage({ dogs }: DogsPageProps) {
                     onClick={() => router.push(`/dogs/${dog.id}`)}
                   >
                     <TableCell className="font-medium">{dog.name}</TableCell>
-                    <TableCell>{dog.breed || '—'}</TableCell>
+                    <TableCell>{dog.breedName || '—'}</TableCell>
                     <TableCell>
                       {dog.size ? sizeLabel[dog.size] || dog.size : '—'}
                     </TableCell>
                     <TableCell>
                       {dog.sex ? sexLabel[dog.sex] || dog.sex : '—'}
                     </TableCell>
-                    <TableCell>
-                      {dog.clientFirstName} {dog.clientLastName}
-                    </TableCell>
+                    <TableCell>{dog.clientNominativo}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -102,15 +99,13 @@ export function DogsPage({ dogs }: DogsPageProps) {
                   </span>
                   <span className="text-sm text-muted-foreground">
                     {[
-                      dog.breed,
+                      dog.breedName,
                       dog.size ? sizeLabel[dog.size] || dog.size : null,
                     ]
                       .filter(Boolean)
                       .join(' · ') || 'Nessun dettaglio'}
                   </span>
-                  <span className="text-sm text-muted-foreground">
-                    {dog.clientFirstName} {dog.clientLastName}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{dog.clientNominativo}</span>
                 </div>
               </button>
             ))}

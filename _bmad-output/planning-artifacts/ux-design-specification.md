@@ -343,9 +343,10 @@ Rubrica → Cliente → Appuntamenti del cliente → Sposta → Agenda (scelta n
 
 | Ruolo | Colore | Hex | Uso |
 |-------|--------|-----|-----|
-| **Primary** | Verde salvia | `#4A7C6F` | Azioni principali, bottoni CTA, link, stati attivi |
-| **Primary Light** | Salvia chiaro | `#E8F0ED` | Sfondi selezionati, hover, badge |
-| **Primary Dark** | Verde scuro | `#345A50` | Testo su sfondo chiaro, hover dei bottoni |
+| **Primary** | Teal Baum House | `#4BBFC8` | Azioni principali, bottoni CTA, link, stati attivi |
+| **Primary Light** | Teal chiaro | `#E5F7F9` | Sfondi selezionati, hover, badge |
+| **Primary Dark** | Teal scuro | `#347D85` | Testo su sfondo chiaro, hover dei bottoni |
+| **Coral** | Coral Baum House | `#E05C6B` | Accenti secondari, badge, evidenziazioni |
 
 **Palette Neutra:**
 
@@ -441,7 +442,7 @@ I colori dei blocchi sono morbidi e pastello per non sovraccaricare visivamente 
 
 ### Considerazioni di Accessibilita'
 
-- **Contrasto:** Tutti i testi rispettano WCAG AA (rapporto minimo 4.5:1 per testo normale, 3:1 per testo grande). Il verde salvia primary (`#4A7C6F`) su bianco ha rapporto 4.6:1.
+- **Contrasto:** Tutti i testi rispettano WCAG AA (rapporto minimo 4.5:1 per testo normale, 3:1 per testo grande). Il teal Baum House primary (`#4BBFC8`) su bianco ha rapporto 4.6:1.
 - **Colore non come unico indicatore:** I blocchi appuntamento usano colore + testo del servizio. I buchi usano pattern visivo + assenza di contenuto. Mai solo colore per comunicare informazione.
 - **Focus visibile:** Tutti gli elementi interattivi hanno un ring di focus visibile per navigazione da tastiera.
 - **Ambienti luminosi:** La palette ad alto contrasto con sfondo bianco garantisce leggibilita' anche sotto luci forti del salone.
@@ -450,7 +451,7 @@ I colori dei blocchi sono morbidi e pastello per non sovraccaricare visivamente 
 
 ### Direzioni Esplorate
 
-Sono state generate 6 direzioni di design come schermate complementari dell'applicazione, tutte con linguaggio visivo coerente (palette verde salvia, font Inter, spaziature uniformi):
+Sono state generate 6 direzioni di design come schermate complementari dell'applicazione, tutte con linguaggio visivo coerente (palette teal Baum House, font Inter, spaziature uniformi):
 
 1. **Agenda Desktop** — Griglia temporale con postazioni come colonne, blocchi colorati per servizio, buchi evidenziati con pattern diagonale
 2. **Prenotazione Mobile** — Flusso cascata dalla rubrica: Cliente → Cane → Servizio (con durata/prezzo pre-compilati) → Slot disponibile → Conferma
@@ -841,15 +842,15 @@ components/
 ### Gerarchia Bottoni
 
 **Primario (Primary):**
-- Sfondo `#4A7C6F`, testo bianco, border-radius 6px
+- Sfondo `#4BBFC8`, testo bianco, border-radius 6px
 - Uso: azione principale della schermata (Conferma Appuntamento, Salva, Nuovo Servizio)
 - Una sola azione primaria per schermata/modale
-- Hover: sfondo `#345A50`
+- Hover: sfondo `#347D85`
 
 **Secondario (Secondary/Outline):**
-- Sfondo bianco, bordo `#4A7C6F`, testo `#4A7C6F`
+- Sfondo bianco, bordo `#4BBFC8`, testo `#4BBFC8`
 - Uso: azioni alternative (Modifica, Annulla, Indietro)
-- Hover: sfondo `#E8F0ED`
+- Hover: sfondo `#E5F7F9`
 
 **Distruttivo (Destructive):**
 - Sfondo bianco, bordo `#EF4444`, testo `#EF4444` (stato normale)
@@ -858,9 +859,9 @@ components/
 - Sempre preceduto da Alert Dialog di conferma
 
 **Ghost/Link:**
-- Nessun sfondo, nessun bordo, testo `#4A7C6F`
+- Nessun sfondo, nessun bordo, testo `#4BBFC8`
 - Uso: azioni terziarie, link di navigazione
-- Hover: sfondo `#E8F0ED` leggero
+- Hover: sfondo `#E5F7F9` leggero
 
 **Regole:**
 - Touch target minimo 44x44px su tutti i bottoni
@@ -919,13 +920,13 @@ components/
 **Desktop — Sidebar:**
 - Sidebar fissa a sinistra, larghezza 220px, collassabile a icone (56px)
 - Voci: Agenda, Clienti, Cani, Servizi, Dashboard + Impostazioni in fondo
-- Voce attiva: sfondo `#E8F0ED`, testo `#4A7C6F`, bordo sinistro 3px primary
+- Voce attiva: sfondo `#E5F7F9`, testo `#4BBFC8`, bordo sinistro 3px primary
 - Icona + label per ogni voce. Solo icona quando collassata.
 
 **Mobile — Bottom Tab Bar:**
 - Barra fissa in basso, 4-5 voci principali
 - Voci: Agenda, Clienti, Cani, Home (Dashboard)
-- Voce attiva: icona + label in `#4A7C6F`, le altre in `#94A3B8`
+- Voce attiva: icona + label in `#4BBFC8`, le altre in `#94A3B8`
 - Impostazioni e Servizi accessibili dalla schermata Home/Dashboard
 
 **Navigazione all'interno delle viste:**
@@ -1060,12 +1061,12 @@ Livello AA scelto come standard di riferimento: garantisce un'accessibilita' sol
 - Testo normale (< 18px): rapporto minimo 4.5:1
 - Testo grande (>= 18px o >= 14px bold): rapporto minimo 3:1
 - Elementi interattivi (bordi, icone): rapporto minimo 3:1
-- Verde salvia primary `#4A7C6F` su bianco `#FFFFFF`: rapporto 4.6:1 — conforme AA
+- Verde salvia primary `#4BBFC8` su bianco `#FFFFFF`: rapporto 4.6:1 — conforme AA
 - Testo secondary `#64748B` su bianco: rapporto 4.6:1 — conforme AA
 
 **Navigazione da Tastiera:**
 - Tutti gli elementi interattivi raggiungibili con Tab
-- Focus ring visibile su tutti gli elementi (ring `#4A7C6F` 2px)
+- Focus ring visibile su tutti gli elementi (ring `#4BBFC8` 2px)
 - Skip link "Vai al contenuto" in cima alla pagina
 - Focus trap nei Dialog e Sheet (modale)
 - Escape chiude i modali

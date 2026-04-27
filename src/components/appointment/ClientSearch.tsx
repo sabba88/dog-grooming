@@ -8,15 +8,14 @@ import { Search, UserPlus, Loader2 } from 'lucide-react'
 
 interface ClientResult {
   id: string
-  firstName: string
-  lastName: string
+  nominativo: string
   phone: string
   email: string | null
   dogsCount: number
 }
 
 interface ClientSearchProps {
-  onSelect: (client: { id: string; firstName: string; lastName: string }) => void
+  onSelect: (client: { id: string; nominativo: string }) => void
   onCreateNew: () => void
   autoFocus?: boolean
 }
@@ -105,9 +104,15 @@ export function ClientSearch({ onSelect, onCreateNew, autoFocus = true }: Client
   }
 
   const handleSelect = (client: ClientResult) => {
-    onSelect({ id: client.id, firstName: client.firstName, lastName: client.lastName })
+    onSelect({ id: client.id, nominativo: client.nominativo })
     setIsOpen(false)
     setQuery('')
+  }
+
+  function getInitials(nominativo: string): string {
+    const parts = nominativo.trim().split(/\s+/)
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+    return nominativo.substring(0, 2).toUpperCase()
   }
 
   return (
@@ -153,16 +158,12 @@ export function ClientSearch({ onSelect, onCreateNew, autoFocus = true }: Client
             >
               <Avatar size="sm">
                 <AvatarFallback className="text-xs">
-                  {client.firstName[0]}{client.lastName[0]}
+                  {getInitials(client.nominativo)}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">
-                  {client.firstName} {client.lastName}
-                </div>
-                <div className="text-muted-foreground truncate text-xs">
-                  {client.phone}
-                </div>
+                <div className="truncate text-sm font-medium">{client.nominativo}</div>
+                <div className="text-muted-foreground truncate text-xs">{client.phone}</div>
               </div>
               <Badge variant="secondary" className="shrink-0 text-xs">
                 {client.dogsCount} {client.dogsCount === 1 ? 'cane' : 'cani'}

@@ -9,7 +9,8 @@ import { Plus } from 'lucide-react'
 interface Dog {
   id: string
   name: string
-  breed: string | null
+  breedId: string | null
+  breedName: string | null
   size: string | null
   dateOfBirth: Date | null
   sex: string | null
@@ -20,9 +21,11 @@ interface Dog {
 interface DogListProps {
   clientId: string
   dogs: Dog[]
+  breeds: { id: string; name: string }[]
+  userRole: 'admin' | 'collaborator'
 }
 
-export function DogList({ clientId, dogs }: DogListProps) {
+export function DogList({ clientId, dogs, breeds, userRole }: DogListProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
 
@@ -60,7 +63,7 @@ export function DogList({ clientId, dogs }: DogListProps) {
               <div className="flex flex-col min-w-0">
                 <span className="font-medium text-foreground">{dog.name}</span>
                 <span className="text-sm text-muted-foreground">
-                  {[dog.breed, dog.size ? `Taglia ${dog.size}` : null]
+                  {[dog.breedName, dog.size ? `Taglia ${dog.size}` : null]
                     .filter(Boolean)
                     .join(' · ') || 'Nessun dettaglio'}
                 </span>
@@ -75,6 +78,8 @@ export function DogList({ clientId, dogs }: DogListProps) {
         onOpenChange={setFormOpen}
         onSuccess={handleSuccess}
         clientId={clientId}
+        breeds={breeds}
+        userRole={userRole}
       />
     </div>
   )

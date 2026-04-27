@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { users, userLocationAssignments, locations } from '@/lib/db/schema'
-import { eq, and, asc } from 'drizzle-orm'
+import { eq, and, asc, gte, lte } from 'drizzle-orm'
 
 export async function getActiveUsers(tenantId: string) {
   return db
@@ -22,7 +22,7 @@ export async function getUserAssignments(userId: string, tenantId: string) {
       userId: userLocationAssignments.userId,
       locationId: userLocationAssignments.locationId,
       locationName: locations.name,
-      dayOfWeek: userLocationAssignments.dayOfWeek,
+      date: userLocationAssignments.date,
       startTime: userLocationAssignments.startTime,
       endTime: userLocationAssignments.endTime,
     })
@@ -32,7 +32,7 @@ export async function getUserAssignments(userId: string, tenantId: string) {
       eq(userLocationAssignments.userId, userId),
       eq(userLocationAssignments.tenantId, tenantId)
     ))
-    .orderBy(asc(userLocationAssignments.dayOfWeek))
+    .orderBy(asc(userLocationAssignments.date), asc(userLocationAssignments.startTime))
 }
 
 export async function getAllUsersWithAssignments(tenantId: string) {
@@ -44,14 +44,14 @@ export async function getAllUsersWithAssignments(tenantId: string) {
       userId: userLocationAssignments.userId,
       locationId: userLocationAssignments.locationId,
       locationName: locations.name,
-      dayOfWeek: userLocationAssignments.dayOfWeek,
+      date: userLocationAssignments.date,
       startTime: userLocationAssignments.startTime,
       endTime: userLocationAssignments.endTime,
     })
     .from(userLocationAssignments)
     .leftJoin(locations, eq(userLocationAssignments.locationId, locations.id))
     .where(eq(userLocationAssignments.tenantId, tenantId))
-    .orderBy(asc(userLocationAssignments.dayOfWeek))
+    .orderBy(asc(userLocationAssignments.date), asc(userLocationAssignments.startTime))
 
   return activeUsers.map(user => ({
     ...user,
@@ -59,66 +59,90 @@ export async function getAllUsersWithAssignments(tenantId: string) {
   }))
 }
 
-export async function getStaffByLocation(locationId: string, tenantId: string) {
-  return db
+export async function getWeeklyStaffShifts(
+  weekStart: string,
+  weekEnd: string,
+  locationId: string,
+  tenantId: string
+): Promise<Record<string, { date: string; shifts: { startTime: string; endTime: string }[] }[]>> {
+  const rows = await db
     .select({
-      id: userLocationAssignments.id,
       userId: userLocationAssignments.userId,
-      userName: users.name,
-      userRole: users.role,
-      dayOfWeek: userLocationAssignments.dayOfWeek,
+      date: userLocationAssignments.date,
       startTime: userLocationAssignments.startTime,
       endTime: userLocationAssignments.endTime,
     })
     .from(userLocationAssignments)
-    .leftJoin(users, eq(userLocationAssignments.userId, users.id))
-    .where(and(
-      eq(userLocationAssignments.locationId, locationId),
-      eq(userLocationAssignments.tenantId, tenantId)
-    ))
-    .orderBy(asc(users.name), asc(userLocationAssignments.dayOfWeek))
-}
+    .where(
+      and(
+        eq(userLocationAssignments.locationId, locationId),
+        eq(userLocationAssignments.tenantId, tenantId),
+        gte(userLocationAssignments.date, weekStart),
+        lte(userLocationAssignments.date, weekEnd)
+      )
+    )
+    .orderBy(asc(userLocationAssignments.date), asc(userLocationAssignments.startTime))
 
-/**
- * Converte il giorno JavaScript (0=Dom) in ISO 8601 (0=Lun)
- */
-export function getIsoDayOfWeek(date: Date): number {
-  const jsDay = date.getDay() // 0=Dom, 1=Lun, ..., 6=Sab
-  return jsDay === 0 ? 6 : jsDay - 1 // Dom→6, Lun→0, Mar→1, ...
+  const result: Record<string, { date: string; shifts: { startTime: string; endTime: string }[] }[]> = {}
+
+  for (const row of rows) {
+    if (!result[row.userId]) result[row.userId] = []
+    const userEntries = result[row.userId]
+    const dateEntry = userEntries.find(e => e.date === row.date)
+    if (dateEntry) {
+      dateEntry.shifts.push({ startTime: row.startTime, endTime: row.endTime })
+    } else {
+      userEntries.push({ date: row.date, shifts: [{ startTime: row.startTime, endTime: row.endTime }] })
+    }
+  }
+
+  return result
 }
 
 export type StaffStatus = 'active' | 'elsewhere' | 'unassigned'
 
-export async function getStaffStatusForDate(locationId: string, date: Date, tenantId: string) {
-  const dayOfWeek = getIsoDayOfWeek(date)
+export type ShiftInfo = {
+  locationId: string
+  locationName: string | null
+  startTime: string
+  endTime: string
+  status: 'active' | 'elsewhere'
+}
 
+export async function getStaffStatusForDate(locationId: string, date: string, tenantId: string) {
   const activeUsers = await getActiveUsers(tenantId)
 
-  const todayAssignments = await db
+  const dateShifts = await db
     .select({
       userId: userLocationAssignments.userId,
       locationId: userLocationAssignments.locationId,
+      locationName: locations.name,
       startTime: userLocationAssignments.startTime,
       endTime: userLocationAssignments.endTime,
     })
     .from(userLocationAssignments)
+    .leftJoin(locations, eq(userLocationAssignments.locationId, locations.id))
     .where(and(
       eq(userLocationAssignments.tenantId, tenantId),
-      eq(userLocationAssignments.dayOfWeek, dayOfWeek)
+      eq(userLocationAssignments.date, date)
     ))
 
   return activeUsers.map(user => {
-    const assignment = todayAssignments.find(a => a.userId === user.id)
-    let status: StaffStatus = 'unassigned'
+    const userShifts = dateShifts.filter(s => s.userId === user.id)
+    const shifts: ShiftInfo[] = userShifts.map(s => ({
+      locationId: s.locationId,
+      locationName: s.locationName,
+      startTime: s.startTime,
+      endTime: s.endTime,
+      status: s.locationId === locationId ? 'active' : 'elsewhere',
+    }))
 
-    if (assignment) {
-      status = assignment.locationId === locationId ? 'active' : 'elsewhere'
-    }
+    const overallStatus: StaffStatus = shifts.length === 0
+      ? 'unassigned'
+      : shifts.some(s => s.status === 'active')
+        ? 'active'
+        : 'elsewhere'
 
-    return {
-      ...user,
-      status,
-      assignment: assignment ?? null,
-    }
+    return { ...user, overallStatus, shifts }
   })
 }
