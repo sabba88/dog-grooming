@@ -30,8 +30,7 @@ interface Appointment {
   notes: string | null
   userId: string
   stationId: string | null
-  clientFirstName: string
-  clientLastName: string
+  clientNominativo: string
   dogName: string
   serviceName: string
   serviceId: string
@@ -165,7 +164,7 @@ export function ScheduleGrid({
                     style={{
                       top: `${((shiftStart - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
                       height: `${((shiftEnd - shiftStart) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
-                      backgroundColor: shift.status === 'active' ? '#E8F0ED' : '#FEF3C7',
+                      backgroundColor: shift.status === 'active' ? '#E5F7F9' : '#FEF3C7',
                     }}
                   />
                 )
@@ -216,7 +215,7 @@ export function ScheduleGrid({
                   <AppointmentBlock
                     key={appt.id}
                     id={appt.id}
-                    clientName={`${appt.clientFirstName} ${appt.clientLastName}`}
+                    clientName={appt.clientNominativo}
                     dogName={appt.dogName}
                     serviceName={appt.serviceName}
                     price={appt.price}

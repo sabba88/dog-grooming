@@ -15,14 +15,15 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-function getInitials(firstName: string, lastName: string): string {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+function getInitials(nominativo: string): string {
+  const parts = nominativo.trim().split(/\s+/)
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+  return nominativo.substring(0, 2).toUpperCase()
 }
 
 interface SearchClient {
   id: string
-  firstName: string
-  lastName: string
+  nominativo: string
   phone: string
   email: string | null
 }
@@ -42,13 +43,13 @@ export function ClientSearch({ onSelect, onCreateNew }: ClientSearchProps) {
     queryKey: ['clients', 'search', debouncedQuery],
     queryFn: () =>
       fetch(`/api/clients/search?q=${encodeURIComponent(debouncedQuery)}`).then(
-        (r) => r.json() as Promise<{ clients: SearchClient[] }>
+        (r) => r.json() as Promise<{ success: boolean; data: SearchClient[] }>
       ),
     enabled: debouncedQuery.length >= 2,
   })
 
   const showResults = isOpen && debouncedQuery.length >= 2
-  const results = data?.clients ?? []
+  const results = data?.data ?? []
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -95,12 +96,12 @@ export function ClientSearch({ onSelect, onCreateNew }: ClientSearchProps) {
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                        {getInitials(client.firstName, client.lastName)}
+                        {getInitials(client.nominativo)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col min-w-0">
                       <span className="text-sm font-medium text-foreground truncate">
-                        {client.firstName} {client.lastName}
+                        {client.nominativo}
                       </span>
                       <span className="text-xs text-muted-foreground">{client.phone}</span>
                     </div>

@@ -16,8 +16,7 @@ interface Dog {
   breedName: string | null
   size: string | null
   sex: string | null
-  clientFirstName: string
-  clientLastName: string
+  clientNominativo: string
   clientId: string
 }
 
@@ -78,9 +77,7 @@ export function DogsPage({ dogs }: DogsPageProps) {
                     <TableCell>
                       {dog.sex ? sexLabel[dog.sex] || dog.sex : '—'}
                     </TableCell>
-                    <TableCell>
-                      {dog.clientFirstName} {dog.clientLastName}
-                    </TableCell>
+                    <TableCell>{dog.clientNominativo}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -108,9 +105,7 @@ export function DogsPage({ dogs }: DogsPageProps) {
                       .filter(Boolean)
                       .join(' · ') || 'Nessun dettaglio'}
                   </span>
-                  <span className="text-sm text-muted-foreground">
-                    {dog.clientFirstName} {dog.clientLastName}
-                  </span>
+                  <span className="text-sm text-muted-foreground">{dog.clientNominativo}</span>
                 </div>
               </button>
             ))}

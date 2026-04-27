@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed-breeds": "npx tsx src/lib/db/seed-breeds.ts",
+    "db:seed-demo": "npx tsx src/lib/db/seed-demo.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -15,6 +17,7 @@
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.4",
     "drizzle-orm": "^0.45.1",
@@ -28,6 +31,7 @@
     "react-day-picker": "^9.13.2",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.1",
+    "recharts": "^3.8.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.6"

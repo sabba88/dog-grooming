@@ -35,9 +35,12 @@ interface ClientFormProps {
   onSuccess: () => void
   client?: {
     id: string
-    firstName: string
-    lastName: string
+    nominativo: string
     phone: string
+    owner2: string | null
+    phone2: string | null
+    owner3: string | null
+    phone3: string | null
     email: string | null
   } | null
 }
@@ -51,12 +54,15 @@ export function ClientForm({ open, onOpenChange, onSuccess, client }: ClientForm
     defaultValues: isEditing
       ? {
           id: client.id,
-          firstName: client.firstName,
-          lastName: client.lastName,
+          nominativo: client.nominativo,
           phone: client.phone,
+          owner2: client.owner2 || '',
+          phone2: client.phone2 || '',
+          owner3: client.owner3 || '',
+          phone3: client.phone3 || '',
           email: client.email || '',
         }
-      : { firstName: '', lastName: '', phone: '', email: '', consent: false },
+      : { nominativo: '', phone: '', owner2: '', phone2: '', owner3: '', phone3: '', email: '', consent: false },
   })
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createClient, {
@@ -96,31 +102,16 @@ export function ClientForm({ open, onOpenChange, onSuccess, client }: ClientForm
   const formContent = (
     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="firstName">Nome</Label>
+        <Label htmlFor="nominativo">Nominativo</Label>
         <Input
-          id="firstName"
-          placeholder="Es. Mario"
-          {...form.register('firstName')}
-          aria-invalid={!!form.formState.errors.firstName}
+          id="nominativo"
+          placeholder="Es. Mario Rossi"
+          {...form.register('nominativo')}
+          aria-invalid={!!form.formState.errors.nominativo}
         />
-        {form.formState.errors.firstName && (
+        {form.formState.errors.nominativo && (
           <p className="text-sm text-destructive">
-            {form.formState.errors.firstName.message}
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="lastName">Cognome</Label>
-        <Input
-          id="lastName"
-          placeholder="Es. Rossi"
-          {...form.register('lastName')}
-          aria-invalid={!!form.formState.errors.lastName}
-        />
-        {form.formState.errors.lastName && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.lastName.message}
+            {form.formState.errors.nominativo.message}
           </p>
         )}
       </div>
@@ -138,6 +129,44 @@ export function ClientForm({ open, onOpenChange, onSuccess, client }: ClientForm
             {form.formState.errors.phone.message}
           </p>
         )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="owner2">Proprietario 2 (opzionale)</Label>
+          <Input
+            id="owner2"
+            placeholder="Nome"
+            {...form.register('owner2')}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="phone2">Telefono 2 (opzionale)</Label>
+          <Input
+            id="phone2"
+            placeholder="Numero"
+            {...form.register('phone2')}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="owner3">Proprietario 3 (opzionale)</Label>
+          <Input
+            id="owner3"
+            placeholder="Nome"
+            {...form.register('owner3')}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="phone3">Telefono 3 (opzionale)</Label>
+          <Input
+            id="phone3"
+            placeholder="Numero"
+            {...form.register('phone3')}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">

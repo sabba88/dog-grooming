@@ -107,8 +107,8 @@ export function WeeklyDayCell({ shifts, appointments, onClick }: WeeklyDayCellPr
               className="h-full flex-shrink-0 border border-dashed"
               style={{
                 width: `${widthPct}%`,
-                backgroundColor: '#E8F0ED',
-                borderColor: '#4A7C6F',
+                backgroundColor: '#E5F7F9',
+                borderColor: '#4BBFC8',
               }}
             />
           )
@@ -117,7 +117,7 @@ export function WeeklyDayCell({ shifts, appointments, onClick }: WeeklyDayCellPr
       <span
         className={`text-xs font-medium ${gapMinutes === 0 ? 'text-muted-foreground' : 'text-primary'}`}
       >
-        {minutesToHoursLabel(gapMinutes)} buco
+        {minutesToHoursLabel(gapMinutes)} non pianificate
       </span>
     </button>
   )

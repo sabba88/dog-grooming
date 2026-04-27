@@ -31,8 +31,7 @@ interface AppointmentFormProps {
 
 interface SelectedClient {
   id: string
-  firstName: string
-  lastName: string
+  nominativo: string
 }
 
 interface Dog {
@@ -145,7 +144,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     loadDogs({ clientId: client.id })
   }
 
-  const handleClientCreated = (client: { id: string; firstName: string; lastName: string }) => {
+  const handleClientCreated = (client: { id: string; nominativo: string }) => {
     setShowQuickClient(false)
     handleClientSelect(client)
   }
@@ -270,12 +269,10 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
           <div className="flex items-center gap-3 rounded-lg border p-2.5">
             <Avatar size="sm">
               <AvatarFallback className="text-xs">
-                {selectedClient.firstName[0]}{selectedClient.lastName[0]}
+                {selectedClient.nominativo.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="flex-1 text-sm font-medium">
-              {selectedClient.firstName} {selectedClient.lastName}
-            </span>
+            <span className="flex-1 text-sm font-medium">{selectedClient.nominativo}</span>
             <Button
               type="button"
               variant="ghost"

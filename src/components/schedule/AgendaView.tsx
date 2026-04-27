@@ -53,7 +53,7 @@ type ContextAction = 'detail' | 'add-note' | 'move' | 'delete'
 
 export function AgendaView({ locations }: AgendaViewProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date())
-  const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
+  const [viewMode, setViewMode] = useState<'day' | 'week'>('week')
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [appointmentSlot, setAppointmentSlot] = useState<{
     userId: string

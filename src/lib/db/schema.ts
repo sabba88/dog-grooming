@@ -53,9 +53,12 @@ export const stationServices = pgTable('station_services', {
 
 export const clients = pgTable('clients', {
   id: uuid('id').primaryKey().defaultRandom(),
-  firstName: text('first_name').notNull(),
-  lastName: text('last_name').notNull(),
+  nominativo: text('nominativo').notNull(),
   phone: text('phone').notNull(),
+  owner2: text('owner2'),
+  phone2: text('phone2'),
+  owner3: text('owner3'),
+  phone3: text('phone3'),
   email: text('email'),
   consentGivenAt: timestamp('consent_given_at').notNull(),
   consentVersion: text('consent_version').notNull().default('1.0'),

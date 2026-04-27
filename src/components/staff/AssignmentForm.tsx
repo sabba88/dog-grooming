@@ -3,6 +3,8 @@
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { format, parseISO } from 'date-fns'
+import { it } from 'date-fns/locale'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,7 +28,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { DAYS_OF_WEEK } from '@/lib/validations/staff'
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/
 
@@ -41,27 +42,23 @@ const assignmentFormSchema = z.object({
 
 type AssignmentFormData = z.infer<typeof assignmentFormSchema>
 
-interface DraftAssignment {
-  locationId: string
-  locationName: string
-  dayOfWeek: number
-  startTime: string
-  endTime: string
-}
-
 interface Location {
   id: string
   name: string
 }
 
+interface ExistingShift {
+  startTime: string
+  endTime: string
+}
+
 interface AssignmentFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSave: (data: { locationId: string; startTime: string; endTime: string }) => void
+  onSave: (data: { locationId: string; locationName: string; startTime: string; endTime: string }) => void
   locations: Location[]
-  dayOfWeek: number
-  existingAssignment: DraftAssignment | null
-  existingDraft: DraftAssignment[]
+  date: string // YYYY-MM-DD
+  existingShifts: ExistingShift[]
 }
 
 export function AssignmentForm({
@@ -69,51 +66,41 @@ export function AssignmentForm({
   onOpenChange,
   onSave,
   locations,
-  dayOfWeek,
-  existingAssignment,
-  existingDraft,
+  date,
+  existingShifts,
 }: AssignmentFormProps) {
   const isMobile = useIsMobile()
-  const isEditing = !!existingAssignment
 
-  const dayLabel = DAYS_OF_WEEK.find(d => d.value === dayOfWeek)?.label ?? ''
+  const dateLabel = date
+    ? format(parseISO(date), "EEEE d MMMM yyyy", { locale: it })
+    : ''
 
   const form = useForm<AssignmentFormData>({
     resolver: zodResolver(assignmentFormSchema),
-    defaultValues: existingAssignment
-      ? {
-          locationId: existingAssignment.locationId,
-          startTime: existingAssignment.startTime,
-          endTime: existingAssignment.endTime,
-        }
-      : {
-          locationId: '',
-          startTime: '09:00',
-          endTime: '18:00',
-        },
+    defaultValues: {
+      locationId: '',
+      startTime: '09:00',
+      endTime: '18:00',
+    },
   })
 
   function onSubmit(data: AssignmentFormData) {
-    // Client-side conflict check (AC #3)
-    const conflict = existingDraft.find(
-      a => a.dayOfWeek === dayOfWeek && a.locationId !== data.locationId
+    // Client-side overlap check
+    const hasOverlap = existingShifts.some(
+      s => data.startTime < s.endTime && data.endTime > s.startTime
     )
-    // This shouldn't happen since we replace the same day, but guard against it
-    if (conflict) {
-      form.setError('locationId', {
-        message: `L'utente è già assegnato a ${conflict.locationName} per questo giorno`,
-      })
+    if (hasOverlap) {
+      form.setError('startTime', { message: 'Fascia oraria sovrapposta a un turno esistente' })
       return
     }
 
-    onSave(data)
+    const locationName = locations.find(l => l.id === data.locationId)?.name ?? ''
+    onSave({ ...data, locationName })
     form.reset()
   }
 
   function handleOpenChange(newOpen: boolean) {
-    if (!newOpen) {
-      form.reset()
-    }
+    if (!newOpen) form.reset()
     onOpenChange(newOpen)
   }
 
@@ -140,9 +127,7 @@ export function AssignmentForm({
           )}
         />
         {form.formState.errors.locationId && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.locationId.message}
-          </p>
+          <p className="text-sm text-destructive">{form.formState.errors.locationId.message}</p>
         )}
       </div>
 
@@ -156,9 +141,7 @@ export function AssignmentForm({
             aria-invalid={!!form.formState.errors.startTime}
           />
           {form.formState.errors.startTime && (
-            <p className="text-sm text-destructive">
-              {form.formState.errors.startTime.message}
-            </p>
+            <p className="text-sm text-destructive">{form.formState.errors.startTime.message}</p>
           )}
         </div>
         <div className="flex flex-col gap-2">
@@ -170,22 +153,16 @@ export function AssignmentForm({
             aria-invalid={!!form.formState.errors.endTime}
           />
           {form.formState.errors.endTime && (
-            <p className="text-sm text-destructive">
-              {form.formState.errors.endTime.message}
-            </p>
+            <p className="text-sm text-destructive">{form.formState.errors.endTime.message}</p>
           )}
         </div>
       </div>
 
-      <Button type="submit" className="mt-2">
-        {isEditing ? 'Salva Modifiche' : 'Assegna'}
-      </Button>
+      <Button type="submit" className="mt-2">Aggiungi</Button>
     </form>
   )
 
-  const title = isEditing
-    ? `Modifica Assegnazione — ${dayLabel}`
-    : `Nuova Assegnazione — ${dayLabel}`
+  const title = `Aggiungi Fascia — ${dateLabel}`
 
   if (isMobile) {
     return (

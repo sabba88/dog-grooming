@@ -75,8 +75,8 @@ development_status:
   epic-4-retrospective: optional
 
   # Epica 5: Dashboard e Panoramica
-  epic-5: backlog
-  5-1-dashboard-riassuntiva: backlog
+  epic-5: in-progress
+  5-1-dashboard-kpi: review  # CC-2026-04-27: ridisegnata - KPI mensili con delta + grafici recharts
   epic-5-retrospective: optional
 
   # Epica 6: Privacy e Conformita' GDPR

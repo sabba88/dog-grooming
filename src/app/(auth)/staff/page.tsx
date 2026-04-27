@@ -28,7 +28,7 @@ export default async function StaffPage() {
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Gestione Personale</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Assegna collaboratori e amministratori alle sedi con il calendario settimanale
+            Assegna collaboratori e amministratori alle sedi con turni per data specifica
           </p>
         </div>
       </div>

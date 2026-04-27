@@ -39,8 +39,7 @@ export async function getDogById(dogId: string, tenantId: string) {
       clientId: dogs.clientId,
       createdAt: dogs.createdAt,
       updatedAt: dogs.updatedAt,
-      clientFirstName: clients.firstName,
-      clientLastName: clients.lastName,
+      clientNominativo: clients.nominativo,
     })
     .from(dogs)
     .leftJoin(breeds, eq(dogs.breedId, breeds.id))
@@ -78,8 +77,7 @@ export async function getAllDogs(tenantId: string) {
       breedName: breeds.name,
       size: dogs.size,
       sex: dogs.sex,
-      clientFirstName: clients.firstName,
-      clientLastName: clients.lastName,
+      clientNominativo: clients.nominativo,
       clientId: dogs.clientId,
     })
     .from(dogs)

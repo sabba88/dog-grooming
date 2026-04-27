@@ -22,8 +22,7 @@ interface Dog {
   clientId: string
   createdAt: Date | null
   updatedAt: Date | null
-  clientFirstName: string
-  clientLastName: string
+  clientNominativo: string
 }
 
 interface Note {
@@ -84,7 +83,7 @@ export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDet
           className="text-muted-foreground hover:text-foreground"
           onClick={() => router.push(`/clients/${dog.clientId}`)}
         >
-          {dog.clientFirstName} {dog.clientLastName}
+          {dog.clientNominativo}
         </Button>
         <span className="text-muted-foreground">/</span>
         <span className="text-sm font-medium text-foreground">{dog.name}</span>

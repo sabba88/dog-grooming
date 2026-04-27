@@ -16,9 +16,12 @@ export const createClient = authActionClient
     const [newClient] = await db
       .insert(clients)
       .values({
-        firstName: parsedInput.firstName,
-        lastName: parsedInput.lastName,
+        nominativo: parsedInput.nominativo,
         phone: parsedInput.phone,
+        owner2: parsedInput.owner2 || null,
+        phone2: parsedInput.phone2 || null,
+        owner3: parsedInput.owner3 || null,
+        phone3: parsedInput.phone3 || null,
         email: parsedInput.email || null,
         consentGivenAt: new Date(),
         consentVersion: '1.0',
@@ -26,8 +29,7 @@ export const createClient = authActionClient
       })
       .returning({
         id: clients.id,
-        firstName: clients.firstName,
-        lastName: clients.lastName,
+        nominativo: clients.nominativo,
       })
 
     return { client: newClient }
@@ -39,9 +41,12 @@ export const updateClient = authActionClient
     const [updatedClient] = await db
       .update(clients)
       .set({
-        firstName: parsedInput.firstName,
-        lastName: parsedInput.lastName,
+        nominativo: parsedInput.nominativo,
         phone: parsedInput.phone,
+        owner2: parsedInput.owner2 || null,
+        phone2: parsedInput.phone2 || null,
+        owner3: parsedInput.owner3 || null,
+        phone3: parsedInput.phone3 || null,
         email: parsedInput.email || null,
         updatedAt: new Date(),
       })
@@ -54,8 +59,7 @@ export const updateClient = authActionClient
       )
       .returning({
         id: clients.id,
-        firstName: clients.firstName,
-        lastName: clients.lastName,
+        nominativo: clients.nominativo,
       })
 
     if (!updatedClient) {
@@ -68,7 +72,6 @@ export const updateClient = authActionClient
 export const addClientNote = authActionClient
   .schema(addClientNoteSchema)
   .action(async ({ parsedInput, ctx }) => {
-    // Verify client exists and is not soft-deleted
     const [client] = await db
       .select({ id: clients.id })
       .from(clients)

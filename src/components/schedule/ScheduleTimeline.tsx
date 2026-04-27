@@ -22,8 +22,7 @@ interface Appointment {
   notes: string | null
   userId: string
   stationId: string | null
-  clientFirstName: string
-  clientLastName: string
+  clientNominativo: string
   dogName: string
   serviceName: string
   serviceId: string
@@ -97,7 +96,7 @@ function PersonTimeline({
               <div className="flex-1">
                 <AppointmentBlock
                   id={appt.id}
-                  clientName={`${appt.clientFirstName} ${appt.clientLastName}`}
+                  clientName={appt.clientNominativo}
                   dogName={appt.dogName}
                   serviceName={appt.serviceName}
                   price={appt.price}

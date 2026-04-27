@@ -1,9 +1,12 @@
 import { z } from 'zod'
 
 export const createClientSchema = z.object({
-  firstName: z.string().min(2, 'Il nome deve avere almeno 2 caratteri'),
-  lastName: z.string().min(2, 'Il cognome deve avere almeno 2 caratteri'),
+  nominativo: z.string().min(2, 'Il nominativo deve avere almeno 2 caratteri'),
   phone: z.string().min(6, 'Il telefono deve avere almeno 6 caratteri'),
+  owner2: z.string().optional().or(z.literal('')),
+  phone2: z.string().optional().or(z.literal('')),
+  owner3: z.string().optional().or(z.literal('')),
+  phone3: z.string().optional().or(z.literal('')),
   email: z.string().email('Inserisci un indirizzo email valido').optional().or(z.literal('')),
   consent: z.boolean().refine((val) => val === true, {
     message: 'Devi accettare il trattamento dei dati personali',
@@ -14,9 +17,12 @@ export type CreateClientFormData = z.infer<typeof createClientSchema>
 
 export const updateClientSchema = z.object({
   id: z.string().uuid(),
-  firstName: z.string().min(2, 'Il nome deve avere almeno 2 caratteri'),
-  lastName: z.string().min(2, 'Il cognome deve avere almeno 2 caratteri'),
+  nominativo: z.string().min(2, 'Il nominativo deve avere almeno 2 caratteri'),
   phone: z.string().min(6, 'Il telefono deve avere almeno 6 caratteri'),
+  owner2: z.string().optional().or(z.literal('')),
+  phone2: z.string().optional().or(z.literal('')),
+  owner3: z.string().optional().or(z.literal('')),
+  phone3: z.string().optional().or(z.literal('')),
   email: z.string().email('Inserisci un indirizzo email valido').optional().or(z.literal('')),
 })
 

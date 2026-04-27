@@ -113,7 +113,7 @@ export function AppointmentDetail({
     return `${h}:${m}`
   }
 
-  const clientName = `${appointment.clientFirstName} ${appointment.clientLastName}`
+  const clientName = appointment.clientNominativo
 
   return (
     <div className="flex flex-col gap-4 p-4">
