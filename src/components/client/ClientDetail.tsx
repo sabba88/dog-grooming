@@ -45,6 +45,10 @@ interface Dog {
   name: string
   breedId: string | null
   breedName: string | null
+  coatType: string | null
+  sizeType: string | null
+  breedCoatType: string | null
+  breedSizeType: string | null
   size: string | null
   dateOfBirth: Date | null
   sex: string | null
@@ -66,7 +70,7 @@ interface ClientDetailProps {
   client: Client
   notes: Note[]
   dogs: Dog[]
-  breeds: { id: string; name: string }[]
+  breeds: { id: string; name: string; coatType: string | null; sizeType: string | null }[]
   appointments: Appointment[]
   userRole: 'admin' | 'collaborator'
 }

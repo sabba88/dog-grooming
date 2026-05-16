@@ -30,6 +30,8 @@ import { Plus, Pencil, Trash2 } from 'lucide-react'
 interface Breed {
   id: string
   name: string
+  coatType: string | null
+  sizeType: string | null
 }
 
 interface BreedListProps {
@@ -94,6 +96,8 @@ export function BreedList({ breeds }: BreedListProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
+                  <TableHead>Pelo</TableHead>
+                  <TableHead>Taglia</TableHead>
                   <TableHead className="text-right">Azioni</TableHead>
                 </TableRow>
               </TableHeader>
@@ -101,6 +105,12 @@ export function BreedList({ breeds }: BreedListProps) {
                 {breeds.map((breed) => (
                   <TableRow key={breed.id}>
                     <TableCell className="font-medium">{breed.name}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {breed.coatType === 'short' ? 'Corto' : breed.coatType === 'medium' ? 'Medio' : breed.coatType === 'long' ? 'Lungo' : '—'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {breed.sizeType === 'toy' ? 'Toy' : breed.sizeType === 'small' ? 'Piccola' : breed.sizeType === 'medium' ? 'Media' : breed.sizeType === 'large' ? 'Grande' : breed.sizeType === 'giant' ? 'Gigante' : '—'}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
@@ -138,6 +148,13 @@ export function BreedList({ breeds }: BreedListProps) {
                 <div className="flex items-start justify-between mb-2">
                   <p className="font-medium text-foreground">{breed.name}</p>
                 </div>
+                {(breed.coatType || breed.sizeType) && (
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {breed.coatType && `Pelo ${breed.coatType === 'short' ? 'Corto' : breed.coatType === 'medium' ? 'Medio' : 'Lungo'}`}
+                    {breed.coatType && breed.sizeType && ' · '}
+                    {breed.sizeType && `Taglia ${breed.sizeType === 'toy' ? 'Toy' : breed.sizeType === 'small' ? 'Piccola' : breed.sizeType === 'medium' ? 'Media' : breed.sizeType === 'large' ? 'Grande' : 'Gigante'}`}
+                  </p>
+                )}
                 <div className="flex gap-2 mt-3">
                   <Button
                     variant="outline"

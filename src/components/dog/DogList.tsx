@@ -11,6 +11,10 @@ interface Dog {
   name: string
   breedId: string | null
   breedName: string | null
+  coatType: string | null
+  sizeType: string | null
+  breedCoatType: string | null
+  breedSizeType: string | null
   size: string | null
   dateOfBirth: Date | null
   sex: string | null
@@ -18,10 +22,13 @@ interface Dog {
   createdAt: Date | null
 }
 
+const COAT_LABELS: Record<string, string> = { short: 'Corto', medium: 'Medio', long: 'Lungo' }
+const SIZE_LABELS: Record<string, string> = { toy: 'Toy', small: 'Piccola', medium: 'Media', large: 'Grande', giant: 'Gigante' }
+
 interface DogListProps {
   clientId: string
   dogs: Dog[]
-  breeds: { id: string; name: string }[]
+  breeds: { id: string; name: string; coatType: string | null; sizeType: string | null }[]
   userRole: 'admin' | 'collaborator'
 }
 
@@ -63,9 +70,16 @@ export function DogList({ clientId, dogs, breeds, userRole }: DogListProps) {
               <div className="flex flex-col min-w-0">
                 <span className="font-medium text-foreground">{dog.name}</span>
                 <span className="text-sm text-muted-foreground">
-                  {[dog.breedName, dog.size ? `Taglia ${dog.size}` : null]
-                    .filter(Boolean)
-                    .join(' · ') || 'Nessun dettaglio'}
+                  {(() => {
+                    const effectiveCoat = dog.coatType ?? dog.breedCoatType ?? null
+                    const effectiveSize = dog.sizeType ?? dog.breedSizeType ?? null
+                    const parts = [
+                      dog.breedName,
+                      effectiveCoat ? `Pelo ${COAT_LABELS[effectiveCoat] ?? effectiveCoat}` : null,
+                      effectiveSize ? `Taglia ${SIZE_LABELS[effectiveSize] ?? effectiveSize}` : null,
+                    ].filter(Boolean)
+                    return parts.length > 0 ? parts.join(' · ') : 'Nessun dettaglio'
+                  })()}
                 </span>
               </div>
             </button>

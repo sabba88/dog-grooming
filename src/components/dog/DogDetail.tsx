@@ -15,6 +15,10 @@ interface Dog {
   name: string
   breedId: string | null
   breedName: string | null
+  coatType: string | null
+  sizeType: string | null
+  breedCoatType: string | null
+  breedSizeType: string | null
   size: string | null
   dateOfBirth: Date | null
   sex: string | null
@@ -42,9 +46,21 @@ interface ServiceNote {
 interface DogDetailProps {
   dog: Dog
   notes: Note[]
-  breeds: { id: string; name: string }[]
+  breeds: { id: string; name: string; coatType: string | null; sizeType: string | null }[]
   serviceNotes: ServiceNote[]
   userRole: 'admin' | 'collaborator'
+}
+
+const COAT_TYPE_LABELS: Record<string, string> = {
+  short: 'Corto', medium: 'Medio', long: 'Lungo',
+}
+const SIZE_TYPE_LABELS: Record<string, string> = {
+  toy: 'Toy', small: 'Piccola', medium: 'Media', large: 'Grande', giant: 'Gigante',
+}
+
+const sexLabel: Record<string, string> = {
+  maschio: 'Maschio',
+  femmina: 'Femmina',
 }
 
 const dateFormatter = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' })
@@ -57,16 +73,10 @@ export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDet
     router.refresh()
   }
 
-  const sizeLabel: Record<string, string> = {
-    piccola: 'Piccola',
-    media: 'Media',
-    grande: 'Grande',
-  }
-
-  const sexLabel: Record<string, string> = {
-    maschio: 'Maschio',
-    femmina: 'Femmina',
-  }
+  const effectiveCoatType = dog.coatType ?? dog.breedCoatType ?? null
+  const effectiveSizeType = dog.sizeType ?? dog.breedSizeType ?? null
+  const coatFromBreed = !dog.coatType && !!dog.breedCoatType
+  const sizeFromBreed = !dog.sizeType && !!dog.breedSizeType
 
   return (
     <>
@@ -108,12 +118,6 @@ export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDet
             <p className="text-sm text-foreground">{dog.breedName || '—'}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Taglia</p>
-            <p className="text-sm text-foreground">
-              {dog.size ? sizeLabel[dog.size] || dog.size : '—'}
-            </p>
-          </div>
-          <div>
             <p className="text-xs text-muted-foreground mb-1">Data di Nascita</p>
             <p className="text-sm text-foreground">
               {dog.dateOfBirth ? dateFormatter.format(dog.dateOfBirth) : '—'}
@@ -131,6 +135,37 @@ export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDet
               {dog.sterilized ? 'Si' : 'No'}
             </p>
           </div>
+
+          {/* Profilo prezzo — pelo e taglia effettivi */}
+          {(effectiveCoatType || effectiveSizeType) && (
+            <div className="sm:col-span-2">
+              <p className="text-xs text-muted-foreground mb-1">Profilo Prezzo</p>
+              <p className="text-sm font-medium text-primary">
+                {effectiveCoatType && (
+                  <>
+                    Pelo {COAT_TYPE_LABELS[effectiveCoatType]}
+                    {coatFromBreed && <span className="text-xs text-muted-foreground ml-1">(da razza)</span>}
+                  </>
+                )}
+                {effectiveCoatType && effectiveSizeType && ' · '}
+                {effectiveSizeType && (
+                  <>
+                    Taglia {SIZE_TYPE_LABELS[effectiveSizeType]}
+                    {sizeFromBreed && <span className="text-xs text-muted-foreground ml-1">(da razza)</span>}
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
+          {/* Avviso soft — nessun pelo/taglia configurato */}
+          {!effectiveCoatType && !effectiveSizeType && (
+            <div className="sm:col-span-2">
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                Pelo/taglia non configurati — il prezzo degli appuntamenti userà il prezzo base del servizio
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

@@ -82,6 +82,8 @@ export const clientNotes = pgTable('client_notes', {
 export const breeds = pgTable('breeds', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
+  coatType: text('coat_type'),
+  sizeType: text('size_type'),
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

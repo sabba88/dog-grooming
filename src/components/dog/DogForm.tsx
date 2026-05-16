@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm, Controller } from 'react-hook-form'
+import { useForm, Controller, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   createDogSchema,
@@ -42,12 +42,14 @@ interface DogFormProps {
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
   clientId: string
-  breeds: { id: string; name: string }[]
+  breeds: { id: string; name: string; coatType: string | null; sizeType: string | null }[]
   userRole: 'admin' | 'collaborator'
   dog?: {
     id: string
     name: string
     breedId: string | null
+    coatType: string | null
+    sizeType: string | null
     size: string | null
     dateOfBirth: Date | null
     sex: string | null
@@ -71,13 +73,23 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, breeds, userR
           id: dog.id,
           name: dog.name,
           breedId: dog.breedId || null,
+          coatType: (dog.coatType as 'short' | 'medium' | 'long') || '',
+          sizeType: (dog.sizeType as 'toy' | 'small' | 'medium' | 'large' | 'giant') || '',
           size: (dog.size as 'piccola' | 'media' | 'grande') || '',
           dateOfBirth: formatDateForInput(dog.dateOfBirth),
           sex: (dog.sex as 'maschio' | 'femmina') || '',
           sterilized: dog.sterilized,
         }
-      : { name: '', breedId: null, size: '', dateOfBirth: '', sex: '', sterilized: false, clientId },
+      : { name: '', breedId: null, coatType: '', sizeType: '', size: '', dateOfBirth: '', sex: '', sterilized: false, clientId },
   })
+
+  const watchedBreedId = useWatch({ control: form.control, name: 'breedId' })
+  const watchedCoatType = useWatch({ control: form.control, name: 'coatType' })
+  const watchedSizeType = useWatch({ control: form.control, name: 'sizeType' })
+
+  const selectedBreed = breeds.find(b => b.id === watchedBreedId)
+  const coatFromBreed = !!selectedBreed?.coatType && watchedCoatType === selectedBreed.coatType
+  const sizeFromBreed = !!selectedBreed?.sizeType && watchedSizeType === selectedBreed.sizeType
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createDog, {
     onSuccess: () => {
@@ -138,7 +150,14 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, breeds, userR
           render={({ field }) => (
             <BreedCombobox
               value={field.value}
-              onChange={field.onChange}
+              onChange={(newBreedId) => {
+                field.onChange(newBreedId)
+                if (newBreedId) {
+                  const breed = breeds.find(b => b.id === newBreedId)
+                  if (breed?.coatType) form.setValue('coatType', breed.coatType as 'short' | 'medium' | 'long')
+                  if (breed?.sizeType) form.setValue('sizeType', breed.sizeType as 'toy' | 'small' | 'medium' | 'large' | 'giant')
+                }
+              }}
               breeds={breeds}
               isAdmin={userRole === 'admin'}
             />
@@ -147,30 +166,52 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, breeds, userR
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="size">Taglia (opzionale)</Label>
+        <Label htmlFor="coatType">Tipo di Pelo (opzionale)</Label>
         <Controller
-          name="size"
+          name="coatType"
           control={form.control}
           render={({ field }) => (
-            <Select
-              value={field.value || ''}
-              onValueChange={(value) => field.onChange(value)}
-            >
-              <SelectTrigger id="size" aria-invalid={!!form.formState.errors.size}>
-                <SelectValue placeholder="Seleziona taglia" />
+            <Select value={field.value || ''} onValueChange={field.onChange}>
+              <SelectTrigger id="coatType">
+                <SelectValue placeholder="Seleziona tipo di pelo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="piccola">Piccola</SelectItem>
-                <SelectItem value="media">Media</SelectItem>
-                <SelectItem value="grande">Grande</SelectItem>
+                <SelectItem value="">Nessuno</SelectItem>
+                <SelectItem value="short">Corto</SelectItem>
+                <SelectItem value="medium">Medio</SelectItem>
+                <SelectItem value="long">Lungo</SelectItem>
               </SelectContent>
             </Select>
           )}
         />
-        {form.formState.errors.size && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.size.message}
-          </p>
+        {coatFromBreed && (
+          <p className="text-xs text-muted-foreground">Valore ereditato dalla razza — puoi modificarlo</p>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="sizeType">Taglia (opzionale)</Label>
+        <Controller
+          name="sizeType"
+          control={form.control}
+          render={({ field }) => (
+            <Select value={field.value || ''} onValueChange={field.onChange}>
+              <SelectTrigger id="sizeType">
+                <SelectValue placeholder="Seleziona taglia" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Nessuno</SelectItem>
+                <SelectItem value="toy">Toy</SelectItem>
+                <SelectItem value="small">Piccola</SelectItem>
+                <SelectItem value="medium">Media</SelectItem>
+                <SelectItem value="large">Grande</SelectItem>
+                <SelectItem value="giant">Gigante</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        />
+        {sizeFromBreed && (
+          <p className="text-xs text-muted-foreground">Valore ereditato dalla razza — puoi modificarlo</p>
         )}
       </div>
 

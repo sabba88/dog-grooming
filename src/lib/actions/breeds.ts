@@ -9,12 +9,12 @@ import { z } from 'zod'
 
 export const createBreed = authActionClient
   .schema(createBreedSchema)
-  .action(async ({ parsedInput: { name }, ctx }) => {
+  .action(async ({ parsedInput: { name, coatType, sizeType }, ctx }) => {
     if (ctx.role !== 'admin') throw new Error('Non autorizzato')
 
     const [breed] = await db
       .insert(breeds)
-      .values({ name, tenantId: ctx.tenantId })
+      .values({ name, coatType: coatType || null, sizeType: sizeType || null, tenantId: ctx.tenantId })
       .returning({ id: breeds.id })
 
     return { breed }
@@ -22,12 +22,12 @@ export const createBreed = authActionClient
 
 export const updateBreed = authActionClient
   .schema(updateBreedSchema)
-  .action(async ({ parsedInput: { id, name }, ctx }) => {
+  .action(async ({ parsedInput: { id, name, coatType, sizeType }, ctx }) => {
     if (ctx.role !== 'admin') throw new Error('Non autorizzato')
 
     await db
       .update(breeds)
-      .set({ name, updatedAt: new Date() })
+      .set({ name, coatType: coatType || null, sizeType: sizeType || null, updatedAt: new Date() })
       .where(and(eq(breeds.id, id), eq(breeds.tenantId, ctx.tenantId)))
 
     return { breedId: id }

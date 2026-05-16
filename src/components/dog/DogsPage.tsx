@@ -14,6 +14,8 @@ interface Dog {
   id: string
   name: string
   breedName: string | null
+  coatType: string | null
+  sizeType: string | null
   size: string | null
   sex: string | null
   clientNominativo: string
@@ -24,11 +26,8 @@ interface DogsPageProps {
   dogs: Dog[]
 }
 
-const sizeLabel: Record<string, string> = {
-  piccola: 'Piccola',
-  media: 'Media',
-  grande: 'Grande',
-}
+const COAT_LABELS: Record<string, string> = { short: 'Corto', medium: 'Medio', long: 'Lungo' }
+const SIZE_LABELS: Record<string, string> = { toy: 'Toy', small: 'Piccola', medium: 'Media', large: 'Grande', giant: 'Gigante' }
 
 const sexLabel: Record<string, string> = {
   maschio: 'Maschio',
@@ -57,7 +56,7 @@ export function DogsPage({ dogs }: DogsPageProps) {
                 <TableRow>
                   <TableHead>Nome</TableHead>
                   <TableHead>Razza</TableHead>
-                  <TableHead>Taglia</TableHead>
+                  <TableHead>Pelo / Taglia</TableHead>
                   <TableHead>Sesso</TableHead>
                   <TableHead>Proprietario</TableHead>
                 </TableRow>
@@ -72,7 +71,13 @@ export function DogsPage({ dogs }: DogsPageProps) {
                     <TableCell className="font-medium">{dog.name}</TableCell>
                     <TableCell>{dog.breedName || '—'}</TableCell>
                     <TableCell>
-                      {dog.size ? sizeLabel[dog.size] || dog.size : '—'}
+                      {(() => {
+                        const parts = [
+                          dog.coatType ? `Pelo ${COAT_LABELS[dog.coatType] ?? dog.coatType}` : null,
+                          dog.sizeType ? `Taglia ${SIZE_LABELS[dog.sizeType] ?? dog.sizeType}` : null,
+                        ].filter(Boolean)
+                        return parts.length > 0 ? parts.join(' · ') : '—'
+                      })()}
                     </TableCell>
                     <TableCell>
                       {dog.sex ? sexLabel[dog.sex] || dog.sex : '—'}
@@ -98,12 +103,14 @@ export function DogsPage({ dogs }: DogsPageProps) {
                     {dog.name}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    {[
-                      dog.breedName,
-                      dog.size ? sizeLabel[dog.size] || dog.size : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ') || 'Nessun dettaglio'}
+                    {(() => {
+                      const parts = [
+                        dog.breedName,
+                        dog.coatType ? `Pelo ${COAT_LABELS[dog.coatType] ?? dog.coatType}` : null,
+                        dog.sizeType ? `Taglia ${SIZE_LABELS[dog.sizeType] ?? dog.sizeType}` : null,
+                      ].filter(Boolean)
+                      return parts.length > 0 ? parts.join(' · ') : 'Nessun dettaglio'
+                    })()}
                   </span>
                   <span className="text-sm text-muted-foreground">{dog.clientNominativo}</span>
                 </div>

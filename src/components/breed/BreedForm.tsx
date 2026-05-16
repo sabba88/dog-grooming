@@ -8,6 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -24,6 +31,8 @@ import { toast } from 'sonner'
 interface Breed {
   id: string
   name: string
+  coatType: string | null
+  sizeType: string | null
 }
 
 interface BreedFormProps {
@@ -39,11 +48,15 @@ export function BreedForm({ open, onOpenChange, onSuccess, breed }: BreedFormPro
 
   const [name, setName] = useState('')
   const [nameError, setNameError] = useState('')
+  const [coatType, setCoatType] = useState<string>('')
+  const [sizeType, setSizeType] = useState<string>('')
 
   useEffect(() => {
     if (!open) return
     setNameError('')
     setName(isEditing && breed ? breed.name : '')
+    setCoatType(isEditing && breed ? breed.coatType ?? '' : '')
+    setSizeType(isEditing && breed ? breed.sizeType ?? '' : '')
   }, [open, breed, isEditing])
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createBreed, {
@@ -79,9 +92,18 @@ export function BreedForm({ open, onOpenChange, onSuccess, breed }: BreedFormPro
     setNameError('')
 
     if (isEditing && breed) {
-      executeUpdate({ id: breed.id, name: name.trim() })
+      executeUpdate({
+        id: breed.id,
+        name: name.trim(),
+        coatType: (coatType || undefined) as 'short' | 'medium' | 'long' | undefined,
+        sizeType: (sizeType || undefined) as 'toy' | 'small' | 'medium' | 'large' | 'giant' | undefined,
+      })
     } else {
-      executeCreate({ name: name.trim() })
+      executeCreate({
+        name: name.trim(),
+        coatType: (coatType || undefined) as 'short' | 'medium' | 'long' | undefined,
+        sizeType: (sizeType || undefined) as 'toy' | 'small' | 'medium' | 'large' | 'giant' | undefined,
+      })
     }
   }
 
@@ -99,6 +121,38 @@ export function BreedForm({ open, onOpenChange, onSuccess, breed }: BreedFormPro
           aria-invalid={!!nameError}
         />
         {nameError && <p className="text-sm text-destructive">{nameError}</p>}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="breed-coat-type">Tipo di Pelo (opzionale)</Label>
+        <Select value={coatType} onValueChange={setCoatType}>
+          <SelectTrigger id="breed-coat-type">
+            <SelectValue placeholder="Seleziona tipo di pelo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Nessuno</SelectItem>
+            <SelectItem value="short">Corto</SelectItem>
+            <SelectItem value="medium">Medio</SelectItem>
+            <SelectItem value="long">Lungo</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="breed-size-type">Taglia (opzionale)</Label>
+        <Select value={sizeType} onValueChange={setSizeType}>
+          <SelectTrigger id="breed-size-type">
+            <SelectValue placeholder="Seleziona taglia" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Nessuno</SelectItem>
+            <SelectItem value="toy">Toy</SelectItem>
+            <SelectItem value="small">Piccola</SelectItem>
+            <SelectItem value="medium">Media</SelectItem>
+            <SelectItem value="large">Grande</SelectItem>
+            <SelectItem value="giant">Gigante</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Button type="submit" disabled={isPending} className="mt-2">
