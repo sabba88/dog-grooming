@@ -9,6 +9,7 @@ export async function getServices(tenantId: string) {
       name: services.name,
       price: services.price,
       duration: services.duration,
+      durationSurchargePer30min: services.durationSurchargePer30min,
       createdAt: services.createdAt,
     })
     .from(services)
@@ -23,6 +24,7 @@ export async function getServiceById(serviceId: string, tenantId: string) {
       name: services.name,
       price: services.price,
       duration: services.duration,
+      durationSurchargePer30min: services.durationSurchargePer30min,
       createdAt: services.createdAt,
     })
     .from(services)

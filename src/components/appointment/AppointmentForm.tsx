@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useAction } from 'next-safe-action/hooks'
 import { toast } from 'sonner'
-import { createAppointment, fetchDogsForClient, fetchAllServices, fetchStationsForLocation, fetchServicesForStation } from '@/lib/actions/appointments'
+import { createAppointment, fetchDogsForClient, fetchAllServices, fetchStationsForLocation, fetchServicesForStation, fetchAppointmentPrice } from '@/lib/actions/appointments'
 import { formatPrice, formatDuration } from '@/lib/utils/formatting'
+import { COAT_LABELS, SIZE_LABELS, CoatType, SizeType } from '@/lib/types'
 import { ClientSearch } from '@/components/appointment/ClientSearch'
 import { QuickClientForm } from '@/components/appointment/QuickClientForm'
 import { Button } from '@/components/ui/button'
@@ -39,6 +40,10 @@ interface Dog {
   name: string
   breedId: string | null
   breedName: string | null
+  coatType: string | null
+  sizeType: string | null
+  breedCoatType: string | null
+  breedSizeType: string | null
 }
 
 interface Service {
@@ -46,6 +51,15 @@ interface Service {
   name: string
   price: number
   duration: number
+  durationSurchargePer30min: number
+}
+
+type PriceHintState = { coat: string | null; size: string | null } | 'base' | null
+
+function getEffectiveCoatSize(dog: Dog) {
+  const coat = dog.coatType ?? dog.breedCoatType ?? null
+  const size = dog.sizeType ?? dog.breedSizeType ?? null
+  return { coat, size }
 }
 
 export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormProps) {
@@ -59,6 +73,9 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [duration, setDuration] = useState<number>(0)
   const [priceEur, setPriceEur] = useState<string>('')
+  const [basePriceForMatrix, setBasePriceForMatrix] = useState<number | null>(null)
+  const [priceIsManual, setPriceIsManual] = useState<boolean>(false)
+  const [priceHint, setPriceHint] = useState<PriceHintState>(null)
   const [businessError, setBusinessError] = useState<{
     code: string
     message: string
@@ -66,12 +83,31 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     shiftEndTime?: string
   } | null>(null)
 
+  function recalcPriceWithSurcharge(baseMatrixPrice: number, currentServiceId: string | null, currentDuration: number, isManual: boolean) {
+    if (isManual) return
+    const service = services.find(s => s.id === currentServiceId)
+    if (!service) return
+    const extraMinutes = Math.max(0, currentDuration - service.duration)
+    const surchargeUnits = Math.floor(extraMinutes / 30)
+    const totalPrice = baseMatrixPrice + surchargeUnits * service.durationSurchargePer30min
+    setPriceEur((totalPrice / 100).toFixed(2))
+  }
+
+  const { execute: executeFetchPrice } = useAction(fetchAppointmentPrice, {
+    onSuccess: ({ data }) => {
+      if (data?.basePrice != null) {
+        setBasePriceForMatrix(data.basePrice)
+        recalcPriceWithSurcharge(data.basePrice, selectedServiceId, duration, priceIsManual)
+      }
+    },
+  })
+
   const { execute: loadDogs, isPending: isLoadingDogs } = useAction(fetchDogsForClient, {
     onSuccess: ({ data }) => {
       if (data?.dogs) {
         setDogs(data.dogs)
         if (data.dogs.length === 1) {
-          setSelectedDogId(data.dogs[0].id)
+          handleDogChange(data.dogs[0].id)
         }
       }
     },
@@ -121,6 +157,29 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     loadServices({})
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleDogChange = (dogId: string) => {
+    setSelectedDogId(dogId)
+    setBusinessError(null)
+    setPriceIsManual(false)
+    if (selectedServiceId) {
+      const dog = dogs.find(d => d.id === dogId)
+      if (dog) {
+        const { coat, size } = getEffectiveCoatSize(dog)
+        if (coat && size) {
+          setPriceHint({ coat, size })
+          executeFetchPrice({ serviceId: selectedServiceId, coatType: coat, sizeType: size })
+        } else {
+          const service = services.find(s => s.id === selectedServiceId)
+          if (service) {
+            setBasePriceForMatrix(service.price)
+            setPriceEur((service.price / 100).toFixed(2))
+          }
+          setPriceHint('base')
+        }
+      }
+    }
+  }
+
   const handleClientSelect = (client: SelectedClient) => {
     setSelectedClient(client)
     setSelectedDogId(null)
@@ -140,6 +199,9 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     setSelectedServiceId(null)
     setDuration(0)
     setPriceEur('')
+    setBasePriceForMatrix(null)
+    setPriceIsManual(false)
+    setPriceHint(null)
     setBusinessError(null)
     if (stationId) {
       loadServicesForStation({ stationId })
@@ -151,11 +213,25 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
   const handleServiceChange = (serviceId: string) => {
     setSelectedServiceId(serviceId)
     setBusinessError(null)
+    setPriceIsManual(false)
     const service = services.find((s) => s.id === serviceId)
-    if (service) {
-      setDuration(service.duration)
-      // TEMP (Story 2.7): usa sempre services.price fino a Story 4.5
+    if (!service) return
+    setDuration(service.duration)
+    const dog = dogs.find(d => d.id === selectedDogId)
+    if (dog) {
+      const { coat, size } = getEffectiveCoatSize(dog)
+      if (coat && size) {
+        setPriceHint({ coat, size })
+        executeFetchPrice({ serviceId, coatType: coat, sizeType: size })
+      } else {
+        setBasePriceForMatrix(service.price)
+        setPriceEur((service.price / 100).toFixed(2))
+        setPriceHint('base')
+      }
+    } else {
+      setBasePriceForMatrix(service.price)
       setPriceEur((service.price / 100).toFixed(2))
+      setPriceHint(null)
     }
   }
 
@@ -251,6 +327,9 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
                 setSelectedServiceId(null)
                 setDuration(0)
                 setPriceEur('')
+                setBasePriceForMatrix(null)
+                setPriceIsManual(false)
+                setPriceHint(null)
                 setBusinessError(null)
                 loadServices({})
               }}
@@ -283,10 +362,7 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
               {dogs[0].breedName && <span className="text-muted-foreground ml-1">({dogs[0].breedName})</span>}
             </div>
           ) : (
-            <Select value={selectedDogId ?? undefined} onValueChange={(val) => {
-              setSelectedDogId(val)
-              setBusinessError(null)
-            }}>
+            <Select value={selectedDogId ?? undefined} onValueChange={handleDogChange}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleziona cane" />
               </SelectTrigger>
@@ -368,10 +444,31 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
               min={15}
               value={duration}
               onChange={(e) => {
-                setDuration(parseInt(e.target.value) || 0)
+                const newDuration = parseInt(e.target.value) || 0
+                setDuration(newDuration)
                 setBusinessError(null)
+                if (basePriceForMatrix !== null && !priceIsManual) {
+                  const service = services.find(s => s.id === selectedServiceId)
+                  if (service && service.durationSurchargePer30min > 0) {
+                    const extraMinutes = Math.max(0, newDuration - service.duration)
+                    const surchargeUnits = Math.floor(extraMinutes / 30)
+                    const totalPrice = basePriceForMatrix + surchargeUnits * service.durationSurchargePer30min
+                    setPriceEur((totalPrice / 100).toFixed(2))
+                  }
+                }
               }}
             />
+            {(() => {
+              const service = services.find(s => s.id === selectedServiceId)
+              if (service && service.durationSurchargePer30min > 0) {
+                return (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ogni 30min aggiuntivi: +€{(service.durationSurchargePer30min / 100).toFixed(2).replace('.', ',')}
+                  </p>
+                )
+              }
+              return null
+            })()}
           </div>
           <div>
             <Label htmlFor="af-price" className="mb-1.5 block text-sm font-medium">Prezzo (EUR)</Label>
@@ -383,8 +480,30 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
               value={priceEur}
               onChange={(e) => {
                 setPriceEur(e.target.value)
+                setPriceIsManual(true)
               }}
             />
+            {priceHint === 'base' && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Pelo/taglia non configurati — uso prezzo base{' '}
+                {selectedDogId && (
+                  <a
+                    href={`/dogs/${selectedDogId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
+                    Configura pelo/taglia
+                  </a>
+                )}
+              </p>
+            )}
+            {priceHint && priceHint !== 'base' && (priceHint.coat || priceHint.size) && (
+              <p className="text-xs text-muted-foreground mt-1">
+                (prezzo:{priceHint.coat ? ` Pelo ${COAT_LABELS[priceHint.coat as CoatType] ?? priceHint.coat}` : ''}
+                {priceHint.size ? ` · Taglia ${SIZE_LABELS[priceHint.size as SizeType] ?? priceHint.size}` : ''})
+              </p>
+            )}
           </div>
         </div>
       )}

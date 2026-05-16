@@ -46,3 +46,9 @@ export const fetchWeeklyAgendaDataSchema = z.object({
   locationId: z.string().uuid(),
   weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato data non valido (YYYY-MM-DD)'),
 })
+
+export const fetchAppointmentPriceSchema = z.object({
+  serviceId: z.string().uuid(),
+  coatType: z.string().nullable().optional(),
+  sizeType: z.string().nullable().optional(),
+})

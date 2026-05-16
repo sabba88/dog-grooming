@@ -57,6 +57,7 @@ export async function getStationServices(stationId: string, tenantId: string) {
       serviceName: services.name,
       servicePrice: services.price,
       serviceDuration: services.duration,
+      durationSurchargePer30min: services.durationSurchargePer30min,
     })
     .from(stationServices)
     .innerJoin(services, eq(stationServices.serviceId, services.id))
@@ -76,6 +77,7 @@ export async function getServicesForStation(stationId: string, tenantId: string)
       name: services.name,
       price: services.price,
       duration: services.duration,
+      durationSurchargePer30min: services.durationSurchargePer30min,
     })
     .from(stationServices)
     .innerJoin(services, eq(stationServices.serviceId, services.id))

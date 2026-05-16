@@ -1,13 +1,13 @@
 'use server'
 
 import { authActionClient } from '@/lib/actions/client'
-import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema } from '@/lib/validations/appointments'
+import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema } from '@/lib/validations/appointments'
 import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog, getWeeklyAppointmentsByPerson } from '@/lib/queries/appointments'
 import { getStaffStatusForDate, getActiveUsers, getWeeklyStaffShifts } from '@/lib/queries/staff'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
 import { getDogsByClient } from '@/lib/queries/dogs'
 import { getStationsByLocation, getServicesForStation } from '@/lib/queries/stations'
-import { getServices, getServiceById } from '@/lib/queries/services'
+import { getServices, getServiceById, getAppointmentPrice } from '@/lib/queries/services'
 import { timeToMinutes } from '@/lib/utils/schedule'
 import { addDays, parseISO, format } from 'date-fns'
 import { z } from 'zod'
@@ -297,6 +297,14 @@ export const fetchServiceNotesByDog = authActionClient
       ctx.tenantId
     )
     return { serviceNotes }
+  })
+
+export const fetchAppointmentPrice = authActionClient
+  .schema(fetchAppointmentPriceSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { serviceId, coatType, sizeType } = parsedInput
+    const basePrice = await getAppointmentPrice(serviceId, coatType ?? null, sizeType ?? null, ctx.tenantId)
+    return { basePrice }
   })
 
 export const moveAppointment = authActionClient

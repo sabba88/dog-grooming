@@ -72,7 +72,7 @@ development_status:
   4-2-creazione-appuntamento-rapido: done               # CC-2026-03-14: modifica (persona pre-compilata, postazione opzionale)
   4-3-cancellazione-e-spostamento-appuntamenti: done          # CC-2026-03-14: modifica (spostamento tra persone); CC-2026-04-26: implementazione completata
   4-4-note-prestazione: review
-  4-5-prezzo-appuntamento-per-pelo-taglia: backlog  # CC-2026-04-26b: logica prezzo breed-aware; CC-2026-05-16: riscritta - logica pelo/taglia, dipende da 3.3 + 2.1 + DB migration
+  4-5-prezzo-appuntamento-per-pelo-taglia: review  # CC-2026-04-26b: logica prezzo breed-aware; CC-2026-05-16: riscritta - logica pelo/taglia, dipende da 3.3 + 2.1 + DB migration
   4-6-vista-settimanale-agenda: review  # CC-2026-04-27: nuova story - vista settimanale con gap operatori evidenziati
   epic-4-retrospective: optional
 
