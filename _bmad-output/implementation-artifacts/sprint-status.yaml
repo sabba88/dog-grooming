@@ -56,7 +56,7 @@ development_status:
   2-5-orari-apertura-sede: done  # CC-2026-04-26: nuova story - orari settimanali sede (2 fasce/giorno), prerequisito per agenda range dinamico
   2-6-gestione-razze-canine: done  # CC-2026-04-26b: CMS razze; CC-2026-05-16: semplificata - rimossa sezione prezzi per servizio (razza solo anagrafica)
   2-7-db-migration-pelo-taglia: review  # CC-2026-05-16: nuova story - migrazione DB (drop service_breed_prices, create service_price_matrix + pricing_surcharges, alter dogs + services); PREREQUISITO per tutte le story CC-2026-05-16
-  2-8-configurazione-tabelle-maggiorazione: backlog  # CC-2026-05-16: nuova story - tabelle maggiorazione Pelo/Taglia per tenant (pricing_surcharges), prerequisito per ricalcolo in 2.1
+  2-8-configurazione-tabelle-maggiorazione: review  # CC-2026-05-16: nuova story - tabelle maggiorazione Pelo/Taglia per tenant (pricing_surcharges), prerequisito per ricalcolo in 2.1
   epic-2-retrospective: optional
 
   # Epica 3: Gestione Clienti e Cani

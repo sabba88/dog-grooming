@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { checkPermission } from '@/lib/auth/permissions'
-import { Users, MapPin } from 'lucide-react'
+import { Users, MapPin, Percent } from 'lucide-react'
 
 export default async function SettingsPage() {
   if (!(await checkPermission('manageUsers'))) {
@@ -35,6 +35,16 @@ export default async function SettingsPage() {
           <div>
             <p className="font-medium text-foreground">Gestione Sedi</p>
             <p className="text-sm text-muted-foreground">Configura le sedi del salone</p>
+          </div>
+        </Link>
+        <Link
+          href="/settings/surcharges"
+          className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
+        >
+          <Percent className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <p className="font-medium text-foreground">Tabelle Maggiorazione</p>
+            <p className="text-sm text-muted-foreground">Configura % maggiorazione per pelo e taglia</p>
           </div>
         </Link>
       </nav>
