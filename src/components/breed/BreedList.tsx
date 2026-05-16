@@ -30,21 +30,13 @@ import { Plus, Pencil, Trash2 } from 'lucide-react'
 interface Breed {
   id: string
   name: string
-  priceCount: number
-}
-
-interface Service {
-  id: string
-  name: string
-  price: number
 }
 
 interface BreedListProps {
   breeds: Breed[]
-  services: Service[]
 }
 
-export function BreedList({ breeds, services }: BreedListProps) {
+export function BreedList({ breeds }: BreedListProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
   const [editingBreed, setEditingBreed] = useState<Breed | null>(null)
@@ -102,7 +94,6 @@ export function BreedList({ breeds, services }: BreedListProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Prezzi configurati</TableHead>
                   <TableHead className="text-right">Azioni</TableHead>
                 </TableRow>
               </TableHeader>
@@ -110,11 +101,6 @@ export function BreedList({ breeds, services }: BreedListProps) {
                 {breeds.map((breed) => (
                   <TableRow key={breed.id}>
                     <TableCell className="font-medium">{breed.name}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {breed.priceCount === 0
-                        ? 'Nessun prezzo specifico'
-                        : `${breed.priceCount} ${breed.priceCount === 1 ? 'prezzo' : 'prezzi'} configurati`}
-                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
@@ -151,11 +137,6 @@ export function BreedList({ breeds, services }: BreedListProps) {
               <div key={breed.id} className="rounded-lg border border-border bg-card p-4">
                 <div className="flex items-start justify-between mb-2">
                   <p className="font-medium text-foreground">{breed.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {breed.priceCount === 0
-                      ? 'Nessun prezzo'
-                      : `${breed.priceCount} prezzi`}
-                  </p>
                 </div>
                 <div className="flex gap-2 mt-3">
                   <Button
@@ -188,7 +169,6 @@ export function BreedList({ breeds, services }: BreedListProps) {
         open={formOpen}
         onOpenChange={setFormOpen}
         onSuccess={handleSuccess}
-        services={services}
         breed={editingBreed}
       />
 
@@ -202,7 +182,7 @@ export function BreedList({ breeds, services }: BreedListProps) {
               Eliminare la razza {deleteTarget?.name}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              I cani associati perderanno la razza. I prezzi specifici verranno eliminati.
+              I cani associati perderanno la razza.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

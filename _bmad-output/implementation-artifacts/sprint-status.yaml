@@ -48,20 +48,22 @@ development_status:
   epic-1-retrospective: optional
 
   # Epica 2: Configurazione del Salone
-  epic-2: done  # CC-2026-04-26: riaperta per story 2.5 orari apertura sede; CC-2026-04-26: chiusa - tutte le story completate
-  2-1-gestione-listino-servizi: done
+  epic-2: in-progress  # CC-2026-04-26: riaperta per story 2.5; CC-2026-04-26: chiusa; CC-2026-05-16: riaperta - logica prezzi pelo/taglia (2.1 extension, 2.6 simplification, nuova 2.7)
+  2-1-gestione-listino-servizi: done  # CC-2026-05-16: estensione richiesta - aggiungere matrice prezzi 3x5 e maggiorazione durata 30min (service_price_matrix)
   2-2-gestione-sedi: done
   2-3-gestione-postazioni-con-servizi-abilitati: done  # CC-2026-03-14: semplificata (rimossi orari)
   2-4-assegnazione-collaboratori-sedi-calendario: done  # CC-2026-03-14: nuova story; CC-2026-04-26: rewrite completato - fasce per data di calendario
   2-5-orari-apertura-sede: done  # CC-2026-04-26: nuova story - orari settimanali sede (2 fasce/giorno), prerequisito per agenda range dinamico
-  2-6-gestione-razze-canine: done  # CC-2026-04-26b: nuova story - CMS razze + prezzi per razza per servizio
+  2-6-gestione-razze-canine: done  # CC-2026-04-26b: CMS razze; CC-2026-05-16: semplificata - rimossa sezione prezzi per servizio (razza solo anagrafica)
+  2-7-db-migration-pelo-taglia: review  # CC-2026-05-16: nuova story - migrazione DB (drop service_breed_prices, create service_price_matrix + pricing_surcharges, alter dogs + services); PREREQUISITO per tutte le story CC-2026-05-16
+  2-8-configurazione-tabelle-maggiorazione: backlog  # CC-2026-05-16: nuova story - tabelle maggiorazione Pelo/Taglia per tenant (pricing_surcharges), prerequisito per ricalcolo in 2.1
   epic-2-retrospective: optional
 
   # Epica 3: Gestione Clienti e Cani
-  epic-3: in-progress  # CC-2026-04-26b: riaperta per story 3.3 razza nel profilo cane
+  epic-3: in-progress  # CC-2026-04-26b: riaperta per story 3.3; CC-2026-05-16: story 3.3 riscritta con campi pelo/taglia
   3-1-anagrafica-clienti: done
   3-2-anagrafica-cani: done
-  3-3-razza-nel-profilo-cane: review  # CC-2026-04-26b: nuova story - campo razza Combobox su cane, dipende da 2.6
+  3-3-razza-pelo-taglia-nel-profilo-cane: backlog  # CC-2026-04-26b: razza Combobox; CC-2026-05-16: riscritta - aggiunge coatType e sizeType al cane, dipende da DB migration
   epic-3-retrospective: optional
 
   # Epica 4: Agenda e Appuntamenti
@@ -70,7 +72,7 @@ development_status:
   4-2-creazione-appuntamento-rapido: done               # CC-2026-03-14: modifica (persona pre-compilata, postazione opzionale)
   4-3-cancellazione-e-spostamento-appuntamenti: done          # CC-2026-03-14: modifica (spostamento tra persone); CC-2026-04-26: implementazione completata
   4-4-note-prestazione: review
-  4-5-prezzo-appuntamento-per-razza: review  # CC-2026-04-26b: nuova story - logica prezzo breed-aware, dipende da 3.3
+  4-5-prezzo-appuntamento-per-pelo-taglia: backlog  # CC-2026-04-26b: logica prezzo breed-aware; CC-2026-05-16: riscritta - logica pelo/taglia, dipende da 3.3 + 2.1 + DB migration
   4-6-vista-settimanale-agenda: review  # CC-2026-04-27: nuova story - vista settimanale con gap operatori evidenziati
   epic-4-retrospective: optional
 

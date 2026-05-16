@@ -19,6 +19,7 @@ export const services = pgTable('services', {
   name: text('name').notNull(),
   price: integer('price').notNull(),
   duration: integer('duration').notNull(),
+  durationSurchargePer30min: integer('duration_surcharge_per_30min').notNull().default(0),
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -91,6 +92,8 @@ export const dogs = pgTable('dogs', {
   name: text('name').notNull(),
   breedId: uuid('breed_id').references(() => breeds.id, { onDelete: 'set null' }),
   size: text('size'),
+  coatType: text('coat_type'),
+  sizeType: text('size_type'),
   dateOfBirth: timestamp('date_of_birth'),
   sex: text('sex'),
   sterilized: boolean('sterilized').notNull().default(false),
@@ -132,18 +135,29 @@ export const locationBusinessHours = pgTable('location_business_hours', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
-// CC-2026-04-26b: Prezzi specifici per razza per servizio.
-// Se non esiste una riga per (serviceId, breedId), il sistema usa services.price come fallback.
-export const serviceBreedPrices = pgTable('service_breed_prices', {
+export const servicePriceMatrix = pgTable('service_price_matrix', {
   id: uuid('id').primaryKey().defaultRandom(),
   serviceId: uuid('service_id').notNull().references(() => services.id, { onDelete: 'cascade' }),
-  breedId: uuid('breed_id').notNull().references(() => breeds.id, { onDelete: 'cascade' }),
+  coatType: text('coat_type').notNull(),
+  sizeType: text('size_type').notNull(),
   price: integer('price').notNull(),
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 },
-(t) => [uniqueIndex('unique_service_breed_tenant').on(t.serviceId, t.breedId, t.tenantId)]
+(t) => [uniqueIndex('unique_service_matrix_cell').on(t.serviceId, t.coatType, t.sizeType, t.tenantId)]
+)
+
+export const pricingSurcharges = pgTable('pricing_surcharges', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull(),
+  dimension: text('dimension').notNull(),
+  valueKey: text('value_key').notNull(),
+  surchargePercent: integer('surcharge_percent').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+},
+(t) => [uniqueIndex('unique_surcharge_key').on(t.tenantId, t.dimension, t.valueKey)]
 )
 
 export const appointments = pgTable('appointments', {

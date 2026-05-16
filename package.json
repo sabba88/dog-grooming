@@ -16,7 +16,10 @@
     "db:seed-breeds:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-breeds.ts",
     "db:seed-clients:dev": "dotenv -e .env.dev -- npx tsx src/lib/db/seed-clients.ts",
     "db:seed-clients:uat": "dotenv -e .env.uat -- npx tsx src/lib/db/seed-clients.ts",
-    "db:seed-clients:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-clients.ts"
+    "db:seed-clients:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-clients.ts",
+    "db:seed-pricing-surcharges:dev": "dotenv -e .env.dev -- npx tsx src/lib/db/seed-pricing-surcharges.ts",
+    "db:seed-pricing-surcharges:uat": "dotenv -e .env.uat -- npx tsx src/lib/db/seed-pricing-surcharges.ts",
+    "db:seed-pricing-surcharges:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-pricing-surcharges.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
