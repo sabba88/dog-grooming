@@ -28,7 +28,7 @@ FR5: L'Amministratore puo' creare e configurare sedi
 FR6: L'Amministratore puo' creare postazioni per ciascuna sede
 FR7: L'Amministratore puo' assegnare i servizi abilitati a ciascuna postazione
 FR8: L'Amministratore puo' definire gli orari di apertura e chiusura per ciascuna postazione
-FR9: L'Amministratore puo' creare servizi specificando nome, tariffa e tempo di esecuzione
+FR9: L'Amministratore puo' creare servizi specificando nome, prezzo base (Pelo Corto + Toy), tempo di esecuzione e maggiorazione per 30min aggiuntivi
 FR10: L'Amministratore puo' modificare ed eliminare servizi dal listino
 FR11: Il Collaboratore puo' consultare il listino servizi in sola lettura
 FR12: L'Amministratore e il Collaboratore possono creare nuovi clienti con i relativi dati anagrafici
@@ -44,7 +44,7 @@ FR21: Il sistema impedisce la creazione di appuntamenti sovrapposti sulla stessa
 FR22: L'Amministratore e il Collaboratore possono cancellare un appuntamento esistente
 FR23: L'Amministratore e il Collaboratore possono spostare un appuntamento a una nuova fascia oraria o data
 FR24: L'Amministratore e il Collaboratore possono aggiungere note alla prestazione al termine di un appuntamento
-FR25: Il sistema calcola automaticamente la durata dell'appuntamento in base al tempo di esecuzione del servizio selezionato
+FR25: Il sistema calcola automaticamente la durata e pre-compila il prezzo usando la matrice prezzi pelo/taglia del cane (FR38/FR40), con fallback al prezzo base; maggiorazione durata (FR42) si applica dinamicamente
 FR26: L'Amministratore e il Collaboratore possono visualizzare l'agenda giornaliera organizzata per sede e postazione
 FR27: L'Amministratore e il Collaboratore possono navigare l'agenda tra giorni diversi
 FR28: L'agenda mostra per ogni appuntamento il cliente, il cane e il servizio previsto
@@ -119,13 +119,13 @@ FR5: Epica 2 - Creazione e configurazione sedi
 FR6: Epica 2 - Creazione postazioni per sede
 FR7: Epica 2 - Assegnazione servizi abilitati a postazione
 FR8: Epica 2 - Definizione orari apertura/chiusura sede (2 fasce/giorno settimanali)
-FR9: Epica 2 - Creazione servizi con nome, tariffa, tempo
+FR9: Epica 2 - Creazione servizi con nome, prezzo base, tempo, maggiorazione 30min (Story 2.1)
 FR10: Epica 2 - Modifica ed eliminazione servizi
 FR11: Epica 2 - Consultazione listino in sola lettura (Collaboratore)
 FR12: Epica 3 - Creazione nuovi clienti
 FR13: Epica 3 - Modifica dati cliente
 FR14: Epica 3 - Note libere su cliente
-FR15: Epica 3 - Ricerca rapida cliente
+FR15: Epica 3 - Filtro lista clienti per nome, telefono e nome del cane (combinabili); navigazione rapida type-ahead nel form appuntamento
 FR16: Epica 3 - Aggiunta cani associati a cliente (1:N)
 FR17: Epica 3 - Modifica dati cane
 FR18: Epica 3 - Note libere su cane
@@ -145,6 +145,12 @@ FR30: Epica 5 - Dashboard riassuntiva attivita'
 FR31: Epica 6 - Gestione dati personali conforme GDPR
 FR32: Epica 6 - Diritto all'oblio (cancellazione dati)
 FR33: Epica 6 - Portabilita' dati (esportazione)
+FR37: Epica 2 - Catalogo razze canine (solo anagrafica, senza prezzi) (Story 2.6)
+FR38: Epica 2 - Matrice prezzi 3x5 (Pelo x Taglia) per servizio (Story 2.1)
+FR39: Epica 3 - Associazione razza opzionale al cane (Story 3.3)
+FR40: Epica 4 - Pre-compilazione prezzo appuntamento da pelo/taglia cane (Story 4.5)
+FR41: Epica 2 - Configurazione tabelle maggiorazione Pelo/Taglia per tenant (Story 2.8)
+FR42: Epica 2 - Maggiorazione per 30min di durata per servizio (Story 2.1)
 
 ## Epic List
 
@@ -153,8 +159,8 @@ Marco e Sara possono accedere al sistema in sicurezza, ciascuno con il proprio r
 **FRs coperti:** FR1, FR2, FR3, FR4
 
 ### Epica 2: Configurazione del Salone
-Marco (Amministratore) configura completamente il suo salone: crea sedi con orari di apertura settimanali, postazioni con servizi abilitati, definisce il listino con tariffe e tempi. Sara (Collaboratore) consulta il listino in sola lettura. Al termine, il salone e' pronto per operare. Copre il Journey 1 — Setup del Salone.
-**FRs coperti:** FR5, FR6, FR7, FR8, FR9, FR10, FR11
+Marco (Amministratore) configura completamente il suo salone: crea sedi con orari di apertura settimanali, postazioni con servizi abilitati, definisce il listino con prezzi per combinazione Pelo/Taglia e maggiorazioni configurabili. Sara (Collaboratore) consulta il listino in sola lettura. Al termine, il salone e' pronto per operare. Copre il Journey 1 — Setup del Salone.
+**FRs coperti:** FR5, FR6, FR7, FR8, FR9, FR10, FR11, FR37, FR38, FR41, FR42
 
 ### Epica 3: Gestione Clienti e Cani
 Marco e Sara gestiscono l'anagrafica completa: creano e modificano clienti e cani, aggiungono note libere, consultano lo storico delle note prestazione, cercano rapidamente i clienti.
@@ -316,16 +322,26 @@ So that **possa definire l'offerta del salone e i collaboratori possano consulta
 **When** la pagina viene renderizzata
 **Then** vede la lista dei servizi in sola lettura, senza opzioni di creazione, modifica o eliminazione
 
-**Given** un Amministratore visualizza il dettaglio di un servizio
-**When** accede alla sezione "Prezzi per Razza"
-**Then** vede la lista di tutte le razze esistenti con il prezzo specifico per questo servizio (se configurato)
-**And** le razze senza prezzo specifico mostrano "Usa prezzo base"
-**And** puo' aggiungere, modificare o rimuovere il prezzo specifico per ogni razza
+**Given** un Amministratore crea o modifica un servizio
+**When** compila il form
+**Then** vede il campo "Prezzo base (Pelo Corto, Taglia Toy)" come prezzo di riferimento
+**And** vede il campo "Maggiorazione per 30min aggiuntivi" (opzionale, default 0)
 
-**Given** un Amministratore aggiunge o modifica un prezzo per razza nella sezione del servizio
-**When** salva
-**Then** il prezzo viene aggiornato in service_breed_prices
-**And** mostra un toast "Prezzo aggiornato"
+**Given** un Amministratore visualizza il dettaglio di un servizio
+**When** accede alla sezione "Listino Pelo/Taglia"
+**Then** vede una tabella 3x5 con righe Pelo (Corto/Medio/Lungo) e colonne Taglia (Toy/Piccola/Media/Grande/Gigante)
+**And** ogni cella mostra il prezzo configurato o e' vuota se non configurata
+**And** vede il pulsante "Ricalcola da maggiorazioni" che calcola i prezzi applicando le % configurate in FR41
+
+**Given** un Amministratore modifica uno o piu' prezzi nella tabella 3x5 e salva
+**When** clicca "Salva"
+**Then** i prezzi vengono salvati in service_price_matrix (upsert per ogni cella)
+**And** mostra un toast "Listino aggiornato"
+
+**Given** un Amministratore clicca "Ricalcola da maggiorazioni" con prezzo base valorizzato
+**When** il sistema calcola i prezzi (prezzo = basePrice x (1 + size_surcharge% + coat_surcharge%) / 100)
+**Then** viene mostrata un'anteprima della tabella calcolata con pulsante "Applica"
+**And** dopo "Applica" l'utente puo' modificare singole celle prima di salvare
 
 ### Story 2.2: Gestione Sedi
 
@@ -427,52 +443,96 @@ So that **l'agenda mostri solo le ore lavorative e non l'intera giornata**.
 
 ### Story 2.6: Gestione Razze Canine
 
+**CC-2026-05-16: Rimossa sezione prezzi per servizio. La razza e' ora solo catalogo anagrafico; il prezzo e' determinato da pelo/taglia del cane (Story 2.1, 2.7, 4.5).**
+
 As a **Amministratore**,
-I want **creare e gestire un catalogo di razze canine con prezzi specifici per servizio**,
-So that **il salone possa tariffeare ogni servizio in modo differenziato per razza e il prezzo degli appuntamenti si pre-compili correttamente**.
+I want **creare e gestire un catalogo di razze canine**,
+So that **i cani del salone possano essere identificati per razza a fini anagrafici**.
 
 **Acceptance Criteria:**
 
 **Given** un Amministratore accede alla pagina Razze
 **When** la pagina viene renderizzata
-**Then** viene mostrata la lista delle razze con nome e numero di prezzi per servizio configurati
+**Then** viene mostrata la lista delle razze con nome e numero di cani associati
 **And** l'accesso e' limitato al ruolo Amministratore (checkRole)
 
 **Given** un Amministratore clicca su "Nuova Razza"
 **When** il form si apre (Sheet mobile / Dialog desktop)
-**Then** vede un campo per il nome della razza e la lista completa dei servizi esistenti, ciascuno con un campo prezzo opzionale (placeholder: "Usa prezzo base")
+**Then** vede solo il campo per il nome della razza (nessun campo prezzo per servizio)
 
-**Given** un Amministratore compila il nome e facoltativamente uno o piu' prezzi per servizio
+**Given** un Amministratore compila il nome
 **When** clicca "Salva"
-**Then** la razza viene creata e i prezzi compilati vengono salvati in service_breed_prices
+**Then** la razza viene creata
 **And** mostra un toast "Razza creata"
 
 **Given** un Amministratore seleziona una razza esistente
-**When** modifica nome o prezzi per servizio e salva
-**Then** le modifiche vengono salvate (upsert su service_breed_prices)
+**When** modifica il nome e salva
+**Then** le modifiche vengono salvate
 **And** mostra un toast "Razza aggiornata"
 
 **Given** un Amministratore clicca "Elimina" su una razza
 **When** viene mostrato Alert Dialog "Eliminare la razza [nome]? I cani associati perderanno la razza."
 **Then** dopo conferma la razza viene eliminata
 **And** i cani con quella razza hanno breedId impostato a null (ON DELETE SET NULL)
-**And** i prezzi in service_breed_prices vengono eliminati (ON DELETE CASCADE)
 **And** mostra un toast "Razza eliminata"
 
-**Given** un Amministratore e' nel dettaglio di un servizio (pagina Servizi)
-**When** accede alla sezione "Prezzi per Razza"
-**Then** vede la lista di tutte le razze con il prezzo specifico configurato per questo servizio (se presente)
-**And** le razze senza prezzo specifico mostrano "Usa prezzo base (€ X,XX)"
-**And** puo' aggiungere, modificare o rimuovere il prezzo specifico per ogni razza
+### Story 2.7: Migrazione DB — Logica Prezzi Pelo/Taglia
 
-**Given** un Amministratore aggiunge o modifica un prezzo per razza dalla vista servizio
-**When** salva
-**Then** il prezzo viene aggiornato in service_breed_prices
-**And** mostra un toast "Prezzo aggiornato"
+**CC-2026-05-16: Nuova story tecnica — prerequisito per TUTTE le story CC-2026-05-16. Nessuna UI. Deve essere completata prima di 2.1 ext, 2.6, 2.8, 3.3, 4.5.**
 
-**Given** viene creato un nuovo servizio dopo che esistono gia' delle razze
-**When** l'Amministratore apre il form di una razza esistente
-**Then** il nuovo servizio appare nella lista con il campo prezzo vuoto (usa prezzo base)
+As a **developer**,
+I want **migrare lo schema del database per supportare la logica prezzi pelo/taglia**,
+So that **tutte le story successive abbiano il corretto schema in place**.
+
+**Acceptance Criteria:**
+
+**Given** lo schema Drizzle aggiornato viene applicato al database
+**When** la migrazione viene eseguita
+**Then** la tabella `service_breed_prices` non esiste piu'
+**And** la tabella `service_price_matrix` esiste con colonne (id, serviceId, coatType, sizeType, price, tenantId, createdAt, updatedAt) e unique constraint su (serviceId, coatType, sizeType, tenantId)
+**And** la tabella `pricing_surcharges` esiste con colonne (id, tenantId, dimension, valueKey, surchargePercent, createdAt, updatedAt) e unique constraint su (tenantId, dimension, valueKey)
+**And** la tabella `dogs` ha le nuove colonne `coat_type` (text, nullable) e `size_type` (text, nullable)
+**And** la tabella `dogs` mantiene il campo `size` esistente (non droppato, per retrocompatibilita')
+**And** la tabella `services` ha il nuovo campo `duration_surcharge_per_30min` (integer, NOT NULL, default 0)
+
+**Given** i tenant esistenti
+**When** la migrazione viene completata
+**Then** la tabella `pricing_surcharges` e' pre-popolata con i default per ogni tenant esistente:
+  coat: short=0, medium=20, long=20
+  size: toy=0, small=0, medium=20, large=40, giant=60
+**And** i file che referenziavano serviceBreedPrices compilano senza errori TypeScript
+
+### Story 2.8: Configurazione Tabelle di Maggiorazione Pelo/Taglia
+
+**CC-2026-05-16: Nuova story (ex-2.7) — configurazione maggiorazioni globali per tenant, prerequisito per il pulsante "Ricalcola" in Story 2.1. Dipende da Story 2.7.**
+
+As a **Amministratore**,
+I want **configurare le percentuali di maggiorazione per ogni tipo di pelo e taglia**,
+So that **il sistema possa pre-calcolare automaticamente la matrice prezzi di ogni servizio a partire dal prezzo base**.
+
+**Acceptance Criteria:**
+
+**Given** un Amministratore accede alla sezione Impostazioni → Tabelle di Maggiorazione
+**When** la pagina viene renderizzata
+**Then** vede due tabelle: "Maggiorazioni Taglia" e "Maggiorazioni Pelo"
+**And** i valori di default sono gia' pre-caricati:
+  Taglia: Toy +0%, Piccola +0%, Media +20%, Grande +40%, Gigante +60%
+  Pelo: Corto +0%, Medio +20%, Lungo +20%
+
+**Given** un Amministratore modifica una percentuale e salva
+**When** clicca "Salva"
+**Then** il valore viene aggiornato in pricing_surcharges (upsert)
+**And** mostra un toast "Tabelle aggiornate"
+**And** le successive chiamate a "Ricalcola da maggiorazioni" (Story 2.1) usano i nuovi valori
+
+**Given** un Amministratore inserisce una % non valida (negativa o > 500%)
+**When** il form viene validato
+**Then** il sistema mostra errore di validazione "La maggiorazione deve essere tra 0% e 500%"
+
+**Given** un salone viene configurato per la prima volta
+**When** il sistema inizializza i dati del tenant
+**Then** le tabelle di maggiorazione vengono pre-popolate con i valori di default
+**And** l'Amministratore puo' modificarle in qualsiasi momento
 
 ## Epica 3: Gestione Clienti e Cani
 
@@ -509,14 +569,28 @@ So that **possa gestire la rubrica del salone e avere tutte le informazioni a po
 **Then** la nota viene salvata con data e autore
 **And** e' visibile nello storico note del cliente
 
-**Given** un utente digita 2 o piu' caratteri nel campo ricerca clienti
+**Given** un utente digita 2 o piu' caratteri nel campo ricerca clienti (nel form appuntamento)
 **When** la ricerca incrementale si attiva (debounce 300ms)
 **Then** vengono mostrati i risultati corrispondenti con avatar, nome e numero cani
 **And** i risultati si aggiornano in tempo reale ad ogni carattere aggiuntivo
 
-**Given** un utente cerca un cliente che non esiste
+**Given** un utente cerca un cliente che non esiste (nel form appuntamento)
 **When** nessun risultato corrisponde
 **Then** viene mostrato "Nessun risultato" con l'opzione "Crea nuovo cliente"
+
+**Given** un utente e' nella pagina Clienti
+**When** digita nel campo filtro (nome, telefono, nome del cane)
+**Then** la lista si aggiorna in tempo reale mostrando solo i clienti che corrispondono
+**And** la ricerca e' combinata: trova corrispondenze in nominativo, telefono O nomi dei cani associati
+**And** la ricerca non e' case-sensitive
+
+**Given** un utente applica un filtro e nessun cliente corrisponde
+**When** la lista viene aggiornata
+**Then** viene mostrato "Nessun cliente trovato per '[query]'" con link "Rimuovi filtro"
+
+**Given** un utente ha applicato un filtro
+**When** clicca la X nel campo filtro o "Rimuovi filtro"
+**Then** la lista torna a mostrare tutti i clienti
 
 ### Story 3.2: Anagrafica Cani
 
@@ -554,31 +628,42 @@ So that **possa conoscere ogni cane e offrire un servizio personalizzato basato 
 **Then** vengono mostrate tutte le note delle prestazioni precedenti in ordine cronologico inverso
 **And** ogni nota mostra data, servizio effettuato e testo della nota
 
-### Story 3.3: Razza nel Profilo Cane
+### Story 3.3: Razza, Pelo e Taglia nel Profilo Cane
+
+**CC-2026-05-16: Riscritta da "Razza nel Profilo Cane" — aggiunge campi coatType e sizeType al cane, fondamentali per il calcolo del prezzo. Dipende da: DB migration (nuovi campi dogs.coat_type, dogs.size_type).**
 
 As a **Amministratore o Collaboratore**,
-I want **associare una razza a ogni cane dal catalogo razze**,
-So that **il prezzo degli appuntamenti si pre-compili correttamente in base alla razza del cane**.
+I want **associare razza, tipo di pelo e taglia a ogni cane**,
+So that **il prezzo degli appuntamenti si pre-compili correttamente in base a pelo e taglia del cane**.
 
 **Acceptance Criteria:**
 
 **Given** un utente crea o modifica un cane
-**When** accede al campo "Razza" nel form
-**Then** vede un Combobox con ricerca sul catalogo razze configurato dall'Amministratore (sostituisce il campo testo libero)
-**And** il campo e' opzionale — un cane puo' non avere razza associata
+**When** accede al form
+**Then** vede i campi:
+  - "Razza": Combobox con ricerca sul catalogo razze (opzionale)
+  - "Tipo di Pelo": Select con opzioni Corto / Medio / Lungo (opzionale)
+  - "Taglia": Select con opzioni Toy / Piccola / Media / Grande / Gigante (opzionale)
+**And** se il cane non ha pelo e taglia configurati, il form mostra hint:
+  "Configura pelo e taglia per ottenere il prezzo corretto degli appuntamenti"
 
-**Given** un utente seleziona una razza dal Combobox e salva
+**Given** un utente seleziona Razza, Pelo e/o Taglia e salva
 **When** il cane viene salvato
-**Then** il campo breedId viene persistito
+**Then** i campi breedId, coatType e sizeType vengono persistiti nel DB
 **And** mostra un toast "Cane aggiornato" / "Cane creato"
 
 **Given** un utente visualizza il dettaglio di un cane
-**When** il cane ha una razza associata
-**Then** la razza viene mostrata nel profilo del cane
+**When** il cane ha pelo e taglia configurati
+**Then** nella scheda viene mostrato il profilo: razza (se presente), tipo di pelo, taglia
+**And** e' visibile l'indicazione "Pelo [tipo] · Taglia [tipo]" come profilo prezzo
+
+**Given** un utente visualizza il dettaglio di un cane
+**When** il cane non ha pelo e/o taglia configurati
+**Then** viene mostrato un avviso soft: "Pelo/taglia non configurati — il prezzo degli appuntamenti usera' il prezzo base del servizio"
 
 **Given** una razza viene eliminata dal catalogo
 **When** un cane aveva quella razza associata
-**Then** il campo razza del cane risulta vuoto senza errori
+**Then** il campo razza del cane risulta vuoto senza errori (ON DELETE SET NULL)
 
 **Given** non esistono razze nel catalogo
 **When** un utente apre il campo razza nel form cane
@@ -743,31 +828,39 @@ So that **lo storico del cane si arricchisca di informazioni utili per le visite
 **When** long-press o right-click sull'appuntamento nell'agenda
 **Then** appare un Dropdown Menu contestuale con le azioni rapide: "Dettaglio", "Aggiungi Nota", "Sposta", "Cancella"
 
-### Story 4.5: Prezzo Appuntamento Differenziato per Razza
+### Story 4.5: Prezzo Appuntamento Differenziato per Pelo/Taglia
+
+**CC-2026-05-16: Riscritta da "Prezzo Appuntamento Differenziato per Razza" — logica prezzo basata su pelo/taglia del cane (non piu' razza). Dipende da: Story 3.3 (pelo/taglia sul cane), Story 2.1 (matrice prezzi servizio), DB migration.**
 
 As a **Amministratore o Collaboratore**,
-I want **che il prezzo dell'appuntamento si pre-compili automaticamente in base alla razza del cane e al servizio selezionato**,
+I want **che il prezzo dell'appuntamento si pre-compili automaticamente in base al pelo e alla taglia del cane e al servizio selezionato**,
 So that **la tariffa proposta rifletta le tariffe reali del salone senza richiedere inserimento manuale**.
 
 **Acceptance Criteria:**
 
-**Given** l'utente ha selezionato cliente, cane (con razza associata) e servizio nel form appuntamento
+**Given** l'utente ha selezionato cliente, cane (con pelo e taglia configurati) e servizio nel form appuntamento
 **When** il servizio viene selezionato
-**Then** il prezzo si pre-compila con il prezzo specifico per quella razza e quel servizio (da service_breed_prices)
-**And** il form mostra sotto il campo prezzo: "(prezzo razza: [nome razza])"
+**Then** il prezzo si pre-compila cercando nella service_price_matrix per (serviceId, coatType, sizeType)
+**And** il form mostra sotto il campo prezzo: "(prezzo: Pelo [tipo] · Taglia [tipo])"
+**And** se il servizio ha durationSurchargePer30min > 0, il campo durata mostra "Ogni 30min aggiuntivi: +€ X,XX"
 
-**Given** l'utente ha selezionato cliente, cane (senza razza o con razza senza prezzo specifico per quel servizio) e servizio
+**Given** l'utente ha selezionato cliente, cane (senza pelo e/o taglia) e servizio
 **When** il servizio viene selezionato
 **Then** il prezzo si pre-compila con il prezzo base del servizio
-**And** non viene mostrata nessuna etichetta aggiuntiva (comportamento invariato)
+**And** il form mostra avviso soft: "Pelo/taglia non configurati sul cane — uso prezzo base"
+**And** e' visibile un link rapido "Configura pelo/taglia" che apre il form cane
 
-**Given** il prezzo e' stato pre-compilato (con o senza prezzo per razza)
+**Given** il prezzo e' stato pre-compilato
 **When** l'utente modifica manualmente il prezzo
 **Then** il valore modificato viene usato senza sovrascrittura
 
 **Given** l'utente cambia il cane selezionato
-**When** il nuovo cane ha una razza diversa o nessuna razza
-**Then** il prezzo si aggiorna automaticamente ricalcolando con la logica breed-aware
+**When** il nuovo cane ha pelo/taglia diversi o non configurati
+**Then** il prezzo si aggiorna automaticamente ricalcolando con la nuova combinazione
+
+**Given** l'utente cambia la durata dell'appuntamento
+**When** il servizio ha durationSurchargePer30min > 0
+**Then** il prezzo si aggiorna aggiungendo la maggiorazione proporzionale ai 30min extra rispetto alla durata base
 
 ### Story 4.6: Vista Settimanale Agenda con Evidenza Buchi Operatori
 

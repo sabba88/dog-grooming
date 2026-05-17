@@ -1,6 +1,6 @@
-# Story 4.6: Vista Settimanale Agenda con Evidenza Buchi Operatori
+﻿# Story 4.6: Vista Settimanale Agenda con Evidenza Buchi Operatori
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

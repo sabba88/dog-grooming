@@ -1,6 +1,6 @@
-# Story 3.3: Razza, Pelo e Taglia nel Profilo Cane
+﻿# Story 3.3: Razza, Pelo e Taglia nel Profilo Cane
 
-Status: review
+Status: done
 
 <!-- CC-2026-05-17: Riscritta. Modello a cascata: coat/size sulla razza come default, override opzionale per-cane. -->
 

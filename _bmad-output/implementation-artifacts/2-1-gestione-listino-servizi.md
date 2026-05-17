@@ -1,6 +1,6 @@
-# Story 2.1: Gestione Listino Servizi
+﻿# Story 2.1: Gestione Listino Servizi
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

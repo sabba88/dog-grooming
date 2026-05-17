@@ -1,6 +1,6 @@
-# Story 2.8: Configurazione Tabelle di Maggiorazione Pelo/Taglia
+﻿# Story 2.8: Configurazione Tabelle di Maggiorazione Pelo/Taglia
 
-Status: review
+Status: done
 
 ## Story
 

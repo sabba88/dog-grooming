@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { clients, clientNotes, users, dogs, appointments, services } from '@/lib/db/schema'
-import { eq, and, asc, desc, isNull, ilike, or, count, max, min, gt } from 'drizzle-orm'
+import { eq, and, asc, desc, isNull, ilike, or, count, max, min, gt, sql } from 'drizzle-orm'
 
 export async function getClients(tenantId: string) {
   const now = new Date()
@@ -33,6 +33,7 @@ export async function getClients(tenantId: string) {
       email: clients.email,
       createdAt: clients.createdAt,
       dogsCount: count(dogs.id),
+      dogNames: sql<string>`coalesce(string_agg(${dogs.name}, ', '), '')`,
       lastAppointmentAt: lastAppt.lastAt,
       nextAppointmentAt: nextAppt.nextAt,
     })

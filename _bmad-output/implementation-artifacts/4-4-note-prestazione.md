@@ -1,6 +1,6 @@
-# Story 4.4: Note Prestazione
+﻿# Story 4.4: Note Prestazione
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

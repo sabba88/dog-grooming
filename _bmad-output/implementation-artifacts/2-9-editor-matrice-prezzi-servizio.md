@@ -1,6 +1,6 @@
-# Story 2.9: Editor Matrice Prezzi per Servizio
+﻿# Story 2.9: Editor Matrice Prezzi per Servizio
 
-Status: review
+Status: done
 
 <!-- CC-2026-05-17: Nuova story — estensione story 2.1 prevista dal change proposal CC-2026-05-16 ma mai tradotta in task. Aggiunge campo durationSurchargePer30min e editor matrice 3×5 pelo×taglia al ServiceForm. Dipende da: Story 2.7 (schema DB — DONE), Story 2.8 (tabelle maggiorazione — review). -->
 

@@ -1,6 +1,6 @@
-# Story 4.5: Prezzo Appuntamento Differenziato per Pelo/Taglia
+﻿# Story 4.5: Prezzo Appuntamento Differenziato per Pelo/Taglia
 
-Status: review
+Status: done
 
 <!-- CC-2026-05-16: Riscritta da "Prezzo Appuntamento Differenziato per Razza" — logica prezzo basata su pelo/taglia del cane (non più razza). Dipende da: Story 3.3 (pelo/taglia su razza e cane — DONE), Story 2.1 (matrice prezzi servizio — DONE), DB migration 2.7 (DONE), 2.8 (DONE). -->
 

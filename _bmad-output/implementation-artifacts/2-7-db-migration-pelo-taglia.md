@@ -1,6 +1,6 @@
-# Story 2.7: Migrazione DB — Logica Prezzi Pelo/Taglia
+﻿# Story 2.7: Migrazione DB — Logica Prezzi Pelo/Taglia
 
-Status: review
+Status: done
 
 ## Story
 

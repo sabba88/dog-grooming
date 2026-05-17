@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -13,8 +14,7 @@ import {
 } from '@/components/ui/table'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ClientForm } from '@/components/client/ClientForm'
-import { ClientSearch } from '@/components/client/ClientSearch'
-import { Plus } from 'lucide-react'
+import { Plus, Search, X } from 'lucide-react'
 
 function getInitials(nominativo: string): string {
   const parts = nominativo.trim().split(/\s+/)
@@ -60,6 +60,7 @@ interface Client {
   phone: string
   email: string | null
   createdAt: Date | null
+  dogNames: string
   lastAppointmentAt: Date | null | string
   nextAppointmentAt: Date | null | string
 }
@@ -71,6 +72,18 @@ interface ClientListProps {
 export function ClientList({ clients }: ClientListProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
+  const [filterNome, setFilterNome] = useState('')
+  const [filterTelefono, setFilterTelefono] = useState('')
+  const [filterCane, setFilterCane] = useState('')
+
+  const filteredClients = clients.filter(c => {
+    if (filterNome.trim() && !c.nominativo.toLowerCase().includes(filterNome.toLowerCase())) return false
+    if (filterTelefono.trim() && !c.phone.includes(filterTelefono.trim())) return false
+    if (filterCane.trim() && !c.dogNames.toLowerCase().includes(filterCane.toLowerCase())) return false
+    return true
+  })
+
+  const hasFilter = filterNome.trim() || filterTelefono.trim() || filterCane.trim()
 
   function handleNew() {
     setFormOpen(true)
@@ -78,10 +91,6 @@ export function ClientList({ clients }: ClientListProps) {
 
   function handleSuccess() {
     router.refresh()
-  }
-
-  function handleSelect(client: { id: string }) {
-    router.push(`/clients/${client.id}`)
   }
 
   return (
@@ -94,8 +103,49 @@ export function ClientList({ clients }: ClientListProps) {
         </Button>
       </div>
 
-      <div className="mb-4">
-        <ClientSearch onSelect={handleSelect} onCreateNew={handleNew} />
+      <div className="mb-4 flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Nome cliente..."
+            value={filterNome}
+            onChange={e => setFilterNome(e.target.value)}
+            className="pl-9 pr-8"
+          />
+          {filterNome && (
+            <button type="button" onClick={() => setFilterNome('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Rimuovi filtro nome">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Telefono..."
+            value={filterTelefono}
+            onChange={e => setFilterTelefono(e.target.value)}
+            className="pl-9 pr-8"
+          />
+          {filterTelefono && (
+            <button type="button" onClick={() => setFilterTelefono('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Rimuovi filtro telefono">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Nome del cane..."
+            value={filterCane}
+            onChange={e => setFilterCane(e.target.value)}
+            className="pl-9 pr-8"
+          />
+          {filterCane && (
+            <button type="button" onClick={() => setFilterCane('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Rimuovi filtro cane">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {clients.length === 0 ? (
@@ -105,6 +155,17 @@ export function ClientList({ clients }: ClientListProps) {
             <Plus className="h-4 w-4 mr-2" />
             Aggiungi il primo cliente
           </Button>
+        </div>
+      ) : filteredClients.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <p className="text-muted-foreground mb-2">Nessun cliente trovato con i filtri applicati</p>
+          <button
+            type="button"
+            className="text-sm text-primary hover:underline"
+            onClick={() => { setFilterNome(''); setFilterTelefono(''); setFilterCane('') }}
+          >
+            Rimuovi tutti i filtri
+          </button>
         </div>
       ) : (
         <>
@@ -122,7 +183,7 @@ export function ClientList({ clients }: ClientListProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clients.map((client) => {
+                {filteredClients.map((client) => {
                   const lastAppt = formatLastAppointment(client.lastAppointmentAt)
                   const nextAppt = formatNextAppointment(client.nextAppointmentAt)
                   return (
@@ -172,7 +233,7 @@ export function ClientList({ clients }: ClientListProps) {
 
           {/* Mobile: Cards */}
           <div className="flex flex-col gap-3 md:hidden">
-            {clients.map((client) => {
+            {filteredClients.map((client) => {
               const lastAppt = formatLastAppointment(client.lastAppointmentAt)
               const nextAppt = formatNextAppointment(client.nextAppointmentAt)
               return (
@@ -190,6 +251,9 @@ export function ClientList({ clients }: ClientListProps) {
                   <div className="flex flex-col min-w-0 flex-1">
                     <span className="font-medium text-foreground truncate">{client.nominativo}</span>
                     <span className="text-sm text-muted-foreground">{client.phone}</span>
+                    {client.dogNames && (
+                      <span className="text-xs text-muted-foreground truncate">{client.dogNames}</span>
+                    )}
                     {(lastAppt || nextAppt) && (
                       <div className="flex gap-3 mt-1">
                         {lastAppt && (
