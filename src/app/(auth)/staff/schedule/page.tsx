@@ -2,8 +2,7 @@ import { redirect } from 'next/navigation'
 import { format, addDays, parseISO, startOfISOWeek } from 'date-fns'
 import { auth } from '@/lib/auth/auth'
 import { checkPermission } from '@/lib/auth/permissions'
-import { getActiveUsers } from '@/lib/queries/staff'
-import { getWeekShiftsForGrid } from '@/lib/queries/staff'
+import { getActiveUsers, getWeekShiftsForGrid, getRecurringShiftsForGrid } from '@/lib/queries/staff'
 import { getLocations } from '@/lib/queries/locations'
 import { getAllLocationBusinessHours } from '@/lib/queries/locations'
 import { StaffWeeklyScheduleGrid } from '@/components/staff/StaffWeeklyScheduleGrid'
@@ -32,11 +31,12 @@ export default async function StaffSchedulePage({ searchParams }: PageProps) {
     format(addDays(weekStartDate, i), 'yyyy-MM-dd')
   )
 
-  const [users, shifts, locations, businessHours] = await Promise.all([
+  const [users, shifts, locations, businessHours, recurringShifts] = await Promise.all([
     getActiveUsers(tenantId),
     getWeekShiftsForGrid(weekStart, weekEnd, tenantId),
     getLocations(tenantId),
     getAllLocationBusinessHours(tenantId),
+    getRecurringShiftsForGrid(tenantId),
   ])
 
   return (
@@ -54,6 +54,7 @@ export default async function StaffSchedulePage({ searchParams }: PageProps) {
         businessHours={businessHours}
         weekDays={weekDays}
         weekStart={weekStart}
+        recurringShifts={recurringShifts}
       />
     </div>
   )

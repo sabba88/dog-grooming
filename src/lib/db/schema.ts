@@ -126,6 +126,20 @@ export const userLocationAssignments = pgTable('user_location_assignments', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
+export const userRecurringSchedules = pgTable('user_recurring_schedules', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  locationId: uuid('location_id').notNull().references(() => locations.id, { onDelete: 'cascade' }),
+  dayOfWeek: integer('day_of_week').notNull(), // 0=Lunedì (ISO getISODay-1), 6=Domenica
+  startTime: text('start_time').notNull(), // "HH:mm"
+  endTime: text('end_time').notNull(), // "HH:mm"
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('urs_user_dow_start_tenant_idx').on(table.userId, table.dayOfWeek, table.startTime, table.tenantId)
+])
+
 export const locationBusinessHours = pgTable('location_business_hours', {
   id: uuid('id').primaryKey().defaultRandom(),
   locationId: uuid('location_id').notNull(),

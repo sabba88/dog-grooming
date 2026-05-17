@@ -15,6 +15,13 @@
       "when": 1778969461908,
       "tag": "0001_young_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779057662632,
+      "tag": "0002_mature_virginia_dare",
+      "breakpoints": true
     }
   ]
 }

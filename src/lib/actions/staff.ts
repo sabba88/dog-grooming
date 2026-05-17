@@ -9,10 +9,13 @@ import {
   upsertShiftSchema,
   deleteShiftSchema,
   copyWeekShiftsSchema,
+  upsertRecurringShiftSchema,
+  deleteRecurringShiftSchema,
+  applyTemplateToWeekSchema,
 } from '@/lib/validations/staff'
 import { db } from '@/lib/db'
-import { userLocationAssignments, users, locations } from '@/lib/db/schema'
-import { eq, and, gte, lte } from 'drizzle-orm'
+import { userLocationAssignments, users, locations, userRecurringSchedules } from '@/lib/db/schema'
+import { eq, and, gte, lte, ne } from 'drizzle-orm'
 import { timeToMinutes } from '@/lib/utils/schedule'
 
 export const assignUserToLocation = authActionClient
@@ -270,6 +273,152 @@ export const copyWeekShifts = authActionClient
     }
 
     return { copied: toInsert.length, skipped: sourceShifts.length - toInsert.length }
+  })
+
+export const upsertRecurringShift = authActionClient
+  .schema(upsertRecurringShiftSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    if (ctx.role !== 'admin') throw new Error('Non autorizzato')
+
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.id, parsedInput.userId), eq(users.tenantId, ctx.tenantId), eq(users.isActive, true)))
+      .limit(1)
+    if (!user) throw new Error('Utente non trovato')
+
+    const [location] = await db
+      .select({ id: locations.id })
+      .from(locations)
+      .where(and(eq(locations.id, parsedInput.locationId), eq(locations.tenantId, ctx.tenantId)))
+      .limit(1)
+    if (!location) throw new Error('Sede non trovata')
+
+    const existingForDow = await db
+      .select({
+        id: userRecurringSchedules.id,
+        startTime: userRecurringSchedules.startTime,
+        endTime: userRecurringSchedules.endTime,
+      })
+      .from(userRecurringSchedules)
+      .where(and(
+        eq(userRecurringSchedules.userId, parsedInput.userId),
+        eq(userRecurringSchedules.dayOfWeek, parsedInput.dayOfWeek),
+        eq(userRecurringSchedules.tenantId, ctx.tenantId),
+        ...(parsedInput.id ? [ne(userRecurringSchedules.id, parsedInput.id)] : [])
+      ))
+
+    const hasOverlap = existingForDow.some(
+      s => parsedInput.startTime < s.endTime && parsedInput.endTime > s.startTime
+    )
+    if (hasOverlap) throw new Error('Fascia oraria sovrapposta a un template esistente')
+
+    if (parsedInput.id) {
+      const [updated] = await db
+        .update(userRecurringSchedules)
+        .set({
+          locationId: parsedInput.locationId,
+          dayOfWeek: parsedInput.dayOfWeek,
+          startTime: parsedInput.startTime,
+          endTime: parsedInput.endTime,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(userRecurringSchedules.id, parsedInput.id),
+          eq(userRecurringSchedules.tenantId, ctx.tenantId)
+        ))
+        .returning({ id: userRecurringSchedules.id })
+      if (!updated) throw new Error('Template non trovato')
+      return { recurringShift: { id: updated.id } }
+    } else {
+      const [result] = await db
+        .insert(userRecurringSchedules)
+        .values({
+          userId: parsedInput.userId,
+          locationId: parsedInput.locationId,
+          dayOfWeek: parsedInput.dayOfWeek,
+          startTime: parsedInput.startTime,
+          endTime: parsedInput.endTime,
+          tenantId: ctx.tenantId,
+        })
+        .returning({ id: userRecurringSchedules.id })
+      return { recurringShift: { id: result.id } }
+    }
+  })
+
+export const deleteRecurringShift = authActionClient
+  .schema(deleteRecurringShiftSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    if (ctx.role !== 'admin') throw new Error('Non autorizzato')
+
+    const [deleted] = await db
+      .delete(userRecurringSchedules)
+      .where(and(
+        eq(userRecurringSchedules.id, parsedInput.id),
+        eq(userRecurringSchedules.tenantId, ctx.tenantId)
+      ))
+      .returning({ id: userRecurringSchedules.id })
+
+    if (!deleted) throw new Error('Template non trovato')
+    return { success: true }
+  })
+
+export const applyTemplateToWeek = authActionClient
+  .schema(applyTemplateToWeekSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    if (ctx.role !== 'admin') throw new Error('Non autorizzato')
+
+    const { weekStart } = parsedInput
+    const weekStartMs = new Date(weekStart).getTime()
+    const weekEnd = new Date(weekStartMs + 6 * 86400000).toISOString().slice(0, 10)
+
+    const templates = await db
+      .select()
+      .from(userRecurringSchedules)
+      .where(eq(userRecurringSchedules.tenantId, ctx.tenantId))
+
+    if (templates.length === 0) {
+      return { generated: 0, skipped: 0 }
+    }
+
+    const existingInWeek = await db
+      .select({
+        userId: userLocationAssignments.userId,
+        date: userLocationAssignments.date,
+        startTime: userLocationAssignments.startTime,
+        locationId: userLocationAssignments.locationId,
+      })
+      .from(userLocationAssignments)
+      .where(and(
+        eq(userLocationAssignments.tenantId, ctx.tenantId),
+        gte(userLocationAssignments.date, weekStart),
+        lte(userLocationAssignments.date, weekEnd),
+      ))
+
+    const existingKeys = new Set(
+      existingInWeek.map(s => `${s.userId}|${s.date}|${s.startTime}|${s.locationId}`)
+    )
+
+    const toInsert = templates
+      .map(t => {
+        // dayOfWeek 0=Mon → +0 days from weekStart (Monday), 6=Sun → +6 days
+        const targetDate = new Date(weekStartMs + t.dayOfWeek * 86400000).toISOString().slice(0, 10)
+        return {
+          userId: t.userId,
+          locationId: t.locationId,
+          date: targetDate,
+          startTime: t.startTime,
+          endTime: t.endTime,
+          tenantId: ctx.tenantId,
+        }
+      })
+      .filter(s => !existingKeys.has(`${s.userId}|${s.date}|${s.startTime}|${s.locationId}`))
+
+    if (toInsert.length > 0) {
+      await db.insert(userLocationAssignments).values(toInsert)
+    }
+
+    return { generated: toInsert.length, skipped: templates.length - toInsert.length }
   })
 
 export const saveDayShifts = authActionClient

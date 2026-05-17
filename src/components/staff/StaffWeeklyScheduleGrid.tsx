@@ -5,12 +5,13 @@ import { format, parseISO, getISODay } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { useAction } from 'next-safe-action/hooks'
 import { toast } from 'sonner'
-import { upsertShift, deleteShift } from '@/lib/actions/staff'
-import type { WeekGridShift } from '@/lib/queries/staff'
+import { upsertShift, deleteShift, upsertRecurringShift, deleteRecurringShift } from '@/lib/actions/staff'
+import type { WeekGridShift, RecurringShift } from '@/lib/queries/staff'
 import type { BusinessHoursEntry } from '@/lib/queries/locations'
 import { WeekNavigator } from './WeekNavigator'
 import { ShiftCell } from './ShiftCell'
 import { CopyWeekButton } from './CopyWeekButton'
+import { ApplyTemplateButton } from './ApplyTemplateButton'
 
 type User = {
   id: string
@@ -30,6 +31,12 @@ interface StaffWeeklyScheduleGridProps {
   businessHours: BusinessHoursEntry[]
   weekDays: string[]
   weekStart: string
+  recurringShifts?: RecurringShift[]
+}
+
+function getISODayOfWeekForDate(date: string): number {
+  // getISODay returns 1=Mon…7=Sun; subtract 1 to get 0=Mon…6=Sun
+  return getISODay(parseISO(date)) - 1
 }
 
 export function StaffWeeklyScheduleGrid({
@@ -39,12 +46,16 @@ export function StaffWeeklyScheduleGrid({
   businessHours,
   weekDays,
   weekStart,
+  recurringShifts: initialRecurring = [],
 }: StaffWeeklyScheduleGridProps) {
   const [shifts, setShifts] = useState<WeekGridShift[]>(initialShifts)
+  const [recurring, setRecurring] = useState<RecurringShift[]>(initialRecurring)
   const [pendingId, setPendingId] = useState<string | null>(null)
 
   const { executeAsync: execUpsert } = useAction(upsertShift)
   const { executeAsync: execDelete } = useAction(deleteShift)
+  const { executeAsync: execUpsertRecurring } = useAction(upsertRecurringShift)
+  const { executeAsync: execDeleteRecurring } = useAction(deleteRecurringShift)
 
   function getBusinessHoursForDay(date: string) {
     const dayOfWeek = getISODay(parseISO(date)) - 1
@@ -55,6 +66,11 @@ export function StaffWeeklyScheduleGrid({
 
   function getShiftsForCell(userId: string, date: string) {
     return shifts.filter(s => s.userId === userId && s.date === date)
+  }
+
+  function getRecurringForCell(userId: string, date: string): RecurringShift[] {
+    const dow = getISODayOfWeekForDate(date)
+    return recurring.filter(r => r.userId === userId && r.dayOfWeek === dow)
   }
 
   async function handleAdd(
@@ -135,12 +151,88 @@ export function StaffWeeklyScheduleGrid({
     }
   }
 
+  async function handleAddRecurring(
+    userId: string,
+    dayOfWeek: number,
+    data: { locationId: string; startTime: string; endTime: string }
+  ) {
+    const tempId = `temp-recurring-${Date.now()}-${Math.random()}`
+    const locationName = locations.find(l => l.id === data.locationId)?.name ?? null
+    const optimistic: RecurringShift = { id: tempId, userId, dayOfWeek, locationName, ...data }
+
+    setRecurring(prev => [...prev, optimistic])
+
+    const result = await execUpsertRecurring({ userId, dayOfWeek, ...data })
+
+    if (result?.data?.recurringShift?.id) {
+      setRecurring(prev =>
+        prev.map(r => (r.id === tempId ? { ...r, id: result.data!.recurringShift.id } : r))
+      )
+      toast.success('Template aggiunto')
+      return { id: result.data.recurringShift.id }
+    } else {
+      setRecurring(prev => prev.filter(r => r.id !== tempId))
+      const errMsg = (result as { serverError?: string })?.serverError
+      toast.error(errMsg ?? 'Errore durante il salvataggio del template')
+      return undefined
+    }
+  }
+
+  async function handleUpdateRecurring(
+    recurringId: string,
+    data: { locationId: string; startTime: string; endTime: string }
+  ) {
+    const original = recurring.find(r => r.id === recurringId)
+    if (!original) return
+
+    const locationName = locations.find(l => l.id === data.locationId)?.name ?? null
+    setRecurring(prev => prev.map(r => (r.id === recurringId ? { ...r, ...data, locationName } : r)))
+    setPendingId(recurringId)
+
+    const result = await execUpsertRecurring({
+      id: recurringId,
+      userId: original.userId,
+      dayOfWeek: original.dayOfWeek,
+      ...data,
+    })
+    setPendingId(null)
+
+    if (result?.data?.recurringShift?.id) {
+      toast.success('Template aggiornato')
+    } else {
+      setRecurring(prev => prev.map(r => (r.id === recurringId ? original : r)))
+      const errMsg = (result as { serverError?: string })?.serverError
+      toast.error(errMsg ?? 'Errore durante il salvataggio del template')
+    }
+  }
+
+  async function handleDeleteRecurring(recurringId: string) {
+    const original = recurring.find(r => r.id === recurringId)
+    if (!original) return
+
+    setRecurring(prev => prev.filter(r => r.id !== recurringId))
+    setPendingId(recurringId)
+
+    const result = await execDeleteRecurring({ id: recurringId })
+    setPendingId(null)
+
+    if (result?.data?.success) {
+      toast.success('Template eliminato')
+    } else {
+      setRecurring(prev => [...prev, original])
+      const errMsg = (result as { serverError?: string })?.serverError
+      toast.error(errMsg ?? "Errore durante l'eliminazione del template")
+    }
+  }
+
   const hasShiftsThisWeek = weekDays.some(day => shifts.some(s => s.date === day))
+  const hasTemplates = recurring.length > 0
 
   return (
     <div className="flex flex-col gap-4">
       <WeekNavigator weekStart={weekStart}>
         <CopyWeekButton weekStart={weekStart} hasShifts={hasShiftsThisWeek} />
+        <ApplyTemplateButton weekStart={weekStart} hasTemplates={hasTemplates} />
       </WeekNavigator>
 
       {/* Desktop: griglia */}
@@ -193,9 +285,13 @@ export function StaffWeeklyScheduleGrid({
                       shifts={getShiftsForCell(user.id, day)}
                       locations={locations}
                       businessHoursForDay={getBusinessHoursForDay(day)}
+                      recurringShifts={getRecurringForCell(user.id, day)}
                       onAdd={handleAdd}
                       onUpdate={handleUpdate}
                       onDelete={handleDelete}
+                      onAddRecurring={(userId, dayOfWeek, data) => handleAddRecurring(userId, dayOfWeek, data)}
+                      onUpdateRecurring={handleUpdateRecurring}
+                      onDeleteRecurring={handleDeleteRecurring}
                       isPending={pendingId !== null}
                     />
                   </td>
@@ -234,9 +330,13 @@ export function StaffWeeklyScheduleGrid({
                         shifts={getShiftsForCell(user.id, day)}
                         locations={locations}
                         businessHoursForDay={getBusinessHoursForDay(day)}
+                        recurringShifts={getRecurringForCell(user.id, day)}
                         onAdd={handleAdd}
                         onUpdate={handleUpdate}
                         onDelete={handleDelete}
+                        onAddRecurring={(userId, dayOfWeek, data) => handleAddRecurring(userId, dayOfWeek, data)}
+                        onUpdateRecurring={handleUpdateRecurring}
+                        onDeleteRecurring={handleDeleteRecurring}
                         isPending={pendingId !== null}
                       />
                     </div>

@@ -1,5 +1,5 @@
 import { db } from '@/lib/db'
-import { users, userLocationAssignments, locations } from '@/lib/db/schema'
+import { users, userLocationAssignments, locations, userRecurringSchedules } from '@/lib/db/schema'
 import { eq, and, asc, gte, lte } from 'drizzle-orm'
 
 export type WeekGridShift = {
@@ -132,6 +132,33 @@ export async function getWeekShiftsForGrid(
       lte(userLocationAssignments.date, weekEnd),
     ))
     .orderBy(asc(userLocationAssignments.date), asc(userLocationAssignments.startTime))
+}
+
+export type RecurringShift = {
+  id: string
+  userId: string
+  dayOfWeek: number
+  locationId: string
+  locationName: string | null
+  startTime: string
+  endTime: string
+}
+
+export async function getRecurringShiftsForGrid(tenantId: string): Promise<RecurringShift[]> {
+  return db
+    .select({
+      id: userRecurringSchedules.id,
+      userId: userRecurringSchedules.userId,
+      dayOfWeek: userRecurringSchedules.dayOfWeek,
+      locationId: userRecurringSchedules.locationId,
+      locationName: locations.name,
+      startTime: userRecurringSchedules.startTime,
+      endTime: userRecurringSchedules.endTime,
+    })
+    .from(userRecurringSchedules)
+    .leftJoin(locations, eq(userRecurringSchedules.locationId, locations.id))
+    .where(eq(userRecurringSchedules.tenantId, tenantId))
+    .orderBy(asc(userRecurringSchedules.userId), asc(userRecurringSchedules.dayOfWeek), asc(userRecurringSchedules.startTime))
 }
 
 export type StaffStatus = 'active' | 'elsewhere' | 'unassigned'

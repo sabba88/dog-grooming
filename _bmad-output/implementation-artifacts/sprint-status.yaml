@@ -60,7 +60,7 @@ development_status:
   2-9-editor-matrice-prezzi-servizio: done  # CC-2026-05-17: nuova story - estensione 2.1 mai implementata: campo durationSurchargePer30min + editor griglia 3x5 pelo/taglia in ServiceForm
   2-10-vista-settimanale-orario-dipendenti: done  # CC-2026-05-18: nuova story - UX correct-course: griglia settimanale tutti-dipendenti × 7-giorni, editing inline Popover, ottimistic updates, default ore da business_hours
   2-11-copia-settimana-precedente: done  # CC-2026-05-18: nuova story - bottone copia settimana prec. con AlertDialog + idempotenza deduplication
-  2-12-template-ricorrente-dipendente: backlog  # CC-2026-05-18: nuova story pianificata - orario standard per dipendente (user_recurring_schedules) + ghost-badge + apply-to-week
+  2-12-template-ricorrente-dipendente: review  # CC-2026-05-18: nuova story pianificata - orario standard per dipendente (user_recurring_schedules) + ghost-badge + apply-to-week
   epic-2-retrospective: optional
 
   # Epica 3: Gestione Clienti e Cani

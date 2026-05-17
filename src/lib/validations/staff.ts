@@ -76,3 +76,29 @@ export const copyWeekShiftsSchema = z.object({
 })
 
 export type CopyWeekShiftsFormData = z.infer<typeof copyWeekShiftsSchema>
+
+export const upsertRecurringShiftSchema = z.object({
+  id: z.string().uuid().optional(),
+  userId: z.string().uuid('ID utente non valido'),
+  locationId: z.string().uuid('ID sede non valido'),
+  dayOfWeek: z.number().int().min(0).max(6),
+  startTime: z.string().regex(timePattern, 'Formato orario non valido (HH:mm)'),
+  endTime: z.string().regex(timePattern, 'Formato orario non valido (HH:mm)'),
+}).refine(
+  (data) => data.endTime > data.startTime,
+  { message: "L'orario di fine deve essere successivo all'orario di inizio", path: ['endTime'] }
+)
+
+export type UpsertRecurringShiftFormData = z.infer<typeof upsertRecurringShiftSchema>
+
+export const deleteRecurringShiftSchema = z.object({
+  id: z.string().uuid(),
+})
+
+export type DeleteRecurringShiftFormData = z.infer<typeof deleteRecurringShiftSchema>
+
+export const applyTemplateToWeekSchema = z.object({
+  weekStart: z.string().date('Data non valida (YYYY-MM-DD)'),
+})
+
+export type ApplyTemplateToWeekFormData = z.infer<typeof applyTemplateToWeekSchema>
