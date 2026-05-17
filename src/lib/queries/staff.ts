@@ -2,6 +2,16 @@ import { db } from '@/lib/db'
 import { users, userLocationAssignments, locations } from '@/lib/db/schema'
 import { eq, and, asc, gte, lte } from 'drizzle-orm'
 
+export type WeekGridShift = {
+  id: string
+  userId: string
+  date: string
+  locationId: string
+  locationName: string | null
+  startTime: string
+  endTime: string
+}
+
 export async function getActiveUsers(tenantId: string) {
   return db
     .select({
@@ -97,6 +107,31 @@ export async function getWeeklyStaffShifts(
   }
 
   return result
+}
+
+export async function getWeekShiftsForGrid(
+  weekStart: string,
+  weekEnd: string,
+  tenantId: string
+): Promise<WeekGridShift[]> {
+  return db
+    .select({
+      id: userLocationAssignments.id,
+      userId: userLocationAssignments.userId,
+      date: userLocationAssignments.date,
+      locationId: userLocationAssignments.locationId,
+      locationName: locations.name,
+      startTime: userLocationAssignments.startTime,
+      endTime: userLocationAssignments.endTime,
+    })
+    .from(userLocationAssignments)
+    .leftJoin(locations, eq(userLocationAssignments.locationId, locations.id))
+    .where(and(
+      eq(userLocationAssignments.tenantId, tenantId),
+      gte(userLocationAssignments.date, weekStart),
+      lte(userLocationAssignments.date, weekEnd),
+    ))
+    .orderBy(asc(userLocationAssignments.date), asc(userLocationAssignments.startTime))
 }
 
 export type StaffStatus = 'active' | 'elsewhere' | 'unassigned'

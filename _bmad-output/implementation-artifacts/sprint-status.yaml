@@ -48,7 +48,7 @@ development_status:
   epic-1-retrospective: optional
 
   # Epica 2: Configurazione del Salone
-  epic-2: done  # CC-2026-04-26: riaperta per story 2.5; CC-2026-04-26: chiusa; CC-2026-05-16: riaperta - logica prezzi pelo/taglia (2.1 extension, 2.6 simplification, nuova 2.7); CC-2026-05-17: tutte le story done
+  epic-2: done  # CC-2026-04-26: riaperta per story 2.5; CC-2026-04-26: chiusa; CC-2026-05-16: riaperta - logica prezzi pelo/taglia (2.1 extension, 2.6 simplification, nuova 2.7); CC-2026-05-17: tutte le story done; CC-2026-05-18: riaperta UX orario dipendenti (2.10 + 2.11 done, 2.12 backlog)
   2-1-gestione-listino-servizi: done  # CC-2026-05-16: estensione richiesta - aggiungere matrice prezzi 3x5 e maggiorazione durata 30min (service_price_matrix)
   2-2-gestione-sedi: done
   2-3-gestione-postazioni-con-servizi-abilitati: done  # CC-2026-03-14: semplificata (rimossi orari)
@@ -58,6 +58,9 @@ development_status:
   2-7-db-migration-pelo-taglia: done  # CC-2026-05-16: nuova story - migrazione DB (drop service_breed_prices, create service_price_matrix + pricing_surcharges, alter dogs + services); PREREQUISITO per tutte le story CC-2026-05-16
   2-8-configurazione-tabelle-maggiorazione: done  # CC-2026-05-16: nuova story - tabelle maggiorazione Pelo/Taglia per tenant (pricing_surcharges), prerequisito per ricalcolo in 2.1
   2-9-editor-matrice-prezzi-servizio: done  # CC-2026-05-17: nuova story - estensione 2.1 mai implementata: campo durationSurchargePer30min + editor griglia 3x5 pelo/taglia in ServiceForm
+  2-10-vista-settimanale-orario-dipendenti: done  # CC-2026-05-18: nuova story - UX correct-course: griglia settimanale tutti-dipendenti × 7-giorni, editing inline Popover, ottimistic updates, default ore da business_hours
+  2-11-copia-settimana-precedente: done  # CC-2026-05-18: nuova story - bottone copia settimana prec. con AlertDialog + idempotenza deduplication
+  2-12-template-ricorrente-dipendente: backlog  # CC-2026-05-18: nuova story pianificata - orario standard per dipendente (user_recurring_schedules) + ghost-badge + apply-to-week
   epic-2-retrospective: optional
 
   # Epica 3: Gestione Clienti e Cani

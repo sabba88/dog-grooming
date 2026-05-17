@@ -49,3 +49,30 @@ export const saveDayShiftsSchema = z.object({
 })
 
 export type SaveDayShiftsFormData = z.infer<typeof saveDayShiftsSchema>
+
+export const upsertShiftSchema = z.object({
+  id: z.string().uuid().optional(),
+  userId: z.string().uuid('ID utente non valido'),
+  locationId: z.string().uuid('ID sede non valido'),
+  date: z.string().date('Data non valida (YYYY-MM-DD)'),
+  startTime: z.string().regex(timePattern, 'Formato orario non valido (HH:mm)'),
+  endTime: z.string().regex(timePattern, 'Formato orario non valido (HH:mm)'),
+}).refine(
+  (data) => data.endTime > data.startTime,
+  { message: "L'orario di fine deve essere successivo all'orario di inizio", path: ['endTime'] }
+)
+
+export type UpsertShiftFormData = z.infer<typeof upsertShiftSchema>
+
+export const deleteShiftSchema = z.object({
+  id: z.string().uuid(),
+})
+
+export type DeleteShiftFormData = z.infer<typeof deleteShiftSchema>
+
+export const copyWeekShiftsSchema = z.object({
+  sourceWeekStart: z.string().date('Data non valida (YYYY-MM-DD)'),
+  targetWeekStart: z.string().date('Data non valida (YYYY-MM-DD)'),
+})
+
+export type CopyWeekShiftsFormData = z.infer<typeof copyWeekShiftsSchema>

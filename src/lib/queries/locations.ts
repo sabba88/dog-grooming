@@ -2,6 +2,13 @@ import { db } from '@/lib/db'
 import { locations, locationBusinessHours } from '@/lib/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 
+export type BusinessHoursEntry = {
+  locationId: string
+  dayOfWeek: number
+  openTime: string
+  closeTime: string
+}
+
 export async function getLocations(tenantId: string) {
   return db
     .select({
@@ -28,6 +35,18 @@ export async function getLocationById(locationId: string, tenantId: string) {
     .limit(1)
 
   return location ?? null
+}
+
+export async function getAllLocationBusinessHours(tenantId: string): Promise<BusinessHoursEntry[]> {
+  return db.select({
+    locationId: locationBusinessHours.locationId,
+    dayOfWeek: locationBusinessHours.dayOfWeek,
+    openTime: locationBusinessHours.openTime,
+    closeTime: locationBusinessHours.closeTime,
+  })
+  .from(locationBusinessHours)
+  .where(eq(locationBusinessHours.tenantId, tenantId))
+  .orderBy(asc(locationBusinessHours.locationId), asc(locationBusinessHours.dayOfWeek), asc(locationBusinessHours.openTime))
 }
 
 export async function getLocationBusinessHours(locationId: string, tenantId: string) {
