@@ -2,8 +2,17 @@
 
 import { authActionClient } from '@/lib/actions/client'
 import { updatePricingSurchargesSchema } from '@/lib/validations/settings'
+import { getPricingSurcharges } from '@/lib/queries/settings'
 import { db } from '@/lib/db'
 import { pricingSurcharges } from '@/lib/db/schema'
+import { z } from 'zod'
+
+export const fetchPricingSurcharges = authActionClient
+  .schema(z.object({}))
+  .action(async ({ ctx }) => {
+    const surcharges = await getPricingSurcharges(ctx.tenantId)
+    return { surcharges }
+  })
 
 export const updatePricingSurcharges = authActionClient
   .schema(updatePricingSurchargesSchema)

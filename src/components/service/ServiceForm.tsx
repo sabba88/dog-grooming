@@ -10,6 +10,7 @@ import {
   type UpdateServiceFormData,
 } from '@/lib/validations/services'
 import { createService, updateService, fetchServicePriceMatrix } from '@/lib/actions/services'
+import { fetchPricingSurcharges } from '@/lib/actions/settings'
 import { COAT_TYPES, COAT_LABELS, SIZE_TYPES, SIZE_LABELS, type CoatType, type SizeType } from '@/lib/types'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useAction } from 'next-safe-action/hooks'
@@ -30,6 +31,12 @@ import {
 } from '@/components/ui/sheet'
 import { toast } from 'sonner'
 
+interface Surcharge {
+  dimension: string
+  valueKey: string
+  surchargePercent: number
+}
+
 interface ServiceFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -47,6 +54,32 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
   const isMobile = useIsMobile()
   const isEditing = !!service
   const [matrixCells, setMatrixCells] = useState<Record<string, number>>({})
+  const [surcharges, setSurcharges] = useState<Surcharge[]>([])
+
+  function calcMatrixFromBase(basePriceCents: number) {
+    if (basePriceCents <= 0 || surcharges.length === 0) return
+    const coatMap: Record<string, number> = {}
+    const sizeMap: Record<string, number> = {}
+    for (const s of surcharges) {
+      if (s.dimension === 'coat') coatMap[s.valueKey] = s.surchargePercent
+      if (s.dimension === 'size') sizeMap[s.valueKey] = s.surchargePercent
+    }
+    const newCells: Record<string, number> = {}
+    for (const coat of COAT_TYPES) {
+      for (const size of SIZE_TYPES) {
+        const coatPct = coatMap[coat] ?? 0
+        const sizePct = sizeMap[size] ?? 0
+        newCells[`${coat}_${size}`] = Math.round(basePriceCents * (1 + (coatPct + sizePct) / 100))
+      }
+    }
+    setMatrixCells(newCells)
+  }
+
+  const { execute: executeFetchSurcharges } = useAction(fetchPricingSurcharges, {
+    onSuccess: ({ data }) => {
+      if (data?.surcharges) setSurcharges(data.surcharges)
+    },
+  })
 
   const { execute: executeFetchMatrix } = useAction(fetchServicePriceMatrix, {
     onSuccess: ({ data }) => {
@@ -61,8 +94,13 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
   })
 
   useEffect(() => {
-    if (open && isEditing && service?.id) {
-      executeFetchMatrix({ serviceId: service.id })
+    if (open) {
+      executeFetchSurcharges({})
+      if (isEditing && service?.id) {
+        executeFetchMatrix({ serviceId: service.id })
+      } else {
+        setMatrixCells({})
+      }
     }
     if (!open) {
       setMatrixCells({})
@@ -110,6 +148,14 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
 
   const isPending = isCreating || isUpdating
 
+  const priceRegistration = form.register('price', {
+    setValueAs: (v: string) => {
+      const num = parseFloat(v)
+      if (isNaN(num)) return 0
+      return Math.round(num * 100)
+    },
+  })
+
   function setCellPrice(coatType: string, sizeType: string, eurValue: string) {
     const cents = Math.round((parseFloat(eurValue) || 0) * 100)
     setMatrixCells(prev => ({ ...prev, [`${coatType}_${sizeType}`]: cents }))
@@ -156,16 +202,18 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
           step="0.01"
           min="0.01"
           placeholder="Es. 25.00"
-          {...form.register('price', {
-            setValueAs: (v: string) => {
-              const num = parseFloat(v)
-              if (isNaN(num)) return 0
-              return Math.round(num * 100)
-            },
-          })}
+          {...priceRegistration}
+          onChange={(e) => {
+            priceRegistration.onChange(e)
+            const cents = Math.round((parseFloat(e.target.value) || 0) * 100)
+            if (cents > 0) calcMatrixFromBase(cents)
+          }}
           defaultValue={isEditing ? (service.price / 100).toFixed(2) : ''}
           aria-invalid={!!form.formState.errors.price}
         />
+        <p className="text-xs text-muted-foreground">
+          Modifica la tariffa base per ricalcolare automaticamente i prezzi pela/taglia.
+        </p>
         {form.formState.errors.price && (
           <p className="text-sm text-destructive">{form.formState.errors.price.message}</p>
         )}
@@ -217,12 +265,17 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
 
       {/* Matrice prezzi 3×5 */}
       <div className="flex flex-col gap-2">
-        <Label>Prezzi per Pelo/Taglia (EUR)</Label>
-        <div className="overflow-x-auto">
+        <div className="flex items-center justify-between">
+          <Label>Prezzi per Pelo/Taglia (EUR)</Label>
+          <p className="text-xs text-muted-foreground">
+            Calcolati automaticamente dalla tariffa base e dalle <a href="/settings/surcharges" target="_blank" className="text-primary underline">tabelle maggiorazione</a>
+          </p>
+        </div>
+        <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr>
-                <th className="p-2 text-left font-medium text-muted-foreground w-24"></th>
+              <tr className="bg-muted/50">
+                <th className="p-2 text-left font-medium text-muted-foreground w-20"></th>
                 {SIZE_TYPES.map(size => (
                   <th key={size} className="p-2 text-center font-medium text-muted-foreground min-w-[80px]">
                     {SIZE_LABELS[size as SizeType]}
@@ -231,9 +284,9 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
               </tr>
             </thead>
             <tbody>
-              {COAT_TYPES.map(coat => (
-                <tr key={coat} className="border-t border-border">
-                  <td className="p-2 font-medium text-muted-foreground">
+              {COAT_TYPES.map((coat, coatIdx) => (
+                <tr key={coat} className={coatIdx > 0 ? 'border-t border-border' : ''}>
+                  <td className="p-2 font-medium text-muted-foreground bg-muted/30">
                     {COAT_LABELS[coat as CoatType]}
                   </td>
                   {SIZE_TYPES.map(size => {
@@ -259,7 +312,7 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
           </table>
         </div>
         <p className="text-xs text-muted-foreground">
-          Lasciare a 0 per usare la tariffa base del servizio.
+          Celle a 0 usano la tariffa base. Modifica i singoli valori per personalizzare.
         </p>
       </div>
 
