@@ -34,12 +34,19 @@ export async function getServiceById(serviceId: string, tenantId: string) {
   return service ?? null
 }
 
-// STUB — implementazione completa in Story 2.1
 export async function getServicePriceMatrixCells(serviceId: string, tenantId: string) {
   return db
     .select()
     .from(servicePriceMatrix)
     .where(and(eq(servicePriceMatrix.serviceId, serviceId), eq(servicePriceMatrix.tenantId, tenantId)))
+}
+
+export async function getServiceWithMatrix(serviceId: string, tenantId: string) {
+  const [service, cells] = await Promise.all([
+    getServiceById(serviceId, tenantId),
+    getServicePriceMatrixCells(serviceId, tenantId),
+  ])
+  return { service, cells }
 }
 
 // STUB — implementazione completa in Story 4.5

@@ -33,6 +33,7 @@ interface Service {
   name: string
   price: number
   duration: number
+  durationSurchargePer30min: number
   createdAt: Date | null
 }
 
@@ -57,7 +58,7 @@ export function ServiceList({ services, role }: ServiceListProps) {
         router.refresh()
       },
       onError: (error) => {
-        toast.error(error.error?.serverError || 'Errore durante l\'eliminazione')
+        toast.error(error.error?.serverError || "Errore durante l'eliminazione")
         setDeleteTarget(null)
       },
     }
@@ -107,7 +108,7 @@ export function ServiceList({ services, role }: ServiceListProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Tariffa</TableHead>
+                  <TableHead>Tariffa base</TableHead>
                   <TableHead>Durata</TableHead>
                   {isAdmin && <TableHead className="text-right">Azioni</TableHead>}
                 </TableRow>
@@ -117,7 +118,14 @@ export function ServiceList({ services, role }: ServiceListProps) {
                   <TableRow key={service.id}>
                     <TableCell className="font-medium">{service.name}</TableCell>
                     <TableCell>{formatPrice(service.price)}</TableCell>
-                    <TableCell>{formatDuration(service.duration)}</TableCell>
+                    <TableCell>
+                      <span>{formatDuration(service.duration)}</span>
+                      {service.durationSurchargePer30min > 0 && (
+                        <span className="block text-xs text-muted-foreground">
+                          +{formatPrice(service.durationSurchargePer30min)}/30min
+                        </span>
+                      )}
+                    </TableCell>
                     {isAdmin && (
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -162,6 +170,11 @@ export function ServiceList({ services, role }: ServiceListProps) {
                   <p className="font-semibold text-foreground">{formatPrice(service.price)}</p>
                 </div>
                 <p className="text-sm text-muted-foreground">{formatDuration(service.duration)}</p>
+                {service.durationSurchargePer30min > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    +{formatPrice(service.durationSurchargePer30min)}/30min
+                  </p>
+                )}
                 {isAdmin && (
                   <div className="flex gap-2 mt-3">
                     <Button
@@ -210,7 +223,7 @@ export function ServiceList({ services, role }: ServiceListProps) {
               Eliminare il servizio {deleteTarget?.name}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Il servizio verra&apos; rimosso dal listino.
+              Il servizio verra&apos; rimosso dal listino insieme a tutti i prezzi pelo/taglia configurati.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

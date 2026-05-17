@@ -6,9 +6,11 @@ import {
   updateServiceSchema,
   deleteServiceSchema,
 } from '@/lib/validations/services'
+import { getServicePriceMatrixCells } from '@/lib/queries/services'
 import { db } from '@/lib/db'
-import { services } from '@/lib/db/schema'
+import { services, servicePriceMatrix } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { z } from 'zod'
 
 export const createService = authActionClient
   .schema(createServiceSchema)
@@ -23,6 +25,7 @@ export const createService = authActionClient
         name: parsedInput.name,
         price: parsedInput.price,
         duration: parsedInput.duration,
+        durationSurchargePer30min: parsedInput.durationSurchargePer30min,
         tenantId: ctx.tenantId,
       })
       .returning({
@@ -30,7 +33,21 @@ export const createService = authActionClient
         name: services.name,
         price: services.price,
         duration: services.duration,
+        durationSurchargePer30min: services.durationSurchargePer30min,
       })
+
+    const nonZeroCells = parsedInput.matrixCells?.filter(c => c.price > 0) ?? []
+    if (nonZeroCells.length > 0) {
+      await db.insert(servicePriceMatrix).values(
+        nonZeroCells.map(c => ({
+          serviceId: newService.id,
+          coatType: c.coatType,
+          sizeType: c.sizeType,
+          price: c.price,
+          tenantId: ctx.tenantId,
+        }))
+      )
+    }
 
     return { service: newService }
   })
@@ -48,6 +65,7 @@ export const updateService = authActionClient
         name: parsedInput.name,
         price: parsedInput.price,
         duration: parsedInput.duration,
+        durationSurchargePer30min: parsedInput.durationSurchargePer30min,
         updatedAt: new Date(),
       })
       .where(
@@ -58,10 +76,30 @@ export const updateService = authActionClient
         name: services.name,
         price: services.price,
         duration: services.duration,
+        durationSurchargePer30min: services.durationSurchargePer30min,
       })
 
     if (!updatedService) {
       throw new Error('Servizio non trovato')
+    }
+
+    await db.delete(servicePriceMatrix)
+      .where(and(
+        eq(servicePriceMatrix.serviceId, parsedInput.id),
+        eq(servicePriceMatrix.tenantId, ctx.tenantId)
+      ))
+
+    const nonZeroCells = parsedInput.matrixCells?.filter(c => c.price > 0) ?? []
+    if (nonZeroCells.length > 0) {
+      await db.insert(servicePriceMatrix).values(
+        nonZeroCells.map(c => ({
+          serviceId: parsedInput.id,
+          coatType: c.coatType,
+          sizeType: c.sizeType,
+          price: c.price,
+          tenantId: ctx.tenantId,
+        }))
+      )
     }
 
     return { service: updatedService }
@@ -89,4 +127,11 @@ export const deleteService = authActionClient
     }
 
     return { service: deletedService }
+  })
+
+export const fetchServicePriceMatrix = authActionClient
+  .schema(z.object({ serviceId: z.string().uuid() }))
+  .action(async ({ parsedInput, ctx }) => {
+    const cells = await getServicePriceMatrixCells(parsedInput.serviceId, ctx.tenantId)
+    return { cells }
   })
