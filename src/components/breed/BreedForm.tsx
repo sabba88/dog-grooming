@@ -125,12 +125,12 @@ export function BreedForm({ open, onOpenChange, onSuccess, breed }: BreedFormPro
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="breed-coat-type">Tipo di Pelo (opzionale)</Label>
-        <Select value={coatType} onValueChange={setCoatType}>
+        <Select value={coatType || '__none__'} onValueChange={(v) => setCoatType(v === '__none__' ? '' : v)}>
           <SelectTrigger id="breed-coat-type">
             <SelectValue placeholder="Seleziona tipo di pelo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Nessuno</SelectItem>
+            <SelectItem value="__none__">Nessuno</SelectItem>
             <SelectItem value="short">Corto</SelectItem>
             <SelectItem value="medium">Medio</SelectItem>
             <SelectItem value="long">Lungo</SelectItem>
@@ -140,12 +140,12 @@ export function BreedForm({ open, onOpenChange, onSuccess, breed }: BreedFormPro
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="breed-size-type">Taglia (opzionale)</Label>
-        <Select value={sizeType} onValueChange={setSizeType}>
+        <Select value={sizeType || '__none__'} onValueChange={(v) => setSizeType(v === '__none__' ? '' : v)}>
           <SelectTrigger id="breed-size-type">
             <SelectValue placeholder="Seleziona taglia" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Nessuno</SelectItem>
+            <SelectItem value="__none__">Nessuno</SelectItem>
             <SelectItem value="toy">Toy</SelectItem>
             <SelectItem value="small">Piccola</SelectItem>
             <SelectItem value="medium">Media</SelectItem>

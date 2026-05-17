@@ -378,6 +378,7 @@ export const userLocationAssignments = pgTable('user_location_assignments', {
 })
 
 // CC-2026-04-26b: Catalogo razze canine — CMS gestito dall'Amministratore.
+// CC-2026-05-16: La razza e' solo catalogo anagrafico; non determina il prezzo del servizio.
 export const breeds = pgTable('breeds', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
@@ -386,21 +387,57 @@ export const breeds = pgTable('breeds', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
-// CC-2026-04-26b: Prezzi specifici per razza per servizio.
-// Se non esiste una riga per (serviceId, breedId), il sistema usa services.price come fallback.
-// Unique constraint su (service_id, breed_id, tenant_id).
-// ON DELETE CASCADE da entrambi i lati (service eliminato o breed eliminata rimuove il prezzo).
-// dogs.breedId: uuid('breed_id').references(() => breeds.id, { onDelete: 'set null' }) — nullable, retrocompatibile.
-export const serviceBreedPrices = pgTable('service_breed_prices', {
+// CC-2026-05-16: ELIMINATA tabella service_breed_prices (migrazione: DROP TABLE service_breed_prices).
+// Sostituita da service_price_matrix con logica pelo/taglia.
+// dogs.breedId rimane (riferimento anagrafico alla razza).
+
+// CC-2026-05-16: Matrice prezzi 3x5 per servizio (Pelo x Taglia).
+// Sostituisce service_breed_prices. Se una cella non esiste, il sistema usa services.base_price come fallback.
+// Unique constraint su (service_id, coat_type, size_type, tenant_id).
+// ON DELETE CASCADE da services.id.
+// coat_type: 'short' | 'medium' | 'long'
+// size_type: 'toy' | 'small' | 'medium' | 'large' | 'giant'
+export const servicePriceMatrix = pgTable('service_price_matrix', {
   id: uuid('id').primaryKey().defaultRandom(),
   serviceId: uuid('service_id').notNull().references(() => services.id, { onDelete: 'cascade' }),
-  breedId: uuid('breed_id').notNull().references(() => breeds.id, { onDelete: 'cascade' }),
-  price: integer('price').notNull(), // centesimi, come services.price
+  coatType: text('coat_type').notNull(),
+  sizeType: text('size_type').notNull(),
+  price: integer('price').notNull(), // centesimi
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
+
+// CC-2026-05-16: Tabelle di maggiorazione configurabili per tenant (FR41).
+// Pre-popolate con i default all'onboarding del tenant.
+// dimension: 'coat' | 'size'
+// coat valueKey: 'short' | 'medium' | 'long'
+// size valueKey: 'toy' | 'small' | 'medium' | 'large' | 'giant'
+// Default coat: short=0, medium=20, long=20
+// Default size: toy=0, small=0, medium=20, large=40, giant=60
+export const pricingSurcharges = pgTable('pricing_surcharges', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull(),
+  dimension: text('dimension').notNull(),
+  valueKey: text('value_key').notNull(),
+  surchargePercent: integer('surcharge_percent').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
 ```
+
+**Note schema CC-2026-05-16 (Pelo/Taglia pricing):**
+- `services` table: aggiungere `duration_surcharge_per_30min integer NOT NULL DEFAULT 0` (centesimi per ogni 30min aggiuntivi oltre la durata base)
+- `dogs` table: aggiungere `coat_type text` (nullable) e `size_type text` (nullable)
+- Enumerazioni gestite come stringhe costanti TypeScript: `CoatType = 'short' | 'medium' | 'long'`, `SizeType = 'toy' | 'small' | 'medium' | 'large' | 'giant'`
+- Calcolo prezzo appointment: `getAppointmentPrice(serviceId, dog.coatType, dog.sizeType, durationMinutes, tenantId)` in `queries/services.ts`
+  1. Se coat/size null → usa services.base_price
+  2. Cerca in service_price_matrix per (serviceId, coatType, sizeType, tenantId)
+  3. Cella trovata → usa price; cella assente → usa services.base_price
+  4. Extra surcharge: `floor(max(0, durationMinutes - baseDuration) / 30) × durationSurchargePer30min`
+- Nuovi file: `lib/actions/settings.ts` (updatePricingSurcharges), `lib/queries/settings.ts` (getPricingSurcharges)
+- Nuovo componente: `components/service/ServicePriceMatrixEditor.tsx` — tabella 3x5 interattiva con pulsante "Ricalcola da maggiorazioni"
+- Migrazione DB: DROP TABLE service_breed_prices → CREATE service_price_matrix, pricing_surcharges → ALTER dogs ADD coat_type, size_type → ALTER services ADD duration_surcharge_per_30min
 
 **Note `locationBusinessHours` (CC-2026-04-26b):**
 - Query `getLocationBusinessHours(locationId, tenantId)` → `{ dayOfWeek, openTime, closeTime }[]`

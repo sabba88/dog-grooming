@@ -171,12 +171,12 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, breeds, userR
           name="coatType"
           control={form.control}
           render={({ field }) => (
-            <Select value={field.value || ''} onValueChange={field.onChange}>
+            <Select value={field.value || '__none__'} onValueChange={(v) => field.onChange(v === '__none__' ? '' : v)}>
               <SelectTrigger id="coatType">
                 <SelectValue placeholder="Seleziona tipo di pelo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nessuno</SelectItem>
+                <SelectItem value="__none__">Nessuno</SelectItem>
                 <SelectItem value="short">Corto</SelectItem>
                 <SelectItem value="medium">Medio</SelectItem>
                 <SelectItem value="long">Lungo</SelectItem>
@@ -195,12 +195,12 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, breeds, userR
           name="sizeType"
           control={form.control}
           render={({ field }) => (
-            <Select value={field.value || ''} onValueChange={field.onChange}>
+            <Select value={field.value || '__none__'} onValueChange={(v) => field.onChange(v === '__none__' ? '' : v)}>
               <SelectTrigger id="sizeType">
                 <SelectValue placeholder="Seleziona taglia" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nessuno</SelectItem>
+                <SelectItem value="__none__">Nessuno</SelectItem>
                 <SelectItem value="toy">Toy</SelectItem>
                 <SelectItem value="small">Piccola</SelectItem>
                 <SelectItem value="medium">Media</SelectItem>

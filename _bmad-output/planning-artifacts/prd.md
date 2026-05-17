@@ -255,16 +255,18 @@ Alta produttivita' con AI ma singolo punto di fallimento. Mitigazione: scope con
 
 ### Gestione Listino Servizi
 
-- **FR9:** L'Amministratore puo' creare servizi specificando nome, tariffa base e tempo di esecuzione; la tariffa base e' il prezzo di fallback quando non e' configurato un prezzo specifico per razza (vedi FR37–FR40)
+- **FR9:** L'Amministratore puo' creare servizi specificando nome, prezzo base (corrispondente alla combinazione Pelo Corto + Taglia Toy), tempo di esecuzione base e maggiorazione per 30 minuti aggiuntivi; il prezzo base e' il fallback quando non e' configurata la matrice prezzi pelo/taglia (vedi FR38–FR42)
 - **FR10:** L'Amministratore puo' modificare ed eliminare servizi dal listino
 - **FR11:** Il Collaboratore puo' consultare il listino servizi in sola lettura
 
-### Gestione Razze Canine
+### Gestione Razze Canine e Dimensioni Pelo/Taglia
 
-- **FR37:** L'Amministratore puo' creare, modificare ed eliminare razze canine nel sistema
-- **FR38:** Durante la creazione o modifica di una razza, l'Amministratore puo' impostare un prezzo specifico per ciascun servizio presente nel listino al momento della configurazione; i servizi senza prezzo specifico utilizzano il prezzo base del servizio (FR9)
+- **FR37:** L'Amministratore puo' creare, modificare ed eliminare razze canine nel sistema (catalogo anagrafico; la razza non determina il prezzo del servizio)
+- **FR38:** Per ogni servizio, l'Amministratore puo' configurare una matrice prezzi 3x5 (Pelo: Corto/Medio/Lungo x Taglia: Toy/Piccola/Media/Grande/Gigante) con 15 combinazioni di prezzo; il sistema puo' pre-calcolare i prezzi della matrice applicando le tabelle di maggiorazione al prezzo base (FR41); i prezzi della matrice sono sempre sovrascrivibili manualmente
 - **FR39:** Ogni cane puo' essere opzionalmente associato a una razza dal catalogo razze
-- **FR40:** Il sistema pre-compila il prezzo dell'appuntamento usando il prezzo specifico per la razza del cane per quel servizio; in assenza di prezzo specifico, usa il prezzo base del servizio
+- **FR40:** Il sistema pre-compila il prezzo dell'appuntamento cercando nella matrice prezzi del servizio la combinazione (pelo del cane, taglia del cane); in assenza di una cella nella matrice o di pelo/taglia sul cane, usa il prezzo base del servizio; se il servizio ha una maggiorazione per durata (FR42), questa viene aggiunta per ogni 30 minuti oltre la durata base
+- **FR41:** L'Amministratore puo' configurare le tabelle di maggiorazione per le dimensioni Pelo e Taglia; i valori di default sono: Taglia Toy +0%, Piccola +0%, Media +20%, Grande +40%, Gigante +60%; Pelo Corto +0%, Medio +20%, Lungo +20%; queste maggiorazioni vengono usate per pre-calcolare la matrice prezzi di un servizio a partire dal prezzo base
+- **FR42:** Ogni servizio puo' avere una maggiorazione per ogni 30 minuti aggiuntivi rispetto alla durata base; questa maggiorazione viene aggiunta al prezzo dell'appuntamento in proporzione ai 30 minuti extra selezionati al momento della prenotazione
 
 ### Anagrafica Clienti
 
@@ -287,7 +289,7 @@ Alta produttivita' con AI ma singolo punto di fallimento. Mitigazione: scope con
 - **FR22:** L'Amministratore e il Collaboratore possono cancellare un appuntamento esistente
 - **FR23:** L'Amministratore e il Collaboratore possono spostare un appuntamento a una nuova fascia oraria o data
 - **FR24:** L'Amministratore e il Collaboratore possono aggiungere note alla prestazione al termine di un appuntamento
-- **FR25:** Il sistema calcola automaticamente la durata dell'appuntamento in base al tempo di esecuzione del servizio selezionato e pre-compila il prezzo usando il prezzo specifico per razza del cane (se configurato), con fallback al prezzo base del servizio (FR40)
+- **FR25:** Il sistema calcola automaticamente la durata dell'appuntamento in base al tempo di esecuzione del servizio selezionato e pre-compila il prezzo usando la matrice prezzi pelo/taglia del cane (FR38/FR40), con fallback al prezzo base del servizio; la maggiorazione per durata (FR42) si aggiunge dinamicamente al variare dei minuti selezionati
 
 ### Agenda e Visualizzazione
 
