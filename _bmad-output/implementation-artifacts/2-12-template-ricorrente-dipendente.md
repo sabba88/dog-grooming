@@ -1,6 +1,6 @@
 # Story 2.12: Template Ricorrente per Dipendente
 
-Status: review
+Status: done
 
 <!-- CC-2026-05-18: Nuova story — terza fase UX stesura orario (sprint-change-proposal-2026-05-18). Dipende da Story 2.10 (StaffWeeklyScheduleGrid, ShiftCell, ShiftInlineEditor — DONE) e Story 2.11 (CopyWeekButton, WeekNavigator — DONE). Richiede migrazione DB: nuova tabella user_recurring_schedules. -->
 
@@ -272,6 +272,7 @@ File da creare:
 ## Change Log
 
 - 2026-05-18: Implementazione completa story 2.12 — DB migration user_recurring_schedules, 3 actions (upsert/delete/applyTemplate), query + tipo RecurringShift, componenti RecurringShiftEditor e ApplyTemplateButton, ghost badge in ShiftCell, recurring state con ottimistic update in StaffWeeklyScheduleGrid.
+- 2026-05-18: Fix review — aggiunto entry point 'Crea template ricorrente' nel Popover + (ShiftCell): toggle addView shift/template con RecurringShiftEditor(mode='add'), visibile solo se onAddRecurring è disponibile (admin). Tutti gli AC verificati via browser testing.
 
 ## Dev Agent Record
 
