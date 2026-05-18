@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format, parseISO, getISODay } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { useAction } from 'next-safe-action/hooks'
@@ -51,6 +51,11 @@ export function StaffWeeklyScheduleGrid({
   const [shifts, setShifts] = useState<WeekGridShift[]>(initialShifts)
   const [recurring, setRecurring] = useState<RecurringShift[]>(initialRecurring)
   const [pendingId, setPendingId] = useState<string | null>(null)
+
+  // Sincronizza lo state quando le props cambiano dopo router.refresh()
+  // (useState ignora gli aggiornamenti di props successivi al mount)
+  useEffect(() => { setShifts(initialShifts) }, [initialShifts])
+  useEffect(() => { setRecurring(initialRecurring) }, [initialRecurring])
 
   const { executeAsync: execUpsert } = useAction(upsertShift)
   const { executeAsync: execDelete } = useAction(deleteShift)
