@@ -70,6 +70,22 @@ export function ShiftCell({
 
   const showGhostBadges = shifts.length === 0 && recurringShifts.length > 0
 
+  // Mostra suggerimenti per le fasce orarie sede non ancora coperte da turni reali.
+  // Non compare quando esistono ghost badge (il template personale ha precedenza).
+  const availableSuggestions = recurringShifts.length === 0
+    ? businessHoursForDay.filter(bh =>
+        !shifts.some(s =>
+          s.locationId === bh.locationId &&
+          s.startTime === bh.openTime &&
+          s.endTime === bh.closeTime
+        )
+      )
+    : []
+
+  function getLocationName(locationId: string) {
+    return locations.find(l => l.id === locationId)?.name ?? 'Sede'
+  }
+
   async function handleAdd(data: { locationId: string; startTime: string; endTime: string }) {
     setOpenPopoverId(null)
     await onAdd(userId, date, data)
@@ -233,6 +249,27 @@ export function ShiftCell({
             )}
           </PopoverContent>
         </Popover>
+      ))}
+
+      {availableSuggestions.map((bh) => (
+        <button
+          key={`suggestion-${bh.locationId}-${bh.openTime}`}
+          type="button"
+          disabled={isPending}
+          className="w-full text-left rounded-sm px-2 py-1 bg-white border border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          onClick={() => onAdd(userId, date, {
+            locationId: bh.locationId,
+            startTime: bh.openTime,
+            endTime: bh.closeTime,
+          })}
+        >
+          <div className="text-[11px] font-medium text-emerald-700 truncate leading-tight">
+            {getLocationName(bh.locationId)}
+          </div>
+          <div className="text-[10px] text-emerald-500 leading-tight">
+            {bh.openTime}–{bh.closeTime}
+          </div>
+        </button>
       ))}
 
       <Popover
