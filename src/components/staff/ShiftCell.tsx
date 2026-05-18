@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
+import { getISODay, parseISO } from 'date-fns'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -57,6 +58,9 @@ export function ShiftCell({
 }: ShiftCellProps) {
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null)
   const [ghostPopoverView, setGhostPopoverView] = useState<GhostPopoverView>('actions')
+  const [addView, setAddView] = useState<'shift' | 'template'>('shift')
+
+  const dayOfWeek = getISODay(parseISO(date)) - 1
 
   const existingShifts: ExistingShift[] = shifts.map(s => ({
     id: s.id,
@@ -100,6 +104,12 @@ export function ShiftCell({
     setOpenPopoverId(null)
     setGhostPopoverView('actions')
     await onDeleteRecurring?.(recurringId)
+  }
+
+  async function handleAddRecurringFromCell(data: { locationId: string; startTime: string; endTime: string }) {
+    setOpenPopoverId(null)
+    setAddView('shift')
+    await onAddRecurring?.(userId, dayOfWeek, data)
   }
 
   return (
@@ -227,7 +237,10 @@ export function ShiftCell({
 
       <Popover
         open={openPopoverId === 'add'}
-        onOpenChange={(o) => setOpenPopoverId(o ? 'add' : null)}
+        onOpenChange={(o) => {
+          setOpenPopoverId(o ? 'add' : null)
+          if (!o) setAddView('shift')
+        }}
       >
         <PopoverTrigger asChild>
           <button
@@ -239,15 +252,41 @@ export function ShiftCell({
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-64 p-3" align="start">
-          <ShiftInlineEditor
-            mode="add"
-            existingShifts={existingShifts}
-            locations={locations}
-            businessHoursForDay={businessHoursForDay}
-            onSave={handleAdd}
-            onCancel={() => setOpenPopoverId(null)}
-            isPending={isPending}
-          />
+          {addView === 'shift' ? (
+            <>
+              <ShiftInlineEditor
+                mode="add"
+                existingShifts={existingShifts}
+                locations={locations}
+                businessHoursForDay={businessHoursForDay}
+                onSave={handleAdd}
+                onCancel={() => setOpenPopoverId(null)}
+                isPending={isPending}
+              />
+              {onAddRecurring && (
+                <>
+                  <Separator className="my-2" />
+                  <button
+                    type="button"
+                    className="w-full text-[11px] text-muted-foreground hover:text-foreground text-center py-0.5"
+                    onClick={() => setAddView('template')}
+                  >
+                    Crea template ricorrente
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <RecurringShiftEditor
+              mode="add"
+              userId={userId}
+              dayOfWeek={dayOfWeek}
+              locations={locations}
+              onSave={handleAddRecurringFromCell}
+              onCancel={() => setAddView('shift')}
+              isPending={isPending}
+            />
+          )}
         </PopoverContent>
       </Popover>
     </div>
