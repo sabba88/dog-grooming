@@ -3,7 +3,6 @@
 import { isToday } from 'date-fns'
 import { AppointmentBlock } from './AppointmentBlock'
 import { EmptySlot } from './EmptySlot'
-import { PersonHeader } from './PersonHeader'
 import {
   generateTimeSlots,
   getAppointmentPosition,
@@ -13,6 +12,11 @@ import {
   MINUTES_PER_SLOT,
 } from '@/lib/utils/schedule'
 import type { StaffStatus, ShiftInfo } from '@/lib/queries/staff'
+
+interface Station {
+  id: string
+  name: string
+}
 
 interface Person {
   id: string
@@ -37,31 +41,40 @@ interface Appointment {
 }
 
 interface ScheduleGridProps {
+  stations: Station[]
   staff: Person[]
   appointments: Appointment[]
   selectedDate: Date
   dateString: string
   globalOpen: string
   globalClose: string
+  // Open intervals for the selected day in minutes (start inclusive, end exclusive)
+  openIntervals: { start: number; end: number }[]
   onAppointmentClick?: (id: string) => void
-  onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
+  onEmptySlotClick?: (data: { stationId?: string; stationName?: string; userId?: string; userName?: string; date: string; time: string }) => void
   movingAppointmentId?: string
   onContextAction?: (action: 'detail' | 'add-note' | 'move' | 'delete', id: string) => void
 }
 
+function isInOpenHours(slotMinutes: number, openIntervals: { start: number; end: number }[]): boolean {
+  return openIntervals.some(iv => slotMinutes >= iv.start && slotMinutes < iv.end)
+}
+
 export function ScheduleGrid({
+  stations,
   staff,
   appointments,
   selectedDate,
   dateString,
   globalOpen,
   globalClose,
+  openIntervals,
   onAppointmentClick,
   onEmptySlotClick,
   movingAppointmentId,
   onContextAction,
 }: ScheduleGridProps) {
-  if (staff.length === 0) return null
+  if (stations.length === 0) return null
 
   const timeSlots = generateTimeSlots(globalOpen, globalClose)
   const dayStartMinutes = timeToMinutes(globalOpen)
@@ -69,32 +82,44 @@ export function ScheduleGrid({
   const totalHeight = (totalMinutes / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
 
   const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
+  const activeStaff = staff.filter(p => p.overallStatus === 'active')
+  const showStaffPanel = activeStaff.length > 0
+  const staffPanelWidth = showStaffPanel ? Math.max(64, activeStaff.length * 32) : 0
 
-  // Current time indicator
+  const STAFF_COLORS = [
+    { bg: 'rgba(219,234,254,0.85)', border: '#60a5fa' },
+    { bg: 'rgba(209,250,229,0.85)', border: '#34d399' },
+    { bg: 'rgba(237,233,254,0.85)', border: '#a78bfa' },
+    { bg: 'rgba(254,243,199,0.85)', border: '#fbbf24' },
+    { bg: 'rgba(254,226,226,0.85)', border: '#f87171' },
+  ]
+
   const now = new Date()
   const showCurrentTime = isToday(selectedDate)
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
   const currentTimeInRange = currentMinutes >= dayStartMinutes && currentMinutes <= dayStartMinutes + totalMinutes
   const currentTimeTop = ((currentMinutes - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
 
+  const gridCols = showStaffPanel
+    ? `60px ${staffPanelWidth}px repeat(${stations.length}, 1fr)`
+    : `60px repeat(${stations.length}, 1fr)`
+
   return (
     <div>
       {/* Header row */}
       <div
         className="grid sticky top-0 z-20 border-b border-border"
-        style={{
-          gridTemplateColumns: `60px repeat(${staff.length}, 1fr)`,
-        }}
+        style={{ gridTemplateColumns: gridCols }}
       >
         <div className="p-2 text-xs text-muted-foreground font-medium bg-card">Orario</div>
-        {staff.map((person) => (
-          <div key={person.id} className="border-l border-border">
-            <PersonHeader
-              name={person.name}
-              role={person.role}
-              overallStatus={person.overallStatus}
-              shifts={person.shifts}
-            />
+        {showStaffPanel && (
+          <div className="border-l border-border px-1 py-1.5 bg-card">
+            <span className="text-[11px] text-muted-foreground font-medium">Personale</span>
+          </div>
+        )}
+        {stations.map((station) => (
+          <div key={station.id} className="border-l border-border px-2 py-1.5 bg-card">
+            <span className="text-sm font-medium truncate">{station.name}</span>
           </div>
         ))}
       </div>
@@ -102,9 +127,7 @@ export function ScheduleGrid({
       {/* Grid body */}
       <div
         className="grid relative"
-        style={{
-          gridTemplateColumns: `60px repeat(${staff.length}, 1fr)`,
-        }}
+        style={{ gridTemplateColumns: gridCols }}
       >
         {/* Time labels column */}
         <div className="relative" style={{ height: `${totalHeight}px` }}>
@@ -123,22 +146,71 @@ export function ScheduleGrid({
           })}
         </div>
 
-        {/* Person columns */}
-        {staff.map((person) => {
-          const personAppointments = appointments.filter(
-            (a) => a.userId === person.id
-          )
+        {/* Staff panel column */}
+        {showStaffPanel && (
+          <div className="relative border-l border-border" style={{ height: `${totalHeight}px` }}>
+            {timeSlots.map((slot) => {
+              const offsetMinutes = timeToMinutes(slot) - dayStartMinutes
+              const top = (offsetMinutes / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
+              return (
+                <div
+                  key={slot}
+                  className="absolute inset-x-0 border-t border-border"
+                  style={{ top: `${top}px` }}
+                />
+              )
+            })}
+            {activeStaff.map((person, personIdx) => {
+              const color = STAFF_COLORS[personIdx % STAFF_COLORS.length]
+              const barLeft = (personIdx / activeStaff.length) * 100
+              const barWidth = 100 / activeStaff.length
+              const shortName = person.name.split(' ')[0].slice(0, 4)
+              return person.shifts
+                .filter(s => s.status === 'active')
+                .map((shift, shiftIdx) => {
+                  const shiftStartMin = timeToMinutes(shift.startTime)
+                  const shiftEndMin = timeToMinutes(shift.endTime)
+                  const clampedStart = Math.max(shiftStartMin, dayStartMinutes)
+                  const clampedEnd = Math.min(shiftEndMin, dayStartMinutes + totalMinutes)
+                  if (clampedEnd <= clampedStart) return null
+                  const top = ((clampedStart - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
+                  const height = ((clampedEnd - clampedStart) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
+                  return (
+                    <div
+                      key={`${person.id}-${shiftIdx}`}
+                      className="absolute overflow-hidden flex flex-col rounded-sm"
+                      style={{
+                        left: `${barLeft + 1}%`,
+                        width: `${barWidth - 2}%`,
+                        top: `${top}px`,
+                        height: `${height}px`,
+                        backgroundColor: color.bg,
+                        borderLeft: `2px solid ${color.border}`,
+                      }}
+                      title={`${person.name}: ${shift.startTime}–${shift.endTime}`}
+                    >
+                      <span
+                        className="text-[9px] font-semibold px-0.5 leading-tight truncate"
+                        style={{ color: color.border }}
+                      >
+                        {shortName}
+                      </span>
+                    </div>
+                  )
+                })
+            })}
+          </div>
+        )}
 
-          const isDimmed = person.overallStatus !== 'active'
+        {/* Station columns */}
+        {stations.map((station) => {
+          const stationAppointments = appointments.filter(a => a.stationId === station.id)
 
           return (
             <div
-              key={person.id}
+              key={station.id}
               className="relative border-l border-border"
-              style={{
-                height: `${totalHeight}px`,
-                opacity: isDimmed ? 0.5 : 1,
-              }}
+              style={{ height: `${totalHeight}px` }}
             >
               {/* Horizontal grid lines */}
               {timeSlots.map((slot) => {
@@ -153,27 +225,10 @@ export function ScheduleGrid({
                 )
               })}
 
-              {/* Shift bands: active (green) and elsewhere (amber) */}
-              {person.shifts.map((shift, i) => {
-                const shiftStart = timeToMinutes(shift.startTime)
-                const shiftEnd = timeToMinutes(shift.endTime)
-                return (
-                  <div
-                    key={i}
-                    className="absolute inset-x-0"
-                    style={{
-                      top: `${((shiftStart - dayStartMinutes) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
-                      height: `${((shiftEnd - shiftStart) / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX}px`,
-                      backgroundColor: shift.status === 'active' ? '#E5F7F9' : '#FEF3C7',
-                    }}
-                  />
-                )
-              })}
-
-              {/* Empty slots */}
+              {/* Empty / closed slots */}
               {timeSlots.map((slot) => {
                 const slotMinutes = timeToMinutes(slot)
-                const isOccupied = personAppointments.some((appt) => {
+                const isOccupied = stationAppointments.some((appt) => {
                   const apptStart = appt.startTime.getUTCHours() * 60 + appt.startTime.getUTCMinutes()
                   const apptEnd = appt.endTime.getUTCHours() * 60 + appt.endTime.getUTCMinutes()
                   return slotMinutes >= apptStart && slotMinutes < apptEnd
@@ -186,31 +241,24 @@ export function ScheduleGrid({
 
                 return (
                   <EmptySlot
-                    key={`${person.id}-${slot}`}
-                    userId={person.id}
-                    userName={person.name}
+                    key={`${station.id}-${slot}`}
+                    stationId={station.id}
+                    stationName={station.name}
                     date={dateString}
                     time={slot}
                     variant="grid"
-                    style={{
-                      top: `${top}px`,
-                      height: `${SLOT_HEIGHT_PX}px`,
-                    }}
+                    closed={!isInOpenHours(slotMinutes, openIntervals)}
+                    style={{ top: `${top}px`, height: `${SLOT_HEIGHT_PX}px` }}
                     onClick={onEmptySlotClick}
-                    isMovingTarget={!!movingAppointmentId && person.overallStatus === 'active'}
+                    isMovingTarget={!!movingAppointmentId}
                   />
                 )
               })}
 
               {/* Appointment blocks */}
-              {personAppointments.map((appt) => {
-                const position = getAppointmentPosition(
-                  appt.startTime,
-                  appt.endTime,
-                  dayStartMinutes
-                )
+              {stationAppointments.map((appt) => {
+                const position = getAppointmentPosition(appt.startTime, appt.endTime, dayStartMinutes)
                 const color = getServiceColor(appt.serviceId, allServiceIds)
-
                 return (
                   <AppointmentBlock
                     key={appt.id}
@@ -223,10 +271,7 @@ export function ScheduleGrid({
                     endTime={appt.endTime}
                     color={color}
                     variant="grid"
-                    style={{
-                      top: `${position.top}px`,
-                      height: `${position.height}px`,
-                    }}
+                    style={{ top: `${position.top}px`, height: `${position.height}px` }}
                     onClick={onAppointmentClick}
                     isMoving={movingAppointmentId === appt.id}
                     onContextAction={onContextAction}

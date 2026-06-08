@@ -9,6 +9,7 @@ import {
 import { db } from '@/lib/db'
 import { dogs, dogNotes, clients } from '@/lib/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
+import { z } from 'zod'
 
 export const createDog = authActionClient
   .schema(createDogSchema)
@@ -73,6 +74,28 @@ export const updateDog = authActionClient
     }
 
     return { dog: updatedDog }
+  })
+
+export const deleteDog = authActionClient
+  .schema(z.object({ id: z.string().uuid() }))
+  .action(async ({ parsedInput, ctx }) => {
+    const [deleted] = await db
+      .update(dogs)
+      .set({ deletedAt: new Date() })
+      .where(
+        and(
+          eq(dogs.id, parsedInput.id),
+          eq(dogs.tenantId, ctx.tenantId),
+          isNull(dogs.deletedAt)
+        )
+      )
+      .returning({ id: dogs.id })
+
+    if (!deleted) {
+      throw new Error('Cane non trovato')
+    }
+
+    return { id: deleted.id }
   })
 
 export const addDogNote = authActionClient

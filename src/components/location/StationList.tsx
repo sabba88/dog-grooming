@@ -27,6 +27,7 @@ interface Station {
   name: string
   locationId: string
   servicesCount: number
+  allowedSizes?: string[] | null
 }
 
 interface Service {

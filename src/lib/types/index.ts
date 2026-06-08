@@ -22,7 +22,7 @@ export type UserRole = 'admin' | 'collaborator'
 
 export interface SessionUser {
   id: string
-  email: string
+  username: string
   name: string
   role: UserRole
   tenantId: string

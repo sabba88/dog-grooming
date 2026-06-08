@@ -43,7 +43,7 @@ interface UserFormProps {
   user?: {
     id: string
     name: string
-    email: string
+    username: string
     role: 'admin' | 'collaborator'
   } | null
 }
@@ -56,8 +56,8 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
   const form = useForm<CreateUserFormData | UpdateUserFormData>({
     resolver: zodResolver(isEditing ? updateUserSchema : createUserSchema),
     defaultValues: isEditing
-      ? { id: user.id, name: user.name, email: user.email, role: user.role, password: '' }
-      : { name: '', email: '', password: '', role: 'collaborator' as const },
+      ? { id: user.id, name: user.name, username: user.username, role: user.role, password: '' }
+      : { name: '', username: '', password: '', role: 'collaborator' as const },
   })
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createUser, {
@@ -70,7 +70,7 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
     },
     onError: (error) => {
       const message = error.error?.serverError || 'Errore durante la creazione'
-      if (message.includes('Email')) {
+      if (message.includes('Username')) {
         setServerError(message)
       } else {
         toast.error(message)
@@ -88,7 +88,7 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
     },
     onError: (error) => {
       const message = error.error?.serverError || 'Errore durante l\'aggiornamento'
-      if (message.includes('Email')) {
+      if (message.includes('Username')) {
         setServerError(message)
       } else {
         toast.error(message)
@@ -125,17 +125,17 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="username">Username</Label>
         <Input
-          id="email"
-          type="email"
-          placeholder="email@esempio.it"
-          {...form.register('email')}
-          aria-invalid={!!form.formState.errors.email || !!serverError}
+          id="username"
+          type="text"
+          placeholder="es. mario.rossi"
+          {...form.register('username')}
+          aria-invalid={!!form.formState.errors.username || !!serverError}
         />
-        {form.formState.errors.email && (
+        {form.formState.errors.username && (
           <p className="text-sm text-destructive">
-            {form.formState.errors.email.message}
+            {form.formState.errors.username.message}
           </p>
         )}
         {serverError && (

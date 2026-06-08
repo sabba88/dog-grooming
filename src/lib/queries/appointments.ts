@@ -112,6 +112,40 @@ export async function getAppointmentsByDateAndLocationGroupedByUser(
     .orderBy(asc(appointments.startTime))
 }
 
+export async function getWeeklyAppointmentsByStation(
+  weekStart: string,
+  weekEnd: string,
+  locationId: string,
+  tenantId: string
+): Promise<{ id: string; stationId: string; startTime: Date; endTime: Date }[]> {
+  const start = new Date(weekStart + 'T00:00:00.000Z')
+  const end = new Date(weekEnd + 'T23:59:59.999Z')
+
+  const rows = await db
+    .select({
+      id: appointments.id,
+      stationId: appointments.stationId,
+      startTime: appointments.startTime,
+      endTime: appointments.endTime,
+    })
+    .from(appointments)
+    .innerJoin(stations, eq(appointments.stationId, stations.id))
+    .innerJoin(clients, eq(appointments.clientId, clients.id))
+    .where(
+      and(
+        isNotNull(appointments.stationId),
+        eq(stations.locationId, locationId),
+        gte(appointments.startTime, start),
+        lt(appointments.startTime, end),
+        eq(appointments.tenantId, tenantId),
+        isNull(clients.deletedAt)
+      )
+    )
+    .orderBy(asc(appointments.startTime))
+
+  return rows.map(r => ({ ...r, stationId: r.stationId! }))
+}
+
 export async function getWeeklyAppointmentsByPerson(
   weekStart: string,
   weekEnd: string,

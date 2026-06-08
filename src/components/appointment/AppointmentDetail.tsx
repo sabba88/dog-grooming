@@ -18,8 +18,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ArrowRightLeft, Trash2, Loader2 } from 'lucide-react'
+import { ArrowRightLeft, Trash2, Loader2, ShoppingBag } from 'lucide-react'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 interface ServiceNote {
   id: string
@@ -192,23 +193,31 @@ export function AppointmentDetail({
         )}
       </div>
 
-      <div className="flex gap-2 pt-2 border-t">
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={() => onMove(appointmentId)}
-        >
-          <ArrowRightLeft className="size-4 mr-2" />
-          Sposta
-        </Button>
-        <Button
-          variant="destructive"
-          className="flex-1"
-          onClick={() => setShowDeleteConfirm(true)}
-        >
-          <Trash2 className="size-4 mr-2" />
-          Cancella
-        </Button>
+      <div className="flex flex-col gap-2 pt-2 border-t">
+        <Link href={`/appointments/${appointmentId}/checkout`} className="w-full">
+          <Button variant="outline" className="w-full">
+            <ShoppingBag className="size-4 mr-2" />
+            Vendi Prodotti
+          </Button>
+        </Link>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => onMove(appointmentId)}
+          >
+            <ArrowRightLeft className="size-4 mr-2" />
+            Sposta
+          </Button>
+          <Button
+            variant="destructive"
+            className="flex-1"
+            onClick={() => setShowDeleteConfirm(true)}
+          >
+            <Trash2 className="size-4 mr-2" />
+            Cancella
+          </Button>
+        </div>
       </div>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

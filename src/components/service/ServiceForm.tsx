@@ -96,10 +96,18 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
   useEffect(() => {
     if (open) {
       executeFetchSurcharges({})
-      if (isEditing && service?.id) {
+      if (isEditing && service) {
         executeFetchMatrix({ serviceId: service.id })
+        form.reset({
+          id: service.id,
+          name: service.name,
+          price: service.price / 100,
+          duration: service.duration,
+          durationSurchargePer30min: service.durationSurchargePer30min / 100,
+        })
       } else {
         setMatrixCells({})
+        form.reset({ name: '', price: 0, duration: 0, durationSurchargePer30min: 0 })
       }
     }
     if (!open) {
@@ -148,13 +156,7 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
 
   const isPending = isCreating || isUpdating
 
-  const priceRegistration = form.register('price', {
-    setValueAs: (v: string) => {
-      const num = parseFloat(v)
-      if (isNaN(num)) return 0
-      return Math.round(num * 100)
-    },
-  })
+  const priceRegistration = form.register('price', { valueAsNumber: true })
 
   function setCellPrice(coatType: string, sizeType: string, eurValue: string) {
     const cents = Math.round((parseFloat(eurValue) || 0) * 100)
@@ -169,7 +171,12 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
         price: matrixCells[`${coat}_${size}`] ?? 0,
       }))
     )
-    const payload = { ...data, matrixCells: cells }
+    const payload = {
+      ...data,
+      price: Math.round((data.price as number) * 100),
+      durationSurchargePer30min: Math.round(((data.durationSurchargePer30min as number) ?? 0) * 100),
+      matrixCells: cells,
+    }
     if (isEditing) {
       executeUpdate(payload as UpdateServiceFormData)
     } else {
@@ -208,7 +215,6 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
             const cents = Math.round((parseFloat(e.target.value) || 0) * 100)
             if (cents > 0) calcMatrixFromBase(cents)
           }}
-          defaultValue={isEditing ? (service.price / 100).toFixed(2) : ''}
           aria-invalid={!!form.formState.errors.price}
         />
         <p className="text-xs text-muted-foreground">
@@ -245,14 +251,7 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
           step="0.01"
           min="0"
           placeholder="0.00"
-          {...form.register('durationSurchargePer30min', {
-            setValueAs: (v: string) => {
-              const num = parseFloat(v)
-              if (isNaN(num) || num < 0) return 0
-              return Math.round(num * 100)
-            },
-          })}
-          defaultValue={isEditing ? (service.durationSurchargePer30min / 100).toFixed(2) : '0.00'}
+          {...form.register('durationSurchargePer30min', { valueAsNumber: true })}
           aria-invalid={!!form.formState.errors.durationSurchargePer30min}
         />
         <p className="text-xs text-muted-foreground">

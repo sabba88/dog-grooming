@@ -22,6 +22,34 @@
       "when": 1779057662632,
       "tag": "0002_mature_virginia_dare",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1779175998275,
+      "tag": "0003_add_shop_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779235200000,
+      "tag": "0004_rename_users_email_to_username",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1779235260000,
+      "tag": "0005_add_dogs_deleted_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1748217600000,
+      "tag": "0006_add_station_allowed_sizes",
+      "breakpoints": true
     }
   ]
 }

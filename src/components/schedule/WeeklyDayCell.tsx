@@ -19,9 +19,9 @@ interface WeeklyDayCellProps {
   onClick: () => void
 }
 
-type BarSegment = { type: 'covered' | 'gap'; duration: number }
+export type BarSegment = { type: 'covered' | 'gap'; duration: number }
 
-function buildBarSegments(
+export function buildBarSegments(
   shifts: Shift[],
   appointments: Appointment[]
 ): { segments: BarSegment[]; totalMinutes: number; gapMinutes: number } {

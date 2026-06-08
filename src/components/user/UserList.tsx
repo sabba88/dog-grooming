@@ -31,7 +31,7 @@ import { Plus, Pencil } from 'lucide-react'
 interface User {
   id: string
   name: string
-  email: string
+  username: string
   role: 'admin' | 'collaborator'
   isActive: boolean
   createdAt: Date | null
@@ -108,7 +108,7 @@ export function UserList({ users, currentUserId }: UserListProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>Email</TableHead>
+              <TableHead>Username</TableHead>
               <TableHead>Ruolo</TableHead>
               <TableHead>Stato</TableHead>
               <TableHead className="text-right">Azioni</TableHead>
@@ -118,7 +118,7 @@ export function UserList({ users, currentUserId }: UserListProps) {
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.username}</TableCell>
                 <TableCell>
                   <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                     {user.role === 'admin' ? 'Amministratore' : 'Collaboratore'}
@@ -182,7 +182,7 @@ export function UserList({ users, currentUserId }: UserListProps) {
             <div className="flex items-start justify-between mb-2">
               <div>
                 <p className="font-medium text-foreground">{user.name}</p>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
+                <p className="text-sm text-muted-foreground">{user.username}</p>
               </div>
               <div className="flex gap-1">
                 <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>

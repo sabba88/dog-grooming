@@ -17,8 +17,10 @@ import { Separator } from '@/components/ui/separator'
 import { User, Calendar, Clock, X, Loader2 } from 'lucide-react'
 
 interface PrefilledSlot {
-  userId: string
-  userName: string
+  stationId?: string | null
+  stationName?: string | null
+  userId?: string
+  userName?: string
   date: string
   time: string
   locationId: string
@@ -26,6 +28,7 @@ interface PrefilledSlot {
 
 interface AppointmentFormProps {
   prefilledSlot: PrefilledSlot
+  availableStaff?: { id: string; name: string }[]
   onSuccess: () => void
   onCancel: () => void
 }
@@ -62,13 +65,14 @@ function getEffectiveCoatSize(dog: Dog) {
   return { coat, size }
 }
 
-export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormProps) {
+export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: AppointmentFormProps) {
   const [selectedClient, setSelectedClient] = useState<SelectedClient | null>(null)
   const [showQuickClient, setShowQuickClient] = useState(false)
   const [dogs, setDogs] = useState<Dog[]>([])
   const [selectedDogId, setSelectedDogId] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<string>(prefilledSlot.userId ?? '')
   const [stationsList, setStationsList] = useState<{ id: string; name: string }[]>([])
-  const [selectedStationId, setSelectedStationId] = useState<string | null>(null)
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(prefilledSlot.stationId ?? null)
   const [services, setServices] = useState<Service[]>([])
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [duration, setDuration] = useState<number>(0)
@@ -151,10 +155,14 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     },
   })
 
-  // Load stations for location and all services on mount
+  // Load stations for location and services on mount
   useEffect(() => {
     loadStations({ locationId: prefilledSlot.locationId })
-    loadServices({})
+    if (prefilledSlot.stationId) {
+      loadServicesForStation({ stationId: prefilledSlot.stationId })
+    } else {
+      loadServices({})
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDogChange = (dogId: string) => {
@@ -237,10 +245,10 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
 
   const handleAlternativeSlotClick = (time: string) => {
     setBusinessError(null)
-    if (selectedClient && selectedDogId && selectedServiceId) {
+    if (selectedClient && selectedDogId && selectedServiceId && selectedUserId) {
       const priceCents = Math.round(parseFloat(priceEur) * 100)
       submitAppointment({
-        userId: prefilledSlot.userId,
+        userId: selectedUserId,
         date: prefilledSlot.date,
         time,
         clientId: selectedClient.id,
@@ -254,11 +262,11 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
   }
 
   const handleSubmit = () => {
-    if (!selectedClient || !selectedDogId || !selectedServiceId) return
+    if (!selectedClient || !selectedDogId || !selectedServiceId || !selectedUserId) return
     setBusinessError(null)
     const priceCents = Math.round(parseFloat(priceEur) * 100)
     submitAppointment({
-      userId: prefilledSlot.userId,
+      userId: selectedUserId,
       date: prefilledSlot.date,
       time: prefilledSlot.time,
       clientId: selectedClient.id,
@@ -276,17 +284,25 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
     month: 'short',
   }).format(new Date(prefilledSlot.date + 'T00:00:00.000Z'))
 
-  const isFormComplete = selectedClient && selectedDogId && selectedServiceId && duration >= 15 && parseFloat(priceEur) >= 0
+  const isFormComplete = selectedClient && selectedDogId && selectedServiceId && duration >= 15 && parseFloat(priceEur) >= 0 && !!selectedUserId
 
   return (
     <div className="space-y-4">
       {/* Header: slot pre-compilato */}
-      <div className="bg-muted/50 flex items-center gap-3 rounded-lg p-3">
-        <div className="flex items-center gap-1.5 text-sm">
-          <User className="text-muted-foreground size-4" />
-          <span className="font-medium">{prefilledSlot.userName}</span>
-        </div>
-        <Separator orientation="vertical" className="h-4" />
+      <div className="bg-muted/50 flex flex-wrap items-center gap-3 rounded-lg p-3">
+        {prefilledSlot.stationName ? (
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="font-medium">{prefilledSlot.stationName}</span>
+          </div>
+        ) : prefilledSlot.userName ? (
+          <div className="flex items-center gap-1.5 text-sm">
+            <User className="text-muted-foreground size-4" />
+            <span className="font-medium">{prefilledSlot.userName}</span>
+          </div>
+        ) : null}
+        {(prefilledSlot.stationName || prefilledSlot.userName) && (
+          <Separator orientation="vertical" className="h-4" />
+        )}
         <div className="flex items-center gap-1.5 text-sm">
           <Calendar className="text-muted-foreground size-4" />
           <span className="capitalize">{formattedDate}</span>
@@ -297,6 +313,25 @@ export function AppointmentForm({ prefilledSlot, onSuccess }: AppointmentFormPro
           <span>{prefilledSlot.time}</span>
         </div>
       </div>
+
+      {/* Collaboratore — mostrato quando non pre-compilato */}
+      {!prefilledSlot.userId && availableStaff && availableStaff.length > 0 && (
+        <div>
+          <Label className="mb-1.5 block text-sm font-medium">Collaboratore</Label>
+          <Select value={selectedUserId || undefined} onValueChange={setSelectedUserId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Seleziona collaboratore" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableStaff.map((person) => (
+                <SelectItem key={person.id} value={person.id}>
+                  {person.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Sezione cliente */}
       <div>

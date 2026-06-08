@@ -7,10 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:seed:dev": "dotenv -e .env.dev -- npx tsx src/lib/db/seed.ts",
-    "db:seed:uat": "dotenv -e .env.uat -- npx tsx src/lib/db/seed.ts",
-    "db:seed:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed.ts",
-    "db:seed-demo:dev": "dotenv -e .env.dev -- npx tsx src/lib/db/seed-demo.ts",
+    "db:seed-services:dev": "dotenv -e .env.dev -- npx tsx src/lib/db/seed-services.ts",
+    "db:seed-services:uat": "dotenv -e .env.uat -- npx tsx src/lib/db/seed-services.ts",
+    "db:seed-services:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-services.ts",
     "db:seed-breeds:dev": "dotenv -e .env.dev -- npx tsx src/lib/db/seed-breeds.ts",
     "db:seed-breeds:uat": "dotenv -e .env.uat -- npx tsx src/lib/db/seed-breeds.ts",
     "db:seed-breeds:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-breeds.ts",
@@ -19,7 +18,10 @@
     "db:seed-clients:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-clients.ts",
     "db:seed-pricing-surcharges:dev": "dotenv -e .env.dev -- npx tsx src/lib/db/seed-pricing-surcharges.ts",
     "db:seed-pricing-surcharges:uat": "dotenv -e .env.uat -- npx tsx src/lib/db/seed-pricing-surcharges.ts",
-    "db:seed-pricing-surcharges:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-pricing-surcharges.ts"
+    "db:seed-pricing-surcharges:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-pricing-surcharges.ts",
+    "db:seed-import0505:dev": "dotenv -e .env.dev -- npx tsx src/lib/db/seed-import0505.ts",
+    "db:seed-import0505:uat": "dotenv -e .env.uat -- npx tsx src/lib/db/seed-import0505.ts",
+    "db:seed-import0505:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-import0505.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -17,7 +17,7 @@ export async function getActiveUsers(tenantId: string) {
     .select({
       id: users.id,
       name: users.name,
-      email: users.email,
+      username: users.username,
       role: users.role,
     })
     .from(users)

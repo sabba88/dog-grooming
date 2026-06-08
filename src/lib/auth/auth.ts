@@ -11,19 +11,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       credentials: {
-        email: {},
+        username: {},
         password: {},
       },
       async authorize(credentials) {
-        const email = credentials.email as string
+        const username = credentials.username as string
         const password = credentials.password as string
 
-        if (!email || !password) return null
+        if (!username || !password) return null
 
         const [user] = await db
           .select()
           .from(users)
-          .where(eq(users.email, email))
+          .where(eq(users.username, username))
           .limit(1)
 
         if (!user || !user.isActive) return null
@@ -33,7 +33,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         return {
           id: user.id,
-          email: user.email,
           name: user.name,
           role: user.role,
           tenantId: user.tenantId,

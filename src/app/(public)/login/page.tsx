@@ -31,7 +31,7 @@ export default function LoginPage() {
 
     try {
       const result = await signIn('credentials', {
-        email: data.email,
+        username: data.username,
         password: data.password,
         redirect: false,
       })
@@ -58,17 +58,17 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="La tua email"
-                {...register('email')}
+                id="username"
+                type="text"
+                placeholder="Il tuo username"
+                {...register('username')}
                 className="min-h-[44px]"
               />
-              {errors.email && (
+              {errors.username && (
                 <p className="text-sm" style={{ color: '#EF4444' }}>
-                  {errors.email.message}
+                  {errors.username.message}
                 </p>
               )}
             </div>

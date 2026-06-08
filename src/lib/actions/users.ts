@@ -22,7 +22,7 @@ export const createUser = authActionClient
         .insert(users)
         .values({
           name: parsedInput.name,
-          email: parsedInput.email,
+          username: parsedInput.username,
           password: hashedPassword,
           role: parsedInput.role,
           tenantId: ctx.tenantId,
@@ -31,7 +31,7 @@ export const createUser = authActionClient
         .returning({
           id: users.id,
           name: users.name,
-          email: users.email,
+          username: users.username,
           role: users.role,
           isActive: users.isActive,
         })
@@ -44,7 +44,7 @@ export const createUser = authActionClient
         'code' in error &&
         (error as { code: string }).code === '23505'
       ) {
-        throw new Error('Email gia\' in uso')
+        throw new Error('Username già in uso')
       }
       throw error
     }
@@ -59,7 +59,7 @@ export const updateUser = authActionClient
 
     const updateData: Record<string, unknown> = {
       name: parsedInput.name,
-      email: parsedInput.email,
+      username: parsedInput.username,
       role: parsedInput.role,
       updatedAt: new Date(),
     }
@@ -78,7 +78,7 @@ export const updateUser = authActionClient
         .returning({
           id: users.id,
           name: users.name,
-          email: users.email,
+          username: users.username,
           role: users.role,
           isActive: users.isActive,
         })
@@ -95,7 +95,7 @@ export const updateUser = authActionClient
         'code' in error &&
         (error as { code: string }).code === '23505'
       ) {
-        throw new Error('Email gia\' in uso')
+        throw new Error('Username già in uso')
       }
       throw error
     }

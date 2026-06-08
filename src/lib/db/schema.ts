@@ -4,7 +4,7 @@ export const userRoleEnum = pgEnum('user_role', ['admin', 'collaborator'])
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
-  email: text('email').notNull().unique(),
+  username: text('username').notNull().unique(),
   password: text('password').notNull(),
   name: text('name').notNull(),
   role: userRoleEnum('role').notNull().default('collaborator'),
@@ -39,6 +39,7 @@ export const stations = pgTable('stations', {
   name: text('name').notNull(),
   locationId: uuid('location_id').notNull(),
   tenantId: uuid('tenant_id').notNull(),
+  allowedSizes: text('allowed_sizes').array(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -101,6 +102,7 @@ export const dogs = pgTable('dogs', {
   sterilized: boolean('sterilized').notNull().default(false),
   clientId: uuid('client_id').notNull(),
   tenantId: uuid('tenant_id').notNull(),
+  deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
@@ -190,4 +192,25 @@ export const appointments = pgTable('appointments', {
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const products = pgTable('products', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  price: integer('price').notNull(), // in centesimi
+  stock: integer('stock').notNull().default(0),
+  deletedAt: timestamp('deleted_at'),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const appointmentProducts = pgTable('appointment_products', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  appointmentId: uuid('appointment_id').notNull().references(() => appointments.id, { onDelete: 'cascade' }),
+  productId: uuid('product_id').notNull().references(() => products.id, { onDelete: 'restrict' }),
+  quantity: integer('quantity').notNull().default(1),
+  priceAtSale: integer('price_at_sale').notNull(), // snapshot prezzo al momento della vendita
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 })

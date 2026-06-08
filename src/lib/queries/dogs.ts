@@ -25,7 +25,7 @@ export async function getDogsByClient(clientId: string, tenantId: string) {
       clients,
       and(eq(dogs.clientId, clients.id), isNull(clients.deletedAt))
     )
-    .where(and(eq(dogs.clientId, clientId), eq(dogs.tenantId, tenantId)))
+    .where(and(eq(dogs.clientId, clientId), eq(dogs.tenantId, tenantId), isNull(dogs.deletedAt)))
     .orderBy(asc(dogs.name))
 }
 
@@ -55,7 +55,7 @@ export async function getDogById(dogId: string, tenantId: string) {
       clients,
       and(eq(dogs.clientId, clients.id), isNull(clients.deletedAt))
     )
-    .where(and(eq(dogs.id, dogId), eq(dogs.tenantId, tenantId)))
+    .where(and(eq(dogs.id, dogId), eq(dogs.tenantId, tenantId), isNull(dogs.deletedAt)))
     .limit(1)
 
   return dog ?? null
@@ -96,6 +96,6 @@ export async function getAllDogs(tenantId: string) {
       clients,
       and(eq(dogs.clientId, clients.id), isNull(clients.deletedAt))
     )
-    .where(eq(dogs.tenantId, tenantId))
+    .where(and(eq(dogs.tenantId, tenantId), isNull(dogs.deletedAt)))
     .orderBy(asc(dogs.name))
 }

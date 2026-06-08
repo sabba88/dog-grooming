@@ -4,9 +4,22 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { DogForm } from '@/components/dog/DogForm'
 import { DogNotes } from '@/components/dog/DogNotes'
-import { ArrowLeft, Pencil } from 'lucide-react'
+import { deleteDog } from '@/lib/actions/dogs'
+import { useAction } from 'next-safe-action/hooks'
+import { toast } from 'sonner'
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 
@@ -68,6 +81,17 @@ const dateFormatter = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' })
 export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+
+  const { execute: execDelete, isPending: isDeleting } = useAction(deleteDog, {
+    onSuccess: () => {
+      toast.success('Cane eliminato')
+      router.push(`/clients/${dog.clientId}`)
+    },
+    onError: (error) => {
+      toast.error(error.error?.serverError || 'Errore durante l\'eliminazione')
+    },
+  })
 
   function handleSuccess() {
     router.refresh()
@@ -103,10 +127,23 @@ export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDet
       <div className="rounded-lg border border-border bg-card p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-foreground">Dati Cane</h2>
-          <Button variant="outline" size="sm" onClick={() => setFormOpen(true)}>
-            <Pencil className="h-4 w-4 mr-1" />
-            Modifica
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setFormOpen(true)}>
+              <Pencil className="h-4 w-4 mr-1" />
+              Modifica
+            </Button>
+            {userRole === 'admin' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Elimina
+              </Button>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -207,6 +244,27 @@ export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDet
         userRole={userRole}
         dog={dog}
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminare {dog.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Il cane verrà eliminato. Lo storico appuntamenti resterà invariato. Questa operazione non è reversibile.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => execDelete({ id: dog.id })}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Eliminazione...' : 'Elimina'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

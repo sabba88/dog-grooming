@@ -7,7 +7,7 @@ export async function getUsers(tenantId: string) {
     .select({
       id: users.id,
       name: users.name,
-      email: users.email,
+      username: users.username,
       role: users.role,
       isActive: users.isActive,
       createdAt: users.createdAt,
@@ -22,7 +22,7 @@ export async function getUserById(userId: string, tenantId: string) {
     .select({
       id: users.id,
       name: users.name,
-      email: users.email,
+      username: users.username,
       role: users.role,
       isActive: users.isActive,
       createdAt: users.createdAt,

@@ -2,7 +2,7 @@
 
 import { authActionClient } from '@/lib/actions/client'
 import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema } from '@/lib/validations/appointments'
-import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog, getWeeklyAppointmentsByPerson } from '@/lib/queries/appointments'
+import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog, getWeeklyAppointmentsByPerson, getWeeklyAppointmentsByStation } from '@/lib/queries/appointments'
 import { getStaffStatusForDate, getActiveUsers, getWeeklyStaffShifts } from '@/lib/queries/staff'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
 import { getDogsByClient } from '@/lib/queries/dogs'
@@ -21,24 +21,28 @@ export const fetchWeeklyAgendaData = authActionClient
     const { locationId, weekStart } = parsedInput
     const weekEnd = format(addDays(parseISO(weekStart), 6), 'yyyy-MM-dd')
 
-    const [allUsers, staffShiftsRaw, allAppointments] = await Promise.all([
+    const [allUsers, staffShiftsRaw, stationAppts, stationsRaw, businessHoursRaw] = await Promise.all([
       getActiveUsers(ctx.tenantId),
       getWeeklyStaffShifts(weekStart, weekEnd, locationId, ctx.tenantId),
-      getWeeklyAppointmentsByPerson(weekStart, weekEnd, ctx.tenantId),
+      getWeeklyAppointmentsByStation(weekStart, weekEnd, locationId, ctx.tenantId),
+      getStationsByLocation(locationId, ctx.tenantId),
+      getLocationBusinessHours(locationId, ctx.tenantId),
     ])
 
     const staffWithShifts = allUsers.filter(u => (staffShiftsRaw[u.id]?.length ?? 0) > 0)
 
-    const appointmentsByUser: Record<string, typeof allAppointments> = {}
-    for (const appt of allAppointments) {
-      if (!appointmentsByUser[appt.userId]) appointmentsByUser[appt.userId] = []
-      appointmentsByUser[appt.userId].push(appt)
+    const appointmentsByStation: Record<string, { id: string; stationId: string; startTime: Date; endTime: Date }[]> = {}
+    for (const appt of stationAppts) {
+      if (!appointmentsByStation[appt.stationId]) appointmentsByStation[appt.stationId] = []
+      appointmentsByStation[appt.stationId].push(appt)
     }
 
     return {
       staff: staffWithShifts,
       staffShifts: staffShiftsRaw,
-      appointments: appointmentsByUser,
+      stations: stationsRaw.map(s => ({ id: s.id, name: s.name })),
+      appointmentsByStation,
+      businessHours: businessHoursRaw,
     }
   })
 
@@ -46,13 +50,19 @@ export const getAgendaData = authActionClient
   .schema(getAppointmentsQuerySchema)
   .action(async ({ parsedInput, ctx }) => {
     const { locationId, date } = parsedInput
-    const [appts, staff, businessHours] = await Promise.all([
+    const [appts, staff, businessHours, stationsRaw] = await Promise.all([
       getAppointmentsByDateAndLocationGroupedByUser(date, ctx.tenantId),
       getStaffStatusForDate(locationId, date, ctx.tenantId),
       getLocationBusinessHours(locationId, ctx.tenantId),
+      getStationsByLocation(locationId, ctx.tenantId),
     ])
 
-    return { appointments: appts, staff, businessHours }
+    return {
+      appointments: appts,
+      staff,
+      businessHours,
+      stations: stationsRaw.map(s => ({ id: s.id, name: s.name })),
+    }
   })
 
 async function findAlternativeSlots(

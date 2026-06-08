@@ -8,6 +8,7 @@ export async function getStationsByLocation(locationId: string, tenantId: string
       id: stations.id,
       name: stations.name,
       locationId: stations.locationId,
+      allowedSizes: stations.allowedSizes,
       createdAt: stations.createdAt,
     })
     .from(stations)
@@ -41,6 +42,7 @@ export async function getStationById(stationId: string, tenantId: string) {
       id: stations.id,
       name: stations.name,
       locationId: stations.locationId,
+      allowedSizes: stations.allowedSizes,
       createdAt: stations.createdAt,
     })
     .from(stations)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   createStationSchema,
@@ -9,10 +9,12 @@ import {
   type UpdateStationFormData,
 } from '@/lib/validations/stations'
 import { createStation, updateStation } from '@/lib/actions/stations'
+import { SIZE_TYPES, SIZE_LABELS, type SizeType } from '@/lib/types'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -36,6 +38,7 @@ interface StationFormProps {
   station?: {
     id: string
     name: string
+    allowedSizes?: string[] | null
   } | null
 }
 
@@ -43,11 +46,16 @@ export function StationForm({ open, onOpenChange, onSuccess, locationId, station
   const isMobile = useIsMobile()
   const isEditing = !!station
 
+  const defaultSizes = [...SIZE_TYPES] as SizeType[]
+  const initialSizes = station?.allowedSizes
+    ? (station.allowedSizes as SizeType[])
+    : defaultSizes
+
   const form = useForm<CreateStationFormData | UpdateStationFormData>({
     resolver: zodResolver(isEditing ? updateStationSchema : createStationSchema),
     defaultValues: isEditing
-      ? { id: station.id, name: station.name }
-      : { name: '', locationId },
+      ? { id: station.id, name: station.name, allowedSizes: initialSizes }
+      : { name: '', locationId, allowedSizes: defaultSizes },
   })
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createStation, {
@@ -97,6 +105,45 @@ export function StationForm({ open, onOpenChange, onSuccess, locationId, station
         {form.formState.errors.name && (
           <p className="text-sm text-destructive">
             {form.formState.errors.name.message}
+          </p>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label>Taglie ammesse</Label>
+        <p className="text-xs text-muted-foreground">
+          Deseleziona le taglie troppo grandi per questa postazione
+        </p>
+        <Controller
+          control={form.control}
+          name="allowedSizes"
+          render={({ field }) => (
+            <div className="flex flex-wrap gap-3">
+              {SIZE_TYPES.map((size) => {
+                const checked = (field.value as SizeType[] | undefined)?.includes(size) ?? true
+                return (
+                  <label key={size} className="flex items-center gap-1.5 cursor-pointer select-none">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(c) => {
+                        const current = (field.value as SizeType[]) ?? [...SIZE_TYPES]
+                        if (c) {
+                          field.onChange([...current, size])
+                        } else {
+                          field.onChange(current.filter((s) => s !== size))
+                        }
+                      }}
+                    />
+                    <span className="text-sm">{SIZE_LABELS[size]}</span>
+                  </label>
+                )
+              })}
+            </div>
+          )}
+        />
+        {form.formState.errors.allowedSizes && (
+          <p className="text-sm text-destructive">
+            {form.formState.errors.allowedSizes.message}
           </p>
         )}
       </div>

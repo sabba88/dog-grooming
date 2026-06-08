@@ -21,7 +21,7 @@ import {
   deleteAppointment,
   fetchWeeklyAgendaData,
 } from '@/lib/actions/appointments'
-import { computeAgendaRange } from '@/lib/utils/schedule'
+import { computeAgendaRange, timeToMinutes } from '@/lib/utils/schedule'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import {
@@ -56,8 +56,10 @@ export function AgendaView({ locations }: AgendaViewProps) {
   const [viewMode, setViewMode] = useState<'day' | 'week'>('week')
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [appointmentSlot, setAppointmentSlot] = useState<{
-    userId: string
-    userName: string
+    stationId?: string | null
+    stationName?: string | null
+    userId?: string
+    userName?: string
     date: string
     time: string
     locationId: string
@@ -69,6 +71,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
     id: string
     duration: number
     serviceName: string
+    userId: string
   } | null>(null)
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
@@ -90,6 +93,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
           })),
           staff: result.data.staff,
           businessHours: result.data.businessHours,
+          stations: result.data.stations,
         }
       }
       return null
@@ -110,7 +114,9 @@ export function AgendaView({ locations }: AgendaViewProps) {
       return {
         staff: result.data.staff,
         staffShifts: result.data.staffShifts,
-        appointments: result.data.appointments,
+        stations: result.data.stations,
+        appointmentsByStation: result.data.appointmentsByStation,
+        businessHours: result.data.businessHours,
       }
     },
     enabled: !!selectedLocationId && isHydrated && viewMode === 'week',
@@ -136,10 +142,14 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
   const appointments = data?.appointments ?? []
   const staff = data?.staff ?? []
+  const stations = data?.stations ?? []
   const dayOfWeek = (getDay(selectedDate) + 6) % 7
   const { globalOpen, globalClose } = data?.businessHours
     ? computeAgendaRange(data.businessHours, dayOfWeek)
     : { globalOpen: '08:00', globalClose: '20:00' }
+  const openIntervals = (data?.businessHours ?? [])
+    .filter(h => h.dayOfWeek === dayOfWeek)
+    .map(h => ({ start: timeToMinutes(h.openTime), end: timeToMinutes(h.closeTime) }))
 
   const handleAppointmentClick = (id: string) => {
     if (movingAppointment) return
@@ -154,7 +164,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
       const start = new Date(appt.startTime)
       const end = new Date(appt.endTime)
       const duration = (end.getTime() - start.getTime()) / (60 * 1000)
-      setMovingAppointment({ id: appointmentId, duration, serviceName: appt.serviceName })
+      setMovingAppointment({ id: appointmentId, duration, serviceName: appt.serviceName, userId: appt.userId })
       setSelectedAppointmentId(null)
     }
   }
@@ -193,9 +203,9 @@ export function AgendaView({ locations }: AgendaViewProps) {
     setMovingAppointment(null)
   }
 
-  const handleEmptySlotClick = (slotData: { userId: string; userName: string; date: string; time: string }) => {
+  const handleEmptySlotClick = (slotData: { stationId?: string; stationName?: string; userId?: string; userName?: string; date: string; time: string }) => {
     if (movingAppointment) {
-      handleMoveSlotClick(slotData.userId, slotData.date, slotData.time)
+      handleMoveSlotClick(movingAppointment.userId, slotData.date, slotData.time)
       return
     }
     setAppointmentSlot({ ...slotData, locationId: selectedLocationId! })
@@ -273,8 +283,8 @@ export function AgendaView({ locations }: AgendaViewProps) {
     </div>
   )
 
-  // No staff assigned (day mode only)
-  if (viewMode === 'day' && isHydrated && selectedLocationId && data && staff.length === 0) {
+  // No stations configured (day mode only)
+  if (viewMode === 'day' && isHydrated && selectedLocationId && data && stations.length === 0) {
     return (
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-2">
@@ -288,13 +298,13 @@ export function AgendaView({ locations }: AgendaViewProps) {
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <Settings className="size-10 text-muted-foreground" />
           <p className="text-muted-foreground text-center">
-            Nessun collaboratore assegnato a questa sede per oggi
+            Nessuna postazione configurata per questa sede
           </p>
           <Link
-            href="/settings/staff"
+            href="/settings/locations"
             className="text-sm text-primary hover:underline"
           >
-            Vai a Impostazioni per configurare le assegnazioni
+            Vai a Impostazioni per configurare le postazioni
           </Link>
         </div>
       </div>
@@ -343,11 +353,13 @@ export function AgendaView({ locations }: AgendaViewProps) {
       {viewMode === 'day' && (
         isMobile ? (
           <ScheduleTimeline
+            stations={stations}
             staff={staff}
             appointments={appointments}
             dateString={dateString}
             globalOpen={globalOpen}
             globalClose={globalClose}
+            openIntervals={openIntervals}
             onAppointmentClick={handleAppointmentClick}
             onEmptySlotClick={handleEmptySlotClick}
             movingAppointmentId={movingAppointment?.id}
@@ -355,12 +367,14 @@ export function AgendaView({ locations }: AgendaViewProps) {
           />
         ) : (
           <ScheduleGrid
+            stations={stations}
             staff={staff}
             appointments={appointments}
             selectedDate={selectedDate}
             dateString={dateString}
             globalOpen={globalOpen}
             globalClose={globalClose}
+            openIntervals={openIntervals}
             onAppointmentClick={handleAppointmentClick}
             onEmptySlotClick={handleEmptySlotClick}
             movingAppointmentId={movingAppointment?.id}
@@ -375,7 +389,9 @@ export function AgendaView({ locations }: AgendaViewProps) {
           weekDates={weekDates}
           staff={weeklyData?.staff ?? []}
           staffShifts={weeklyData?.staffShifts ?? {}}
-          appointments={weeklyData?.appointments ?? {}}
+          stations={weeklyData?.stations ?? []}
+          appointmentsByStation={weeklyData?.appointmentsByStation ?? {}}
+          businessHours={weeklyData?.businessHours ?? []}
           onDayClick={handleDayClick}
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
@@ -459,6 +475,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
             {appointmentSlot && (
               <AppointmentForm
                 prefilledSlot={appointmentSlot}
+                availableStaff={staff.filter(p => p.overallStatus === 'active').map(p => ({ id: p.id, name: p.name }))}
                 onSuccess={handleAppointmentCreated}
                 onCancel={() => setAppointmentSlot(null)}
               />
@@ -474,6 +491,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
             {appointmentSlot && (
               <AppointmentForm
                 prefilledSlot={appointmentSlot}
+                availableStaff={staff.filter(p => p.overallStatus === 'active').map(p => ({ id: p.id, name: p.name }))}
                 onSuccess={handleAppointmentCreated}
                 onCancel={() => setAppointmentSlot(null)}
               />

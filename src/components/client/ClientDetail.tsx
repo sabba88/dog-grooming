@@ -4,10 +4,23 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { ClientForm } from '@/components/client/ClientForm'
 import { ClientNotes } from '@/components/client/ClientNotes'
 import { DogList } from '@/components/dog/DogList'
-import { ArrowLeft, Pencil, Calendar, Clock } from 'lucide-react'
+import { deleteClient } from '@/lib/actions/clients'
+import { useAction } from 'next-safe-action/hooks'
+import { toast } from 'sonner'
+import { ArrowLeft, Pencil, Trash2, Calendar, Clock } from 'lucide-react'
 
 const dateFormatter = new Intl.DateTimeFormat('it-IT', {
   dateStyle: 'long',
@@ -78,6 +91,17 @@ interface ClientDetailProps {
 export function ClientDetail({ client, notes, dogs, breeds, appointments, userRole }: ClientDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+
+  const { execute: execDelete, isPending: isDeleting } = useAction(deleteClient, {
+    onSuccess: () => {
+      toast.success('Cliente eliminato')
+      router.push('/clients')
+    },
+    onError: (error) => {
+      toast.error(error.error?.serverError || 'Errore durante l\'eliminazione')
+    },
+  })
 
   function handleSuccess() {
     router.refresh()
@@ -99,10 +123,23 @@ export function ClientDetail({ client, notes, dogs, breeds, appointments, userRo
       <div className="rounded-lg border border-border bg-card p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-foreground">Dati Anagrafici</h2>
-          <Button variant="outline" size="sm" onClick={() => setFormOpen(true)}>
-            <Pencil className="h-4 w-4 mr-1" />
-            Modifica
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setFormOpen(true)}>
+              <Pencil className="h-4 w-4 mr-1" />
+              Modifica
+            </Button>
+            {userRole === 'admin' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Elimina
+              </Button>
+            )}
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -249,6 +286,27 @@ export function ClientDetail({ client, notes, dogs, breeds, appointments, userRo
         onSuccess={handleSuccess}
         client={client}
       />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminare {client.nominativo}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Verranno eliminati anche tutti i cani associati. Questa operazione non è reversibile.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => execDelete({ id: client.id })}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Eliminazione...' : 'Elimina'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

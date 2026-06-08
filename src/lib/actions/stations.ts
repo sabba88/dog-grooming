@@ -34,6 +34,7 @@ export const createStation = authActionClient
         name: parsedInput.name,
         locationId: parsedInput.locationId,
         tenantId: ctx.tenantId,
+        allowedSizes: parsedInput.allowedSizes ?? null,
       })
       .returning({
         id: stations.id,
@@ -54,6 +55,7 @@ export const updateStation = authActionClient
       .update(stations)
       .set({
         name: parsedInput.name,
+        allowedSizes: parsedInput.allowedSizes ?? null,
         updatedAt: new Date(),
       })
       .where(

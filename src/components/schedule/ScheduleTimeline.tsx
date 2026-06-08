@@ -6,6 +6,11 @@ import { EmptySlot } from './EmptySlot'
 import { generateTimeSlots, getServiceColor } from '@/lib/utils/schedule'
 import type { StaffStatus, ShiftInfo } from '@/lib/queries/staff'
 
+interface Station {
+  id: string
+  name: string
+}
+
 interface Person {
   id: string
   name: string
@@ -28,44 +33,55 @@ interface Appointment {
   serviceId: string
 }
 
+interface SlotData {
+  stationId?: string
+  stationName?: string
+  userId?: string
+  userName?: string
+  date: string
+  time: string
+}
+
 interface ScheduleTimelineProps {
+  stations: Station[]
   staff: Person[]
   appointments: Appointment[]
   dateString: string
   globalOpen: string
   globalClose: string
+  openIntervals: { start: number; end: number }[]
   onAppointmentClick?: (id: string) => void
-  onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
+  onEmptySlotClick?: (data: SlotData) => void
   movingAppointmentId?: string
   onContextAction?: (action: 'detail' | 'add-note' | 'move' | 'delete', id: string) => void
 }
 
-const STATUS_DOT_COLOR: Record<StaffStatus, string> = {
-  active: '#22C55E',
-  elsewhere: '#EAB308',
-  unassigned: '#9CA3AF',
+function isInOpenHours(slotMinutes: number, openIntervals: { start: number; end: number }[]): boolean {
+  return openIntervals.some(iv => slotMinutes >= iv.start && slotMinutes < iv.end)
 }
 
-function PersonTimeline({
-  person,
+function StationTimeline({
+  station,
   appointments,
   allServiceIds,
   dateString,
   globalOpen,
   globalClose,
+  openIntervals,
   onAppointmentClick,
   onEmptySlotClick,
   movingAppointmentId,
   onContextAction,
 }: {
-  person: Person
+  station: Station
   appointments: Appointment[]
   allServiceIds: string[]
   dateString: string
   globalOpen: string
   globalClose: string
+  openIntervals: { start: number; end: number }[]
   onAppointmentClick?: (id: string) => void
-  onEmptySlotClick?: (data: { userId: string; userName: string; date: string; time: string }) => void
+  onEmptySlotClick?: (data: SlotData) => void
   movingAppointmentId?: string
   onContextAction?: (action: 'detail' | 'add-note' | 'move' | 'delete', id: string) => void
 }) {
@@ -83,13 +99,11 @@ function PersonTimeline({
           return slotMinutes >= startMinutes && slotMinutes < endMinutes
         })
 
-        // Only show the appointment block on its first slot
         if (appt) {
           const apptStartMinutes = appt.startTime.getUTCHours() * 60 + appt.startTime.getUTCMinutes()
           if (slotMinutes !== apptStartMinutes) return null
 
           const color = getServiceColor(appt.serviceId, allServiceIds)
-
           return (
             <div key={slot} className="flex gap-3 items-start">
               <span className="text-xs text-muted-foreground w-12 pt-3 shrink-0">{slot}</span>
@@ -113,18 +127,21 @@ function PersonTimeline({
           )
         }
 
+        const isClosed = !isInOpenHours(slotMinutes, openIntervals)
+
         return (
-          <div key={slot} className="flex gap-3 items-start">
+          <div key={slot} className={`flex gap-3 items-start${isClosed ? ' opacity-60' : ''}`}>
             <span className="text-xs text-muted-foreground w-12 pt-3 shrink-0">{slot}</span>
             <div className="flex-1">
               <EmptySlot
-                userId={person.id}
-                userName={person.name}
+                stationId={station.id}
+                stationName={station.name}
                 date={dateString}
                 time={slot}
                 variant="timeline"
+                closed={isClosed}
                 onClick={onEmptySlotClick}
-                isMovingTarget={!!movingAppointmentId && person.overallStatus === 'active'}
+                isMovingTarget={!!movingAppointmentId}
               />
             </div>
           </div>
@@ -135,55 +152,62 @@ function PersonTimeline({
 }
 
 export function ScheduleTimeline({
+  stations,
   staff,
   appointments,
   dateString,
   globalOpen,
   globalClose,
+  openIntervals,
   onAppointmentClick,
   onEmptySlotClick,
   movingAppointmentId,
   onContextAction,
 }: ScheduleTimelineProps) {
   const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
+  const activeStaff = staff.filter(p => p.overallStatus === 'active')
 
   return (
     <Tabs defaultValue="all" className="w-full">
       <TabsList className="w-full overflow-x-auto">
         <TabsTrigger value="all">Tutte</TabsTrigger>
-        {staff.map((person) => (
-          <TabsTrigger key={person.id} value={person.id} className="gap-1.5">
-            <span
-              className="size-2 rounded-full inline-block shrink-0"
-              style={{ backgroundColor: STATUS_DOT_COLOR[person.overallStatus] }}
-            />
-            {person.name}
+        {stations.map((station) => (
+          <TabsTrigger key={station.id} value={station.id}>
+            {station.name}
           </TabsTrigger>
         ))}
       </TabsList>
 
-      <TabsContent value="all" className="mt-4">
-        <div className="flex flex-col gap-6">
-          {staff.map((person) => {
-            const personAppointments = appointments.filter(
-              (a) => a.userId === person.id
-            )
+      {activeStaff.length > 0 && (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 py-2 px-1">
+          {activeStaff.map((person) => {
+            const shifts = person.shifts.filter(s => s.status === 'active')
+            if (shifts.length === 0) return null
             return (
-              <div key={person.id}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span
-                    className="size-2 rounded-full inline-block shrink-0"
-                    style={{ backgroundColor: STATUS_DOT_COLOR[person.overallStatus] }}
-                  />
-                  <h3 className="text-sm font-semibold text-foreground">{person.name}</h3>
-                </div>
-                <PersonTimeline
-                  person={person}
-                  appointments={personAppointments}
+              <span key={person.id} className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{person.name.split(' ')[0]}</span>
+                {' '}{shifts.map(s => `${s.startTime}–${s.endTime}`).join(', ')}
+              </span>
+            )
+          })}
+        </div>
+      )}
+
+      <TabsContent value="all" className="mt-0">
+        <div className="flex flex-col gap-6">
+          {stations.map((station) => {
+            const stationAppts = appointments.filter(a => a.stationId === station.id)
+            return (
+              <div key={station.id}>
+                <h3 className="text-sm font-semibold mb-2">{station.name}</h3>
+                <StationTimeline
+                  station={station}
+                  appointments={stationAppts}
                   allServiceIds={allServiceIds}
                   dateString={dateString}
                   globalOpen={globalOpen}
                   globalClose={globalClose}
+                  openIntervals={openIntervals}
                   onAppointmentClick={onAppointmentClick}
                   onEmptySlotClick={onEmptySlotClick}
                   movingAppointmentId={movingAppointmentId}
@@ -195,19 +219,18 @@ export function ScheduleTimeline({
         </div>
       </TabsContent>
 
-      {staff.map((person) => {
-        const personAppointments = appointments.filter(
-          (a) => a.userId === person.id
-        )
+      {stations.map((station) => {
+        const stationAppts = appointments.filter(a => a.stationId === station.id)
         return (
-          <TabsContent key={person.id} value={person.id} className="mt-4">
-            <PersonTimeline
-              person={person}
-              appointments={personAppointments}
+          <TabsContent key={station.id} value={station.id} className="mt-4">
+            <StationTimeline
+              station={station}
+              appointments={stationAppts}
               allServiceIds={allServiceIds}
               dateString={dateString}
               globalOpen={globalOpen}
               globalClose={globalClose}
+              openIntervals={openIntervals}
               onAppointmentClick={onAppointmentClick}
               onEmptySlotClick={onEmptySlotClick}
               movingAppointmentId={movingAppointmentId}

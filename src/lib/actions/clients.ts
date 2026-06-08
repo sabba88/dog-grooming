@@ -7,8 +7,9 @@ import {
   addClientNoteSchema,
 } from '@/lib/validations/clients'
 import { db } from '@/lib/db'
-import { clients, clientNotes } from '@/lib/db/schema'
+import { clients, clientNotes, dogs } from '@/lib/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
+import { z } from 'zod'
 
 export const createClient = authActionClient
   .schema(createClientSchema)
@@ -67,6 +68,41 @@ export const updateClient = authActionClient
     }
 
     return { client: updatedClient }
+  })
+
+export const deleteClient = authActionClient
+  .schema(z.object({ id: z.string().uuid() }))
+  .action(async ({ parsedInput, ctx }) => {
+    const now = new Date()
+
+    const [deleted] = await db
+      .update(clients)
+      .set({ deletedAt: now })
+      .where(
+        and(
+          eq(clients.id, parsedInput.id),
+          eq(clients.tenantId, ctx.tenantId),
+          isNull(clients.deletedAt)
+        )
+      )
+      .returning({ id: clients.id })
+
+    if (!deleted) {
+      throw new Error('Cliente non trovato')
+    }
+
+    await db
+      .update(dogs)
+      .set({ deletedAt: now })
+      .where(
+        and(
+          eq(dogs.clientId, parsedInput.id),
+          eq(dogs.tenantId, ctx.tenantId),
+          isNull(dogs.deletedAt)
+        )
+      )
+
+    return { id: deleted.id }
   })
 
 export const addClientNote = authActionClient
