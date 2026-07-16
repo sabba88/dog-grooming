@@ -139,12 +139,12 @@ export function ShiftCell({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="w-full text-left rounded-sm px-2 py-1 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full text-left rounded-sm px-2 py-1 bg-emerald-600 border border-emerald-200 hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <div className="text-[11px] font-medium text-emerald-800 truncate leading-tight">
+              <div className="text-[11px] font-medium text-white truncate leading-tight">
                 {shift.locationName ?? 'Sede'}
               </div>
-              <div className="text-[10px] text-emerald-600 leading-tight">
+              <div className="text-[10px] text-white/80 leading-tight">
                 {shift.startTime}–{shift.endTime}
               </div>
             </button>

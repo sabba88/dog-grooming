@@ -25,6 +25,7 @@ export const createUser = authActionClient
           username: parsedInput.username,
           password: hashedPassword,
           role: parsedInput.role,
+          color: parsedInput.color ?? null,
           tenantId: ctx.tenantId,
           isActive: true,
         })
@@ -61,6 +62,7 @@ export const updateUser = authActionClient
       name: parsedInput.name,
       username: parsedInput.username,
       role: parsedInput.role,
+      color: parsedInput.color ?? null,
       updatedAt: new Date(),
     }
 

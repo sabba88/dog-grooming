@@ -3,7 +3,7 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { AppointmentBlock } from './AppointmentBlock'
 import { EmptySlot } from './EmptySlot'
-import { generateTimeSlots, getServiceColor } from '@/lib/utils/schedule'
+import { generateTimeSlots, getServiceColor, getUserColor } from '@/lib/utils/schedule'
 import type { StaffStatus, ShiftInfo } from '@/lib/queries/staff'
 
 interface Station {
@@ -15,6 +15,7 @@ interface Person {
   id: string
   name: string
   role: 'admin' | 'collaborator'
+  color: string | null
   overallStatus: StaffStatus
   shifts: ShiftInfo[]
 }
@@ -64,6 +65,7 @@ function StationTimeline({
   station,
   appointments,
   allServiceIds,
+  staff,
   dateString,
   globalOpen,
   globalClose,
@@ -76,6 +78,7 @@ function StationTimeline({
   station: Station
   appointments: Appointment[]
   allServiceIds: string[]
+  staff: Person[]
   dateString: string
   globalOpen: string
   globalClose: string
@@ -103,7 +106,8 @@ function StationTimeline({
           const apptStartMinutes = appt.startTime.getUTCHours() * 60 + appt.startTime.getUTCMinutes()
           if (slotMinutes !== apptStartMinutes) return null
 
-          const color = getServiceColor(appt.serviceId, allServiceIds)
+          const staffMember = staff.find(p => p.id === appt.userId)
+          const color = staffMember?.color ? getUserColor(staffMember.color) : getServiceColor(appt.serviceId, allServiceIds)
           return (
             <div key={slot} className="flex gap-3 items-start">
               <span className="text-xs text-muted-foreground w-12 pt-3 shrink-0">{slot}</span>
@@ -113,6 +117,7 @@ function StationTimeline({
                   clientName={appt.clientNominativo}
                   dogName={appt.dogName}
                   serviceName={appt.serviceName}
+                  staffName={staffMember?.name ?? ''}
                   price={appt.price}
                   startTime={appt.startTime}
                   endTime={appt.endTime}
@@ -204,6 +209,7 @@ export function ScheduleTimeline({
                   station={station}
                   appointments={stationAppts}
                   allServiceIds={allServiceIds}
+                  staff={staff}
                   dateString={dateString}
                   globalOpen={globalOpen}
                   globalClose={globalClose}
@@ -227,6 +233,7 @@ export function ScheduleTimeline({
               station={station}
               appointments={stationAppts}
               allServiceIds={allServiceIds}
+              staff={staff}
               dateString={dateString}
               globalOpen={globalOpen}
               globalClose={globalClose}

@@ -1,7 +1,7 @@
 'use server'
 
 import { authActionClient } from '@/lib/actions/client'
-import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema } from '@/lib/validations/appointments'
+import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema, reassignStaffSchema } from '@/lib/validations/appointments'
 import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog, getWeeklyAppointmentsByPerson, getWeeklyAppointmentsByStation } from '@/lib/queries/appointments'
 import { getStaffStatusForDate, getActiveUsers, getWeeklyStaffShifts } from '@/lib/queries/staff'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
@@ -12,7 +12,7 @@ import { timeToMinutes } from '@/lib/utils/schedule'
 import { addDays, parseISO, format } from 'date-fns'
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { appointments, stationServices, userLocationAssignments } from '@/lib/db/schema'
+import { appointments, stationServices, userLocationAssignments, users } from '@/lib/db/schema'
 import { eq, and, lt, gt, gte, asc, ne } from 'drizzle-orm'
 
 export const fetchWeeklyAgendaData = authActionClient
@@ -113,6 +113,74 @@ async function findAlternativeSlots(
   return alternatives
 }
 
+async function findAlternativeStaff(
+  excludeUserId: string,
+  locationId: string,
+  date: string,
+  startTime: Date,
+  endTime: Date,
+  tenantId: string
+): Promise<{ id: string; name: string }[]> {
+  const shifts = await db
+    .select({
+      userId: userLocationAssignments.userId,
+      shiftStart: userLocationAssignments.startTime,
+      shiftEnd: userLocationAssignments.endTime,
+    })
+    .from(userLocationAssignments)
+    .where(
+      and(
+        eq(userLocationAssignments.locationId, locationId),
+        eq(userLocationAssignments.date, date),
+        eq(userLocationAssignments.tenantId, tenantId)
+      )
+    )
+
+  const apptStartMin = startTime.getUTCHours() * 60 + startTime.getUTCMinutes()
+  const apptEndMin = endTime.getUTCHours() * 60 + endTime.getUTCMinutes()
+
+  const candidateIds = [...new Set(
+    shifts
+      .filter(s => {
+        if (s.userId === excludeUserId) return false
+        const sStart = timeToMinutes(s.shiftStart)
+        const sEnd = timeToMinutes(s.shiftEnd)
+        return apptStartMin >= sStart && apptEndMin <= sEnd
+      })
+      .map(s => s.userId)
+  )]
+
+  if (candidateIds.length === 0) return []
+
+  const dayStart = new Date(date + 'T00:00:00.000Z')
+  const dayEnd = new Date(date + 'T23:59:59.999Z')
+
+  const conflictingAppts = await db
+    .select({ userId: appointments.userId })
+    .from(appointments)
+    .where(
+      and(
+        eq(appointments.tenantId, tenantId),
+        gte(appointments.startTime, dayStart),
+        lt(appointments.startTime, dayEnd),
+        lt(appointments.startTime, endTime),
+        gt(appointments.endTime, startTime)
+      )
+    )
+
+  const busyUserIds = new Set(conflictingAppts.map(a => a.userId))
+  const freeIds = candidateIds.filter(id => !busyUserIds.has(id))
+  if (freeIds.length === 0) return []
+
+  const staffRows = await db
+    .select({ id: users.id, name: users.name })
+    .from(users)
+    .where(and(eq(users.tenantId, tenantId), eq(users.isActive, true)))
+    .orderBy(asc(users.name))
+
+  return staffRows.filter(u => freeIds.includes(u.id)).slice(0, 3)
+}
+
 export const fetchStationsForLocation = authActionClient
   .schema(z.object({ locationId: z.string().uuid() }))
   .action(async ({ parsedInput, ctx }) => {
@@ -144,7 +212,7 @@ export const fetchAllServices = authActionClient
 export const createAppointment = authActionClient
   .schema(createAppointmentSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const { userId, stationId, date, time, clientId, dogId, serviceId, duration, price } = parsedInput
+    const { userId, locationId, stationId, date, time, clientId, dogId, serviceId, duration, price } = parsedInput
 
     // 1. Calcola startTime e endTime
     const startTime = new Date(`${date}T${time}:00.000Z`)
@@ -184,12 +252,18 @@ export const createAppointment = authActionClient
       .limit(1)
 
     if (conflicts.length > 0) {
-      const alternatives = await findAlternativeSlots(userId, date, duration, ctx.tenantId)
+      const [alternatives, alternativeStaff] = await Promise.all([
+        findAlternativeSlots(userId, date, duration, ctx.tenantId),
+        locationId
+          ? findAlternativeStaff(userId, locationId, date, startTime, endTime, ctx.tenantId)
+          : Promise.resolve([]),
+      ])
       return {
         error: {
           code: 'SLOT_OCCUPIED' as const,
           message: "Lo slot e' gia' occupato",
           alternatives,
+          alternativeStaff,
         },
       }
     }
@@ -317,10 +391,61 @@ export const fetchAppointmentPrice = authActionClient
     return { basePrice }
   })
 
+export const fetchActiveUsers = authActionClient
+  .schema(z.object({}))
+  .action(async ({ ctx }) => {
+    const users = await getActiveUsers(ctx.tenantId)
+    return { users }
+  })
+
+export const reassignStaff = authActionClient
+  .schema(reassignStaffSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { id, userId } = parsedInput
+
+    const [existing] = await db
+      .select({ startTime: appointments.startTime, endTime: appointments.endTime })
+      .from(appointments)
+      .where(and(eq(appointments.id, id), eq(appointments.tenantId, ctx.tenantId)))
+      .limit(1)
+
+    if (!existing) throw new Error('Appuntamento non trovato')
+
+    const conflicts = await db
+      .select({ id: appointments.id })
+      .from(appointments)
+      .where(
+        and(
+          eq(appointments.userId, userId),
+          eq(appointments.tenantId, ctx.tenantId),
+          ne(appointments.id, id),
+          lt(appointments.startTime, existing.endTime),
+          gt(appointments.endTime, existing.startTime)
+        )
+      )
+      .limit(1)
+
+    if (conflicts.length > 0) {
+      return {
+        error: {
+          code: 'SLOT_OCCUPIED' as const,
+          message: 'Il collaboratore ha già un appuntamento in questo orario',
+        },
+      }
+    }
+
+    await db
+      .update(appointments)
+      .set({ userId, updatedAt: new Date() })
+      .where(and(eq(appointments.id, id), eq(appointments.tenantId, ctx.tenantId)))
+
+    return { success: true }
+  })
+
 export const moveAppointment = authActionClient
   .schema(moveAppointmentSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const { id, userId, date, time } = parsedInput
+    const { id, userId, stationId, date, time } = parsedInput
 
     // 1. Caricare appuntamento esistente per calcolare durata
     const [existing] = await db
@@ -409,6 +534,7 @@ export const moveAppointment = authActionClient
       .update(appointments)
       .set({
         userId,
+        ...(stationId !== undefined && { stationId }),
         startTime: newStartTime,
         endTime: newEndTime,
         updatedAt: new Date(),

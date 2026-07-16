@@ -19,7 +19,11 @@ export async function GET(request: NextRequest) {
   const enriched = await Promise.all(
     clients.map(async (client) => {
       const dogs = await getDogsByClient(client.id, session.user.tenantId)
-      return { ...client, dogsCount: dogs.length }
+      return {
+        ...client,
+        dogsCount: dogs.length,
+        dogs: dogs.map((d) => ({ id: d.id, name: d.name, breedName: d.breedName ?? null })),
+      }
     })
   )
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -53,6 +54,15 @@ export function LocationForm({ open, onOpenChange, onSuccess, location }: Locati
         }
       : { name: '', address: '' },
   })
+
+  useEffect(() => {
+    if (!open) return
+    if (location) {
+      form.reset({ id: location.id, name: location.name, address: location.address })
+    } else {
+      form.reset({ name: '', address: '' })
+    }
+  }, [open, location?.id])
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createLocation, {
     onSuccess: () => {

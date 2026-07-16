@@ -24,7 +24,8 @@
     "db:seed-pricing-surcharges:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-pricing-surcharges.ts",
     "db:seed-import0505:dev": "dotenv -e .env.dev -- npx tsx src/lib/db/seed-import0505.ts",
     "db:seed-import0505:uat": "dotenv -e .env.uat -- npx tsx src/lib/db/seed-import0505.ts",
-    "db:seed-import0505:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-import0505.ts"
+    "db:seed-import0505:prod": "dotenv -e .env.prod -- npx tsx src/lib/db/seed-import0505.ts",
+    "db:migrate:dev-to-uat": "npx tsx src/lib/db/migrate-dev-to-uat.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

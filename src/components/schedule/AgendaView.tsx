@@ -72,6 +72,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
     duration: number
     serviceName: string
     userId: string
+    stationId: string | null
   } | null>(null)
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
@@ -164,12 +165,12 @@ export function AgendaView({ locations }: AgendaViewProps) {
       const start = new Date(appt.startTime)
       const end = new Date(appt.endTime)
       const duration = (end.getTime() - start.getTime()) / (60 * 1000)
-      setMovingAppointment({ id: appointmentId, duration, serviceName: appt.serviceName, userId: appt.userId })
+      setMovingAppointment({ id: appointmentId, duration, serviceName: appt.serviceName, userId: appt.userId, stationId: appt.stationId ?? null })
       setSelectedAppointmentId(null)
     }
   }
 
-  const handleMoveSlotClick = async (userId: string, date: string, time: string) => {
+  const handleMoveSlotClick = async (userId: string, date: string, time: string, stationId?: string | null) => {
     if (!movingAppointment) return
 
     const result = await moveAppointmentAction({
@@ -177,6 +178,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
       userId,
       date,
       time,
+      ...(stationId !== undefined && { stationId }),
     })
 
     if (result?.data?.error) {
@@ -205,7 +207,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
   const handleEmptySlotClick = (slotData: { stationId?: string; stationName?: string; userId?: string; userName?: string; date: string; time: string }) => {
     if (movingAppointment) {
-      handleMoveSlotClick(movingAppointment.userId, slotData.date, slotData.time)
+      handleMoveSlotClick(movingAppointment.userId, slotData.date, slotData.time, slotData.stationId ?? null)
       return
     }
     setAppointmentSlot({ ...slotData, locationId: selectedLocationId! })

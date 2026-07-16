@@ -9,6 +9,7 @@ export type GetAppointmentsQuery = z.infer<typeof getAppointmentsQuerySchema>
 
 export const createAppointmentSchema = z.object({
   userId: z.string().uuid(),
+  locationId: z.string().uuid().optional(),
   stationId: z.string().uuid().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
@@ -28,6 +29,7 @@ export const deleteAppointmentSchema = z.object({
 export const moveAppointmentSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
+  stationId: z.string().uuid().nullable().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
 })
@@ -51,4 +53,9 @@ export const fetchAppointmentPriceSchema = z.object({
   serviceId: z.string().uuid(),
   coatType: z.string().nullable().optional(),
   sizeType: z.string().nullable().optional(),
+})
+
+export const reassignStaffSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
 })

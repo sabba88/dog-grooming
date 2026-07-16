@@ -227,6 +227,7 @@ export function StationList({
 
       {servicesStation && (
         <StationServicesForm
+          key={servicesStation.id}
           open={servicesFormOpen}
           onOpenChange={setServicesFormOpen}
           onSuccess={handleSuccess}

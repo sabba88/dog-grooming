@@ -40,3 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .gstack/
+
+# dati / manuale / script di debug locali
+*.xlsx
+MANUALE_UTENTE.pdf
+check-*.mjs
+/dog-grooming/
+nul

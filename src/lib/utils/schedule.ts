@@ -58,6 +58,10 @@ export function getServiceColor(serviceId: string, allServiceIds: string[]) {
   return SERVICE_COLORS[index % SERVICE_COLORS.length]
 }
 
+export function getUserColor(hex: string): { bg: string; border: string } {
+  return { bg: `${hex}33`, border: hex }
+}
+
 export function generateTimeSlots(
   openTime: string,
   closeTime: string,

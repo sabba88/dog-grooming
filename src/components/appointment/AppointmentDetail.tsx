@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useAction } from 'next-safe-action/hooks'
-import { fetchAppointmentDetail, deleteAppointment, saveAppointmentNote, fetchServiceNotesByDog } from '@/lib/actions/appointments'
+import { fetchAppointmentDetail, deleteAppointment, saveAppointmentNote, fetchServiceNotesByDog, fetchActiveUsers, reassignStaff } from '@/lib/actions/appointments'
 import { formatPrice, formatDuration } from '@/lib/utils/formatting'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +48,9 @@ export function AppointmentDetail({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [noteText, setNoteText] = useState('')
   const [serviceNotes, setServiceNotes] = useState<ServiceNote[]>([])
+  const [editingStaff, setEditingStaff] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string>('')
+  const [activeUsers, setActiveUsers] = useState<{ id: string; name: string }[]>([])
   const notesTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const { execute: loadDetail, result: detailResult, isExecuting: isLoading } = useAction(fetchAppointmentDetail)
@@ -74,6 +78,23 @@ export function AppointmentDetail({
       }
     },
   })
+  const { execute: loadActiveUsers } = useAction(fetchActiveUsers, {
+    onSuccess: (result) => {
+      if (result.data?.users) setActiveUsers(result.data.users)
+    },
+  })
+  const { execute: executeReassignStaff, isExecuting: isReassigning } = useAction(reassignStaff, {
+    onSuccess: (result) => {
+      if (result.data?.error) {
+        toast.error(result.data.error.message)
+        return
+      }
+      toast.success('Collaboratore aggiornato')
+      setEditingStaff(false)
+      loadDetail({ id: appointmentId })
+    },
+    onError: () => toast.error('Errore durante il salvataggio'),
+  })
 
   useEffect(() => {
     loadDetail({ id: appointmentId })
@@ -82,8 +103,13 @@ export function AppointmentDetail({
   const appointment = detailResult?.data?.appointment
 
   useEffect(() => {
+    loadActiveUsers({})
+  }, [])
+
+  useEffect(() => {
     if (!appointment) return
     setNoteText(appointment.notes ?? '')
+    setSelectedUserId(appointment.userId)
     if (appointment.dogId) {
       loadServiceNotes({ dogId: appointment.dogId, excludeAppointmentId: appointmentId })
     }
@@ -131,9 +157,40 @@ export function AppointmentDetail({
           <span className="text-sm text-muted-foreground w-20">Servizio</span>
           <span className="text-sm font-medium">{appointment.serviceName}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground w-20">Persona</span>
-          <span className="text-sm font-medium">{appointment.userName}</span>
+        <div className="flex items-start gap-2">
+          <span className="text-sm text-muted-foreground w-20 pt-1">Persona</span>
+          {editingStaff ? (
+            <div className="flex items-center gap-2 flex-1">
+              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                <SelectTrigger className="h-8 text-sm flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeUsers.map((u) => (
+                    <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                className="h-8"
+                disabled={isReassigning || selectedUserId === appointment.userId}
+                onClick={() => executeReassignStaff({ id: appointmentId, userId: selectedUserId })}
+              >
+                {isReassigning ? <Loader2 className="size-3 animate-spin" /> : 'Salva'}
+              </Button>
+              <Button size="sm" variant="ghost" className="h-8" onClick={() => { setEditingStaff(false); setSelectedUserId(appointment.userId) }}>
+                Annulla
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{appointment.userName}</span>
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-muted-foreground" onClick={() => setEditingStaff(true)}>
+                Cambia
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="border-t pt-3 flex flex-col gap-3">

@@ -31,11 +31,26 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
   })
 
   const [savingDay, setSavingDay] = useState<number | null>(null)
+  const [dirtyDays, setDirtyDays] = useState<Set<number>>(new Set())
+
+  function markDirty(dayOfWeek: number) {
+    setDirtyDays(prev => {
+      if (prev.has(dayOfWeek)) return prev
+      const next = new Set(prev)
+      next.add(dayOfWeek)
+      return next
+    })
+  }
 
   const { execute } = useAction(upsertLocationBusinessHours, {
-    onSuccess: () => {
+    onSuccess: ({ input }) => {
       toast.success('Orari aggiornati')
       setSavingDay(null)
+      setDirtyDays(prev => {
+        const next = new Set(prev)
+        next.delete(input.dayOfWeek)
+        return next
+      })
     },
     onError: (error) => {
       toast.error(error.error?.serverError ?? 'Errore durante il salvataggio')
@@ -51,6 +66,7 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
       newMap.set(dayOfWeek, slots)
       return newMap
     })
+    markDirty(dayOfWeek)
   }
 
   function handleAddSlot(dayOfWeek: number) {
@@ -60,6 +76,7 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
       newMap.set(dayOfWeek, [...existing, { openTime: '', closeTime: '' }])
       return newMap
     })
+    markDirty(dayOfWeek)
   }
 
   function handleRemoveSlot(dayOfWeek: number, slotIndex: number) {
@@ -69,6 +86,7 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
       newMap.set(dayOfWeek, slots)
       return newMap
     })
+    markDirty(dayOfWeek)
   }
 
   function handleOpenDay(dayOfWeek: number) {
@@ -77,6 +95,7 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
       newMap.set(dayOfWeek, [{ openTime: '', closeTime: '' }])
       return newMap
     })
+    markDirty(dayOfWeek)
   }
 
   function validateSlots(slots: TimeSlot[]): string | null {
@@ -106,6 +125,7 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
       {DAY_LABELS.map((label, dayOfWeek) => {
         const slots = weekHours.get(dayOfWeek) ?? []
         const isSaving = savingDay === dayOfWeek
+        const isDirty = dirtyDays.has(dayOfWeek)
 
         return (
           <div key={dayOfWeek} className="rounded-lg border border-border p-3 flex flex-col gap-2">
@@ -123,6 +143,17 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
                   >
                     Apri giorno
                   </Button>
+                  {isDirty && (
+                    <Button
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => handleSaveDay(dayOfWeek)}
+                      disabled={isSaving}
+                    >
+                      {isSaving && <Loader2 className="size-3.5 animate-spin mr-1" />}
+                      Salva
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col gap-2 flex-1 ml-4">

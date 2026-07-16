@@ -8,6 +8,7 @@ import { formatPrice, formatDuration } from '@/lib/utils/formatting'
 import { COAT_LABELS, SIZE_LABELS, CoatType, SizeType } from '@/lib/types'
 import { ClientSearch } from '@/components/appointment/ClientSearch'
 import { QuickClientForm } from '@/components/appointment/QuickClientForm'
+import { QuickDogForm } from '@/components/appointment/QuickDogForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -68,6 +69,7 @@ function getEffectiveCoatSize(dog: Dog) {
 export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: AppointmentFormProps) {
   const [selectedClient, setSelectedClient] = useState<SelectedClient | null>(null)
   const [showQuickClient, setShowQuickClient] = useState(false)
+  const [showQuickDog, setShowQuickDog] = useState(false)
   const [dogs, setDogs] = useState<Dog[]>([])
   const [selectedDogId, setSelectedDogId] = useState<string | null>(null)
   const [selectedUserId, setSelectedUserId] = useState<string>(prefilledSlot.userId ?? '')
@@ -84,6 +86,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
     code: string
     message: string
     alternatives?: string[]
+    alternativeStaff?: { id: string; name: string }[]
     shiftEndTime?: string
   } | null>(null)
 
@@ -94,7 +97,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
     const extraMinutes = Math.max(0, currentDuration - service.duration)
     const surchargeUnits = Math.floor(extraMinutes / 30)
     const totalPrice = baseMatrixPrice + surchargeUnits * service.durationSurchargePer30min
-    setPriceEur((totalPrice / 100).toFixed(2))
+    setPriceEur(String(Math.round(totalPrice / 100)))
   }
 
   const { execute: executeFetchPrice } = useAction(fetchAppointmentPrice, {
@@ -180,7 +183,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
           const service = services.find(s => s.id === selectedServiceId)
           if (service) {
             setBasePriceForMatrix(service.price)
-            setPriceEur((service.price / 100).toFixed(2))
+            setPriceEur(String(Math.round(service.price / 100)))
           }
           setPriceHint('base')
         }
@@ -192,8 +195,16 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
     setSelectedClient(client)
     setSelectedDogId(null)
     setDogs([])
+    setShowQuickDog(false)
     setBusinessError(null)
     loadDogs({ clientId: client.id })
+  }
+
+  const handleDogCreated = (dog: { id: string; name: string }) => {
+    setShowQuickDog(false)
+    if (selectedClient) {
+      loadDogs({ clientId: selectedClient.id })
+    }
   }
 
   const handleClientCreated = (client: { id: string; nominativo: string }) => {
@@ -233,12 +244,12 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
         executeFetchPrice({ serviceId, coatType: coat, sizeType: size })
       } else {
         setBasePriceForMatrix(service.price)
-        setPriceEur((service.price / 100).toFixed(2))
+        setPriceEur(String(Math.round(service.price / 100)))
         setPriceHint('base')
       }
     } else {
       setBasePriceForMatrix(service.price)
-      setPriceEur((service.price / 100).toFixed(2))
+      setPriceEur(String(Math.round(service.price / 100)))
       setPriceHint(null)
     }
   }
@@ -249,8 +260,29 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
       const priceCents = Math.round(parseFloat(priceEur) * 100)
       submitAppointment({
         userId: selectedUserId,
+        locationId: prefilledSlot.locationId,
         date: prefilledSlot.date,
         time,
+        clientId: selectedClient.id,
+        dogId: selectedDogId,
+        serviceId: selectedServiceId,
+        duration,
+        price: priceCents,
+        ...(selectedStationId && { stationId: selectedStationId }),
+      })
+    }
+  }
+
+  const handleAlternativeStaffClick = (userId: string) => {
+    setBusinessError(null)
+    setSelectedUserId(userId)
+    if (selectedClient && selectedDogId && selectedServiceId) {
+      const priceCents = Math.round(parseFloat(priceEur) * 100)
+      submitAppointment({
+        userId,
+        locationId: prefilledSlot.locationId,
+        date: prefilledSlot.date,
+        time: prefilledSlot.time,
         clientId: selectedClient.id,
         dogId: selectedDogId,
         serviceId: selectedServiceId,
@@ -267,6 +299,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
     const priceCents = Math.round(parseFloat(priceEur) * 100)
     submitAppointment({
       userId: selectedUserId,
+      locationId: prefilledSlot.locationId,
       date: prefilledSlot.date,
       time: prefilledSlot.time,
       clientId: selectedClient.id,
@@ -389,8 +422,24 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
               <Loader2 className="size-4 animate-spin" />
               Caricamento...
             </div>
+          ) : showQuickDog ? (
+            <QuickDogForm
+              clientId={selectedClient!.id}
+              onCreated={handleDogCreated}
+              onCancel={() => setShowQuickDog(false)}
+            />
           ) : dogs.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Nessun cane associato a questo cliente</p>
+            <div className="flex items-center gap-3">
+              <p className="text-muted-foreground text-sm">Nessun cane associato</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowQuickDog(true)}
+              >
+                + Aggiungi cane
+              </Button>
+            </div>
           ) : dogs.length === 1 ? (
             <div className="rounded-lg border p-2.5 text-sm">
               <span className="font-medium">{dogs[0].name}</span>
@@ -488,7 +537,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
                     const extraMinutes = Math.max(0, newDuration - service.duration)
                     const surchargeUnits = Math.floor(extraMinutes / 30)
                     const totalPrice = basePriceForMatrix + surchargeUnits * service.durationSurchargePer30min
-                    setPriceEur((totalPrice / 100).toFixed(2))
+                    setPriceEur(String(Math.round(totalPrice / 100)))
                   }
                 }
               }}
@@ -498,7 +547,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
               if (service && service.durationSurchargePer30min > 0) {
                 return (
                   <p className="text-xs text-muted-foreground mt-1">
-                    Ogni 30min aggiuntivi: +€{(service.durationSurchargePer30min / 100).toFixed(2).replace('.', ',')}
+                    Ogni 30min aggiuntivi: +€{Math.round(service.durationSurchargePer30min / 100)},00
                   </p>
                 )
               }
@@ -511,7 +560,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
               id="af-price"
               type="number"
               min={0}
-              step="0.01"
+              step="1"
               value={priceEur}
               onChange={(e) => {
                 setPriceEur(e.target.value)
@@ -560,6 +609,24 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
                     onClick={() => handleAlternativeSlotClick(time)}
                   >
                     {time}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+          {businessError.code === 'SLOT_OCCUPIED' && businessError.alternativeStaff && businessError.alternativeStaff.length > 0 && (
+            <div className="mt-2">
+              <p className="text-muted-foreground mb-1.5 text-xs">Collaboratori disponibili allo stesso orario:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {businessError.alternativeStaff.map((person) => (
+                  <Button
+                    key={person.id}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleAlternativeStaffClick(person.id)}
+                  >
+                    {person.name}
                   </Button>
                 ))}
               </div>

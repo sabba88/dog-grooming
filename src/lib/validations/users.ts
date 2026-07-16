@@ -7,6 +7,7 @@ export const createUserSchema = z.object({
   role: z.enum(['admin', 'collaborator'], {
     message: 'Seleziona un ruolo',
   }),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).nullable().optional(),
 })
 
 export type CreateUserFormData = z.infer<typeof createUserSchema>
@@ -23,6 +24,7 @@ export const updateUserSchema = z.object({
   role: z.enum(['admin', 'collaborator'], {
     message: 'Seleziona un ruolo',
   }),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).nullable().optional(),
 })
 
 export type UpdateUserFormData = z.infer<typeof updateUserSchema>

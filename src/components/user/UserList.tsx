@@ -33,6 +33,7 @@ interface User {
   name: string
   username: string
   role: 'admin' | 'collaborator'
+  color: string | null
   isActive: boolean
   createdAt: Date | null
 }
@@ -117,7 +118,17 @@ export function UserList({ users, currentUserId }: UserListProps) {
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.name}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {user.color && (
+                      <span
+                        className="inline-block size-3 rounded-full shrink-0"
+                        style={{ backgroundColor: user.color }}
+                      />
+                    )}
+                    {user.name}
+                  </div>
+                </TableCell>
                 <TableCell>{user.username}</TableCell>
                 <TableCell>
                   <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
@@ -180,9 +191,17 @@ export function UserList({ users, currentUserId }: UserListProps) {
             className="rounded-lg border border-border bg-card p-4"
           >
             <div className="flex items-start justify-between mb-2">
-              <div>
-                <p className="font-medium text-foreground">{user.name}</p>
-                <p className="text-sm text-muted-foreground">{user.username}</p>
+              <div className="flex items-center gap-2">
+                {user.color && (
+                  <span
+                    className="inline-block size-3 rounded-full shrink-0 mt-0.5"
+                    style={{ backgroundColor: user.color }}
+                  />
+                )}
+                <div>
+                  <p className="font-medium text-foreground">{user.name}</p>
+                  <p className="text-sm text-muted-foreground">{user.username}</p>
+                </div>
               </div>
               <div className="flex gap-1">
                 <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>

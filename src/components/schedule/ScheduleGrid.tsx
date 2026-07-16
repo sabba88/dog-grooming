@@ -7,6 +7,7 @@ import {
   generateTimeSlots,
   getAppointmentPosition,
   getServiceColor,
+  getUserColor,
   timeToMinutes,
   SLOT_HEIGHT_PX,
   MINUTES_PER_SLOT,
@@ -22,6 +23,7 @@ interface Person {
   id: string
   name: string
   role: 'admin' | 'collaborator'
+  color: string | null
   overallStatus: StaffStatus
   shifts: ShiftInfo[]
 }
@@ -161,7 +163,9 @@ export function ScheduleGrid({
               )
             })}
             {activeStaff.map((person, personIdx) => {
-              const color = STAFF_COLORS[personIdx % STAFF_COLORS.length]
+              const color = person.color
+                ? getUserColor(person.color)
+                : STAFF_COLORS[personIdx % STAFF_COLORS.length]
               const barLeft = (personIdx / activeStaff.length) * 100
               const barWidth = 100 / activeStaff.length
               const shortName = person.name.split(' ')[0].slice(0, 4)
@@ -258,7 +262,8 @@ export function ScheduleGrid({
               {/* Appointment blocks */}
               {stationAppointments.map((appt) => {
                 const position = getAppointmentPosition(appt.startTime, appt.endTime, dayStartMinutes)
-                const color = getServiceColor(appt.serviceId, allServiceIds)
+                const staffMember = staff.find(p => p.id === appt.userId)
+                const color = staffMember?.color ? getUserColor(staffMember.color) : getServiceColor(appt.serviceId, allServiceIds)
                 return (
                   <AppointmentBlock
                     key={appt.id}
@@ -266,6 +271,7 @@ export function ScheduleGrid({
                     clientName={appt.clientNominativo}
                     dogName={appt.dogName}
                     serviceName={appt.serviceName}
+                    staffName={staffMember?.name ?? ''}
                     price={appt.price}
                     startTime={appt.startTime}
                     endTime={appt.endTime}

@@ -206,9 +206,9 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
         <Input
           id="price"
           type="number"
-          step="0.01"
-          min="0.01"
-          placeholder="Es. 25.00"
+          step="1"
+          min="1"
+          placeholder="Es. 25"
           {...priceRegistration}
           onChange={(e) => {
             priceRegistration.onChange(e)
@@ -248,9 +248,9 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
         <Input
           id="durationSurchargePer30min"
           type="number"
-          step="0.01"
+          step="1"
           min="0"
-          placeholder="0.00"
+          placeholder="0"
           {...form.register('durationSurchargePer30min', { valueAsNumber: true })}
           aria-invalid={!!form.formState.errors.durationSurchargePer30min}
         />
@@ -295,11 +295,11 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
                       <td key={size} className="p-1">
                         <Input
                           type="number"
-                          step="0.01"
+                          step="1"
                           min="0"
-                          placeholder="0.00"
+                          placeholder="0"
                           className="h-8 text-center px-1"
-                          value={cents > 0 ? (cents / 100).toFixed(2) : ''}
+                          value={cents > 0 ? (cents / 100).toFixed(0) : ''}
                           onChange={e => setCellPrice(coat, size, e.target.value)}
                         />
                       </td>

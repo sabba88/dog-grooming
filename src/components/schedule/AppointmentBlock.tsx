@@ -18,6 +18,7 @@ interface AppointmentBlockProps {
   clientName: string
   dogName: string
   serviceName: string
+  staffName: string
   price: number
   startTime: Date
   endTime: Date
@@ -34,6 +35,7 @@ export function AppointmentBlock({
   clientName,
   dogName,
   serviceName,
+  staffName,
   price,
   startTime,
   endTime,
@@ -117,6 +119,7 @@ export function AppointmentBlock({
             <p className="text-xs font-medium text-foreground truncate">{clientName}</p>
             <p className="text-xs text-muted-foreground truncate">{dogName}</p>
             <p className="text-xs text-muted-foreground truncate">{serviceName}</p>
+            <p className="text-xs text-muted-foreground truncate">{staffName}</p>
           </button>
         </DropdownMenuTrigger>
         {dropdownContent}
@@ -154,6 +157,7 @@ export function AppointmentBlock({
             <p className="text-xs text-muted-foreground">{serviceName}</p>
             <span className="text-xs font-medium text-foreground">{formatPrice(price)}</span>
           </div>
+          <p className="text-xs text-muted-foreground mt-0.5">{staffName}</p>
         </button>
       </DropdownMenuTrigger>
       {dropdownContent}

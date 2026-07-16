@@ -3,7 +3,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WeeklyStationRow } from './WeeklyStationRow'
-import { WeeklyStaffHeatmapBar } from './WeeklyStaffHeatmapBar'
 import { formatDayHeader } from './WeeklyDayCell'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { timeToMinutes, MINUTES_PER_SLOT } from '@/lib/utils/schedule'
@@ -55,18 +54,6 @@ function getBusinessHoursForDate(
     .filter(bh => bh.dayOfWeek === dow)
     .map(bh => ({ startTime: bh.openTime, endTime: bh.closeTime }))
     .sort((a, b) => a.startTime.localeCompare(b.startTime))
-}
-
-// Range globale (ora intera) da usare come asse fisso nella heatmap
-function computeGlobalHourRange(businessHours: BusinessHour[]): { startHour: number; endHour: number } {
-  if (businessHours.length === 0) return { startHour: 8, endHour: 18 }
-  let minMin = Infinity
-  let maxMin = 0
-  for (const bh of businessHours) {
-    minMin = Math.min(minMin, timeToMinutes(bh.openTime))
-    maxMin = Math.max(maxMin, timeToMinutes(bh.closeTime))
-  }
-  return { startHour: Math.floor(minMin / 60), endHour: Math.ceil(maxMin / 60) }
 }
 
 // Raggruppa gli appuntamenti di una postazione per data (chiave YYYY-MM-DD UTC)
@@ -213,8 +200,6 @@ export function WeeklyScheduleView({
     weekDates.map(date => [date, getBusinessHoursForDate(date, businessHours)])
   )
 
-  const globalHourRange = computeGlobalHourRange(businessHours)
-
   if (isMobile) {
     return (
       <div className="flex flex-col gap-0">
@@ -254,15 +239,6 @@ export function WeeklyScheduleView({
             {formatDayHeader(date)}
           </div>
         ))}
-
-        {/* Staff heatmap bar */}
-        <WeeklyStaffHeatmapBar
-          weekDates={weekDates}
-          staff={staff}
-          staffShifts={staffShifts}
-          businessHoursPerDate={businessHoursPerDate}
-          globalHourRange={globalHourRange}
-        />
 
         {/* Station rows */}
         {stations.map(station => (

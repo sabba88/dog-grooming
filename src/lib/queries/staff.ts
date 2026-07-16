@@ -19,6 +19,7 @@ export async function getActiveUsers(tenantId: string) {
       name: users.name,
       username: users.username,
       role: users.role,
+      color: users.color,
     })
     .from(users)
     .where(and(eq(users.tenantId, tenantId), eq(users.isActive, true)))

@@ -9,6 +9,7 @@ export async function getUsers(tenantId: string) {
       name: users.name,
       username: users.username,
       role: users.role,
+      color: users.color,
       isActive: users.isActive,
       createdAt: users.createdAt,
     })
@@ -24,6 +25,7 @@ export async function getUserById(userId: string, tenantId: string) {
       name: users.name,
       username: users.username,
       role: users.role,
+      color: users.color,
       isActive: users.isActive,
       createdAt: users.createdAt,
     })

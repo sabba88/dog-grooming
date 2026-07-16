@@ -34,7 +34,13 @@ import {
 } from '@/components/ui/sheet'
 import { toast } from 'sonner'
 import { useAction } from 'next-safe-action/hooks'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+const PRESET_COLORS = [
+  '#3B82F6', '#22C55E', '#A855F7', '#F97316',
+  '#EC4899', '#EF4444', '#14B8A6', '#EAB308',
+  '#6366F1', '#84CC16', '#06B6D4', '#F43F5E',
+]
 
 interface UserFormProps {
   open: boolean
@@ -45,6 +51,7 @@ interface UserFormProps {
     name: string
     username: string
     role: 'admin' | 'collaborator'
+    color: string | null
   } | null
 }
 
@@ -56,8 +63,8 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
   const form = useForm<CreateUserFormData | UpdateUserFormData>({
     resolver: zodResolver(isEditing ? updateUserSchema : createUserSchema),
     defaultValues: isEditing
-      ? { id: user.id, name: user.name, username: user.username, role: user.role, password: '' }
-      : { name: '', username: '', password: '', role: 'collaborator' as const },
+      ? { id: user.id, name: user.name, username: user.username, role: user.role, color: user.color ?? null, password: '' }
+      : { name: '', username: '', password: '', role: 'collaborator' as const, color: null },
   })
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createUser, {
@@ -97,6 +104,16 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
   })
 
   const isPending = isCreating || isUpdating
+
+  useEffect(() => {
+    if (!open) return
+    if (user) {
+      form.reset({ id: user.id, name: user.name, username: user.username, role: user.role, color: user.color ?? null, password: '' })
+    } else {
+      form.reset({ name: '', username: '', password: '', role: 'collaborator', color: null })
+    }
+    setServerError(null)
+  }, [open, user])
 
   function onSubmit(data: CreateUserFormData | UpdateUserFormData) {
     setServerError(null)
@@ -164,7 +181,7 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
       <div className="flex flex-col gap-2">
         <Label htmlFor="role">Ruolo</Label>
         <Select
-          defaultValue={isEditing ? user.role : 'collaborator'}
+          value={form.watch('role') ?? 'collaborator'}
           onValueChange={(value) =>
             form.setValue('role', value as 'admin' | 'collaborator')
           }
@@ -182,6 +199,34 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
             {form.formState.errors.role.message}
           </p>
         )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label>Colore</Label>
+        <div className="flex flex-wrap gap-2 items-center">
+          <button
+            type="button"
+            onClick={() => form.setValue('color', null)}
+            className={`size-7 rounded-full border-2 flex items-center justify-center text-xs ${
+              !form.watch('color') ? 'border-foreground' : 'border-border'
+            } bg-muted text-muted-foreground`}
+            title="Nessun colore"
+          >
+            ✕
+          </button>
+          {PRESET_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => form.setValue('color', c)}
+              className={`size-7 rounded-full border-2 transition-transform hover:scale-110 ${
+                form.watch('color') === c ? 'border-foreground scale-110' : 'border-transparent'
+              }`}
+              style={{ backgroundColor: c }}
+              title={c}
+            />
+          ))}
+        </div>
       </div>
 
       {isEditing && <input type="hidden" {...form.register('id')} />}

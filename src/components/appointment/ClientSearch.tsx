@@ -3,8 +3,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Search, UserPlus, Loader2 } from 'lucide-react'
+
+interface DogSummary {
+  id: string
+  name: string
+  breedName: string | null
+}
 
 interface ClientResult {
   id: string
@@ -12,6 +17,7 @@ interface ClientResult {
   phone: string
   email: string | null
   dogsCount: number
+  dogs: DogSummary[]
 }
 
 interface ClientSearchProps {
@@ -164,10 +170,14 @@ export function ClientSearch({ onSelect, onCreateNew, autoFocus = true }: Client
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium">{client.nominativo}</div>
                 <div className="text-muted-foreground truncate text-xs">{client.phone}</div>
+                {client.dogs.length > 0 && (
+                  <div className="text-muted-foreground truncate text-xs">
+                    {client.dogs
+                      .map((d) => (d.breedName ? `${d.name} (${d.breedName})` : d.name))
+                      .join(', ')}
+                  </div>
+                )}
               </div>
-              <Badge variant="secondary" className="shrink-0 text-xs">
-                {client.dogsCount} {client.dogsCount === 1 ? 'cane' : 'cani'}
-              </Badge>
             </button>
           ))}
 
