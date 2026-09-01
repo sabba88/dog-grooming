@@ -152,34 +152,36 @@ export function ClientSearch({ onSelect, onCreateNew, autoFocus = true }: Client
             </div>
           )}
 
-          {results.map((client, index) => (
-            <button
-              key={client.id}
-              type="button"
-              className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
-                index === activeIndex ? 'bg-accent' : 'hover:bg-accent/50'
-              }`}
-              onClick={() => handleSelect(client)}
-              onMouseEnter={() => setActiveIndex(index)}
-            >
-              <Avatar size="sm">
-                <AvatarFallback className="text-xs">
-                  {getInitials(client.nominativo)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{client.nominativo}</div>
-                <div className="text-muted-foreground truncate text-xs">{client.phone}</div>
-                {client.dogs.length > 0 && (
-                  <div className="text-muted-foreground truncate text-xs">
-                    {client.dogs
-                      .map((d) => (d.breedName ? `${d.name} (${d.breedName})` : d.name))
-                      .join(', ')}
-                  </div>
-                )}
-              </div>
-            </button>
-          ))}
+          <div className="max-h-64 overflow-y-auto">
+            {results.map((client, index) => (
+              <button
+                key={client.id}
+                type="button"
+                className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                  index === activeIndex ? 'bg-accent' : 'hover:bg-accent/50'
+                }`}
+                onClick={() => handleSelect(client)}
+                onMouseEnter={() => setActiveIndex(index)}
+              >
+                <Avatar size="sm">
+                  <AvatarFallback className="text-xs">
+                    {getInitials(client.nominativo)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium">{client.nominativo}</div>
+                  <div className="text-muted-foreground truncate text-xs">{client.phone}</div>
+                  {client.dogs.length > 0 && (
+                    <div className="text-muted-foreground truncate text-xs">
+                      {client.dogs
+                        .map((d) => (d.breedName ? `${d.name} (${d.breedName})` : d.name))
+                        .join(', ')}
+                    </div>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
 
           <button
             type="button"

@@ -1,6 +1,14 @@
 import { db } from '@/lib/db'
-import { clients, clientNotes, users, dogs, appointments, services } from '@/lib/db/schema'
+import { clients, clientNotes, users, dogs, breeds, appointments, services } from '@/lib/db/schema'
 import { eq, and, asc, desc, isNull, ilike, or, count, max, min, gt, sql } from 'drizzle-orm'
+
+export interface ClientDogSummary {
+  id: string
+  name: string
+  breedName: string | null
+  coatType: string | null
+  sizeType: string | null
+}
 
 export async function getClients(tenantId: string) {
   const now = new Date()
@@ -34,11 +42,23 @@ export async function getClients(tenantId: string) {
       createdAt: clients.createdAt,
       dogsCount: count(dogs.id),
       dogNames: sql<string>`coalesce(string_agg(${dogs.name}, ', '), '')`,
+      dogs: sql<ClientDogSummary[]>`coalesce(
+        jsonb_agg(
+          jsonb_build_object(
+            'id', ${dogs.id},
+            'name', ${dogs.name},
+            'breedName', ${breeds.name},
+            'coatType', coalesce(${dogs.coatType}, ${breeds.coatType}),
+            'sizeType', coalesce(${dogs.sizeType}, ${breeds.sizeType})
+          ) order by ${dogs.name}
+        ) filter (where ${dogs.id} is not null), '[]'
+      )`,
       lastAppointmentAt: lastAppt.lastAt,
       nextAppointmentAt: nextAppt.nextAt,
     })
     .from(clients)
-    .leftJoin(dogs, eq(dogs.clientId, clients.id))
+    .leftJoin(dogs, and(eq(dogs.clientId, clients.id), isNull(dogs.deletedAt)))
+    .leftJoin(breeds, eq(dogs.breedId, breeds.id))
     .leftJoin(lastAppt, eq(lastAppt.clientId, clients.id))
     .leftJoin(nextAppt, eq(nextAppt.clientId, clients.id))
     .where(and(eq(clients.tenantId, tenantId), isNull(clients.deletedAt)))

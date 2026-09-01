@@ -13,8 +13,20 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { ClientForm } from '@/components/client/ClientForm'
 import { Plus, Search, X } from 'lucide-react'
+import { COAT_LABELS, SIZE_LABELS } from '@/lib/types'
+import type { ClientDogSummary } from '@/lib/queries/clients'
+
+function formatDogDetails(dog: ClientDogSummary): string {
+  const parts = [
+    dog.breedName,
+    dog.coatType ? `Pelo ${COAT_LABELS[dog.coatType as keyof typeof COAT_LABELS] ?? dog.coatType}` : null,
+    dog.sizeType ? `Taglia ${SIZE_LABELS[dog.sizeType as keyof typeof SIZE_LABELS] ?? dog.sizeType}` : null,
+  ].filter(Boolean)
+  return parts.join(' · ')
+}
 
 function getInitials(nominativo: string): string {
   const parts = nominativo.trim().split(/\s+/)
@@ -61,6 +73,7 @@ interface Client {
   email: string | null
   createdAt: Date | null
   dogNames: string
+  dogs: ClientDogSummary[]
   lastAppointmentAt: Date | null | string
   nextAppointmentAt: Date | null | string
 }
@@ -178,6 +191,7 @@ export function ClientList({ clients }: ClientListProps) {
                   <TableHead>Nominativo</TableHead>
                   <TableHead>Telefono</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Cani</TableHead>
                   <TableHead>Ultimo appuntamento</TableHead>
                   <TableHead>Prossimo appuntamento</TableHead>
                 </TableRow>
@@ -203,6 +217,25 @@ export function ClientList({ clients }: ClientListProps) {
                       <TableCell>{client.phone}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {client.email || '—'}
+                      </TableCell>
+                      <TableCell>
+                        {client.dogs.length === 0 ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : (
+                          <div className="flex flex-col gap-1">
+                            {client.dogs.map(dog => {
+                              const details = formatDogDetails(dog)
+                              return (
+                                <div key={dog.id} className="flex items-baseline gap-1.5">
+                                  <Badge variant="secondary" className="font-normal">{dog.name}</Badge>
+                                  {details && (
+                                    <span className="text-xs text-muted-foreground">{details}</span>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         {lastAppt ? (
@@ -251,8 +284,17 @@ export function ClientList({ clients }: ClientListProps) {
                   <div className="flex flex-col min-w-0 flex-1">
                     <span className="font-medium text-foreground truncate">{client.nominativo}</span>
                     <span className="text-sm text-muted-foreground">{client.phone}</span>
-                    {client.dogNames && (
-                      <span className="text-xs text-muted-foreground truncate">{client.dogNames}</span>
+                    {client.dogs.length > 0 && (
+                      <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                        {client.dogs.map(dog => {
+                          const details = formatDogDetails(dog)
+                          return (
+                            <span key={dog.id} className="text-xs text-muted-foreground truncate">
+                              {dog.name}{details ? ` (${details})` : ''}
+                            </span>
+                          )
+                        })}
+                      </div>
                     )}
                     {(lastAppt || nextAppt) && (
                       <div className="flex gap-3 mt-1">
