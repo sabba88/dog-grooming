@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -57,6 +58,20 @@ export function StationForm({ open, onOpenChange, onSuccess, locationId, station
       ? { id: station.id, name: station.name, allowedSizes: initialSizes }
       : { name: '', locationId, allowedSizes: defaultSizes },
   })
+
+  useEffect(() => {
+    if (!open) return
+    if (isEditing && station) {
+      form.reset({
+        id: station.id,
+        name: station.name,
+        allowedSizes: station.allowedSizes ? (station.allowedSizes as SizeType[]) : defaultSizes,
+      })
+    } else {
+      form.reset({ name: '', locationId, allowedSizes: defaultSizes })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, isEditing, station])
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createStation, {
     onSuccess: () => {

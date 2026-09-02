@@ -19,9 +19,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ArrowRightLeft, Trash2, Loader2, ShoppingBag } from 'lucide-react'
+import { ArrowRightLeft, Trash2, Loader2, ShoppingBag, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { AppointmentForm } from '@/components/appointment/AppointmentForm'
 
 interface ServiceNote {
   id: string
@@ -32,6 +33,7 @@ interface ServiceNote {
 
 interface AppointmentDetailProps {
   appointmentId: string
+  locationId: string
   onClose: () => void
   onMove: (appointmentId: string) => void
   onDeleted: () => void
@@ -40,6 +42,7 @@ interface AppointmentDetailProps {
 
 export function AppointmentDetail({
   appointmentId,
+  locationId,
   onClose,
   onMove,
   onDeleted,
@@ -51,6 +54,7 @@ export function AppointmentDetail({
   const [editingStaff, setEditingStaff] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string>('')
   const [activeUsers, setActiveUsers] = useState<{ id: string; name: string }[]>([])
+  const [isEditingAppointment, setIsEditingAppointment] = useState(false)
   const notesTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const { execute: loadDetail, result: detailResult, isExecuting: isLoading } = useAction(fetchAppointmentDetail)
@@ -109,7 +113,7 @@ export function AppointmentDetail({
   useEffect(() => {
     if (!appointment) return
     setNoteText(appointment.notes ?? '')
-    setSelectedUserId(appointment.userId)
+    setSelectedUserId(appointment.userId ?? '')
     if (appointment.dogId) {
       loadServiceNotes({ dogId: appointment.dogId, excludeAppointmentId: appointmentId })
     }
@@ -141,6 +145,38 @@ export function AppointmentDetail({
   }
 
   const clientName = appointment.clientNominativo
+
+  if (isEditingAppointment) {
+    return (
+      <div className="flex flex-col gap-4 p-4">
+        <AppointmentForm
+          mode="edit"
+          appointmentId={appointmentId}
+          prefilledSlot={{
+            date: format(startTime, 'yyyy-MM-dd'),
+            time: formatTime(startTime),
+            locationId,
+          }}
+          availableStaff={activeUsers}
+          initialValues={{
+            clientId: appointment.clientId,
+            clientNominativo: appointment.clientNominativo,
+            dogId: appointment.dogId,
+            serviceId: appointment.serviceId,
+            duration: durationMinutes,
+            price: appointment.price,
+            userId: appointment.userId,
+            stationId: appointment.stationId,
+          }}
+          onSuccess={() => {
+            setIsEditingAppointment(false)
+            loadDetail({ id: appointmentId })
+          }}
+          onCancel={() => setIsEditingAppointment(false)}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -179,15 +215,15 @@ export function AppointmentDetail({
               >
                 {isReassigning ? <Loader2 className="size-3 animate-spin" /> : 'Salva'}
               </Button>
-              <Button size="sm" variant="ghost" className="h-8" onClick={() => { setEditingStaff(false); setSelectedUserId(appointment.userId) }}>
+              <Button size="sm" variant="ghost" className="h-8" onClick={() => { setEditingStaff(false); setSelectedUserId(appointment.userId ?? '') }}>
                 Annulla
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{appointment.userName}</span>
+              <span className="text-sm font-medium">{appointment.userName ?? 'Non assegnato'}</span>
               <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-muted-foreground" onClick={() => setEditingStaff(true)}>
-                Cambia
+                {appointment.userName ? 'Cambia' : 'Assegna'}
               </Button>
             </div>
           )}
@@ -251,6 +287,14 @@ export function AppointmentDetail({
       </div>
 
       <div className="flex flex-col gap-2 pt-2 border-t">
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setIsEditingAppointment(true)}
+        >
+          <Pencil className="size-4 mr-2" />
+          Modifica appuntamento
+        </Button>
         <Link href={`/appointments/${appointmentId}/checkout`} className="w-full">
           <Button variant="outline" className="w-full">
             <ShoppingBag className="size-4 mr-2" />

@@ -43,9 +43,13 @@ export function EmptySlot({
     return (
       <button
         onClick={() => onClick?.({ stationId, stationName, userId, userName, date, time })}
-        className="absolute inset-x-0 cursor-pointer transition-colors border border-border/40 hover:border-primary hover:bg-primary/5"
+        className="absolute inset-x-0 cursor-pointer transition-colors border border-border/40 hover:border-primary hover:bg-primary/5 flex items-start"
         style={{ ...style, background: bg }}
-      />
+      >
+        <span className="text-xs text-muted-foreground/70 leading-none px-0.5 pt-0.5">
+          {time}
+        </span>
+      </button>
     )
   }
 
@@ -59,7 +63,7 @@ export function EmptySlot({
       }}
     >
       <span className="text-sm text-muted-foreground">
-        {isMovingTarget ? 'Sposta qui' : '+ Slot libero'}
+        {isMovingTarget ? 'Sposta qui' : `${time} · + Slot libero`}
       </span>
     </button>
   )

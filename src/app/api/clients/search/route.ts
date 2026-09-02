@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth/auth'
-import { searchClients } from '@/lib/queries/clients'
-import { getDogsByClient } from '@/lib/queries/dogs'
+import { searchClientsWithDogs } from '@/lib/queries/clients'
 
 export async function GET(request: NextRequest) {
   const session = await auth()
@@ -14,18 +13,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: [] })
   }
 
-  const clients = await searchClients(q, session.user.tenantId)
+  const results = await searchClientsWithDogs(q, session.user.tenantId)
 
-  const enriched = await Promise.all(
-    clients.map(async (client) => {
-      const dogs = await getDogsByClient(client.id, session.user.tenantId)
-      return {
-        ...client,
-        dogsCount: dogs.length,
-        dogs: dogs.map((d) => ({ id: d.id, name: d.name, breedName: d.breedName ?? null })),
-      }
-    })
-  )
-
-  return NextResponse.json({ success: true, data: enriched })
+  return NextResponse.json({ success: true, data: results })
 }

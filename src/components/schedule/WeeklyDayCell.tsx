@@ -96,7 +96,7 @@ export function WeeklyDayCell({ shifts, appointments, onClick }: WeeklyDayCellPr
             return (
               <div
                 key={i}
-                className="bg-gray-700 h-full flex-shrink-0"
+                className="bg-red-600 h-full flex-shrink-0"
                 style={{ width: `${widthPct}%` }}
               />
             )
@@ -107,15 +107,15 @@ export function WeeklyDayCell({ shifts, appointments, onClick }: WeeklyDayCellPr
               className="h-full flex-shrink-0 border border-dashed"
               style={{
                 width: `${widthPct}%`,
-                backgroundColor: '#E5F7F9',
-                borderColor: '#4BBFC8',
+                backgroundColor: '#DCFCE7',
+                borderColor: '#22C55E',
               }}
             />
           )
         })}
       </div>
       <span
-        className={`text-xs font-medium ${gapMinutes === 0 ? 'text-muted-foreground' : 'text-primary'}`}
+        className={`text-xs font-medium ${gapMinutes === 0 ? 'text-muted-foreground' : 'text-green-600'}`}
       >
         {minutesToHoursLabel(gapMinutes)} non pianificate
       </span>

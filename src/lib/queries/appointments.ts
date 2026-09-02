@@ -24,7 +24,7 @@ export async function getAppointmentById(id: string, tenantId: string) {
     .innerJoin(clients, eq(appointments.clientId, clients.id))
     .innerJoin(dogs, eq(appointments.dogId, dogs.id))
     .innerJoin(services, eq(appointments.serviceId, services.id))
-    .innerJoin(users, eq(appointments.userId, users.id))
+    .leftJoin(users, eq(appointments.userId, users.id))
     .where(
       and(
         eq(appointments.id, id),
@@ -102,7 +102,6 @@ export async function getAppointmentsByDateAndLocationGroupedByUser(
     .innerJoin(services, eq(appointments.serviceId, services.id))
     .where(
       and(
-        isNotNull(appointments.userId),
         gte(appointments.startTime, dayStart),
         lt(appointments.startTime, dayEnd),
         eq(appointments.tenantId, tenantId),
@@ -154,7 +153,7 @@ export async function getWeeklyAppointmentsByPerson(
   const start = new Date(weekStart + 'T00:00:00.000Z')
   const end = new Date(weekEnd + 'T23:59:59.999Z')
 
-  return db
+  const rows = await db
     .select({
       id: appointments.id,
       userId: appointments.userId,
@@ -173,6 +172,8 @@ export async function getWeeklyAppointmentsByPerson(
       )
     )
     .orderBy(asc(appointments.startTime))
+
+  return rows.map(r => ({ ...r, userId: r.userId! }))
 }
 
 export async function getServiceNotesByDog(

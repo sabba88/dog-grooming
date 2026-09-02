@@ -26,7 +26,7 @@ interface Appointment {
   endTime: Date
   price: number
   notes: string | null
-  userId: string
+  userId: string | null
   stationId: string | null
   clientNominativo: string
   dogName: string
@@ -117,7 +117,7 @@ function StationTimeline({
                   clientName={appt.clientNominativo}
                   dogName={appt.dogName}
                   serviceName={appt.serviceName}
-                  staffName={staffMember?.name ?? ''}
+                  staffName={staffMember?.name ?? 'Da assegnare'}
                   price={appt.price}
                   startTime={appt.startTime}
                   endTime={appt.endTime}

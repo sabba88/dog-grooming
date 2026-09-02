@@ -165,7 +165,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
       const start = new Date(appt.startTime)
       const end = new Date(appt.endTime)
       const duration = (end.getTime() - start.getTime()) / (60 * 1000)
-      setMovingAppointment({ id: appointmentId, duration, serviceName: appt.serviceName, userId: appt.userId, stationId: appt.stationId ?? null })
+      setMovingAppointment({ id: appointmentId, duration, serviceName: appt.serviceName, userId: appt.userId ?? '', stationId: appt.stationId ?? null })
       setSelectedAppointmentId(null)
     }
   }
@@ -412,6 +412,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
             {selectedAppointmentId && (
               <AppointmentDetail
                 appointmentId={selectedAppointmentId}
+                locationId={selectedLocationId!}
                 onClose={handleDetailClose}
                 onMove={handleMoveStart}
                 onDeleted={handleAppointmentDeleted}
@@ -429,6 +430,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
             {selectedAppointmentId && (
               <AppointmentDetail
                 appointmentId={selectedAppointmentId}
+                locationId={selectedLocationId!}
                 onClose={handleDetailClose}
                 onMove={handleMoveStart}
                 onDeleted={handleAppointmentDeleted}

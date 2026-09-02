@@ -8,7 +8,7 @@ export const getAppointmentsQuerySchema = z.object({
 export type GetAppointmentsQuery = z.infer<typeof getAppointmentsQuerySchema>
 
 export const createAppointmentSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().uuid().optional(),
   locationId: z.string().uuid().optional(),
   stationId: z.string().uuid().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -18,9 +18,28 @@ export const createAppointmentSchema = z.object({
   serviceId: z.string().uuid(),
   duration: z.number().int().min(15),
   price: z.number().int().min(0),
+}).refine((data) => !!data.userId || !!data.stationId, {
+  message: 'Serve un collaboratore o una postazione',
+  path: ['userId'],
 })
 
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>
+
+export const updateAppointmentSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid().optional(),
+  stationId: z.string().uuid().optional(),
+  clientId: z.string().uuid(),
+  dogId: z.string().uuid(),
+  serviceId: z.string().uuid(),
+  duration: z.number().int().min(15),
+  price: z.number().int().min(0),
+}).refine((data) => !!data.userId || !!data.stationId, {
+  message: 'Serve un collaboratore o una postazione',
+  path: ['userId'],
+})
+
+export type UpdateAppointmentInput = z.infer<typeof updateAppointmentSchema>
 
 export const deleteAppointmentSchema = z.object({
   id: z.string().uuid(),

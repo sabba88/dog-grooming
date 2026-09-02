@@ -5,30 +5,24 @@ import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Search, UserPlus, Loader2 } from 'lucide-react'
 
-interface DogSummary {
-  id: string
-  name: string
+interface ClientDogResult {
+  clientId: string
+  nominativo: string
+  phone: string
+  dogId: string | null
+  dogName: string | null
   breedName: string | null
 }
 
-interface ClientResult {
-  id: string
-  nominativo: string
-  phone: string
-  email: string | null
-  dogsCount: number
-  dogs: DogSummary[]
-}
-
-interface ClientSearchProps {
-  onSelect: (client: { id: string; nominativo: string }) => void
+interface ClientDogSearchProps {
+  onSelect: (result: { client: { id: string; nominativo: string }; dog: { id: string; name: string } | null }) => void
   onCreateNew: () => void
   autoFocus?: boolean
 }
 
-export function ClientSearch({ onSelect, onCreateNew, autoFocus = true }: ClientSearchProps) {
+export function ClientDogSearch({ onSelect, onCreateNew, autoFocus = true }: ClientDogSearchProps) {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<ClientResult[]>([])
+  const [results, setResults] = useState<ClientDogResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState(-1)
@@ -109,8 +103,11 @@ export function ClientSearch({ onSelect, onCreateNew, autoFocus = true }: Client
     }
   }
 
-  const handleSelect = (client: ClientResult) => {
-    onSelect({ id: client.id, nominativo: client.nominativo })
+  const handleSelect = (result: ClientDogResult) => {
+    onSelect({
+      client: { id: result.clientId, nominativo: result.nominativo },
+      dog: result.dogId && result.dogName ? { id: result.dogId, name: result.dogName } : null,
+    })
     setIsOpen(false)
     setQuery('')
   }
@@ -133,7 +130,7 @@ export function ClientSearch({ onSelect, onCreateNew, autoFocus = true }: Client
           onFocus={() => {
             if (results.length > 0 || query.length >= 2) setIsOpen(true)
           }}
-          placeholder="Cerca cliente..."
+          placeholder="Cerca per cliente, cane o telefono..."
           className="pl-9 pr-9"
         />
         {isLoading && (
@@ -153,31 +150,30 @@ export function ClientSearch({ onSelect, onCreateNew, autoFocus = true }: Client
           )}
 
           <div className="max-h-64 overflow-y-auto">
-            {results.map((client, index) => (
+            {results.map((result, index) => (
               <button
-                key={client.id}
+                key={`${result.clientId}-${result.dogId ?? 'none'}`}
                 type="button"
                 className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
                   index === activeIndex ? 'bg-accent' : 'hover:bg-accent/50'
                 }`}
-                onClick={() => handleSelect(client)}
+                onClick={() => handleSelect(result)}
                 onMouseEnter={() => setActiveIndex(index)}
               >
                 <Avatar size="sm">
                   <AvatarFallback className="text-xs">
-                    {getInitials(client.nominativo)}
+                    {getInitials(result.nominativo)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{client.nominativo}</div>
-                  <div className="text-muted-foreground truncate text-xs">{client.phone}</div>
-                  {client.dogs.length > 0 && (
-                    <div className="text-muted-foreground truncate text-xs">
-                      {client.dogs
-                        .map((d) => (d.breedName ? `${d.name} (${d.breedName})` : d.name))
-                        .join(', ')}
-                    </div>
-                  )}
+                  <div className="truncate text-sm font-medium">
+                    {result.dogName
+                      ? `${result.dogName}${result.breedName ? ` (${result.breedName})` : ''}`
+                      : result.nominativo}
+                  </div>
+                  <div className="text-muted-foreground truncate text-xs">
+                    {result.dogName ? `${result.nominativo} · ${result.phone}` : `${result.phone} · Nessun cane`}
+                  </div>
                 </div>
               </button>
             ))}

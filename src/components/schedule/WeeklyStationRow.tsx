@@ -143,8 +143,8 @@ function StationDayBar({
   const labelColor = gapMinutes === 0
     ? 'text-muted-foreground'
     : hasUnderstaffing
-      ? 'text-amber-600'
-      : 'text-primary'
+      ? 'text-red-600'
+      : 'text-green-600'
 
   return (
     <button
@@ -158,7 +158,7 @@ function StationDayBar({
             return (
               <div
                 key={i}
-                className="bg-gray-700 h-full flex-shrink-0"
+                className="bg-red-600 h-full flex-shrink-0"
                 style={{ width: `${widthPct}%` }}
               />
             )
@@ -168,14 +168,14 @@ function StationDayBar({
               <div
                 key={i}
                 className="h-full flex-shrink-0 border border-dashed"
-                style={{ width: `${widthPct}%`, backgroundColor: '#FEF3C7', borderColor: '#F59E0B' }}
+                style={{ width: `${widthPct}%`, backgroundColor: '#FEE2E2', borderColor: '#EF4444' }}
               />
             )
           }
           return (
             <div
               key={i}
-              className="h-full flex-shrink-0 bg-slate-100"
+              className="h-full flex-shrink-0 bg-green-100"
               style={{ width: `${widthPct}%` }}
             />
           )
@@ -218,11 +218,11 @@ export function WeeklyStationRow({
             if (isUnassigned) {
               cls += 'border-border text-muted-foreground bg-muted'
             } else if (hasUnderstaffing && gapMinutes > 0) {
-              cls += 'border-amber-400 text-amber-700 bg-amber-50'
+              cls += 'border-red-400 text-red-700 bg-red-50'
             } else if (gapMinutes > 0) {
-              cls += 'border-primary text-primary bg-transparent'
+              cls += 'border-green-400 text-green-700 bg-green-50'
             } else {
-              cls += 'border-border text-muted-foreground bg-transparent'
+              cls += 'border-red-300 text-red-700 bg-red-50'
             }
 
             return (

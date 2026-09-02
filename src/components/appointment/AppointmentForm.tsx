@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAction } from 'next-safe-action/hooks'
 import { toast } from 'sonner'
-import { createAppointment, fetchDogsForClient, fetchAllServices, fetchStationsForLocation, fetchServicesForStation, fetchAppointmentPrice } from '@/lib/actions/appointments'
+import { createAppointment, updateAppointment, fetchDogsForClient, fetchAllServices, fetchStationsForLocation, fetchServicesForStation, fetchAppointmentPrice } from '@/lib/actions/appointments'
 import { formatPrice, formatDuration } from '@/lib/utils/formatting'
 import { COAT_LABELS, SIZE_LABELS, CoatType, SizeType } from '@/lib/types'
-import { ClientSearch } from '@/components/appointment/ClientSearch'
+import { ClientDogSearch } from '@/components/appointment/ClientDogSearch'
 import { QuickClientForm } from '@/components/appointment/QuickClientForm'
 import { QuickDogForm } from '@/components/appointment/QuickDogForm'
 import { Button } from '@/components/ui/button'
@@ -27,9 +27,23 @@ interface PrefilledSlot {
   locationId: string
 }
 
+interface EditInitialValues {
+  clientId: string
+  clientNominativo: string
+  dogId: string
+  serviceId: string
+  duration: number
+  price: number
+  userId: string | null
+  stationId: string | null
+}
+
 interface AppointmentFormProps {
   prefilledSlot: PrefilledSlot
   availableStaff?: { id: string; name: string }[]
+  mode?: 'create' | 'edit'
+  appointmentId?: string
+  initialValues?: EditInitialValues
   onSuccess: () => void
   onCancel: () => void
 }
@@ -66,12 +80,16 @@ function getEffectiveCoatSize(dog: Dog) {
   return { coat, size }
 }
 
-export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: AppointmentFormProps) {
+export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create', appointmentId, initialValues, onSuccess, onCancel }: AppointmentFormProps) {
+  const [editInitialized, setEditInitialized] = useState(false)
   const [selectedClient, setSelectedClient] = useState<SelectedClient | null>(null)
   const [showQuickClient, setShowQuickClient] = useState(false)
   const [showQuickDog, setShowQuickDog] = useState(false)
   const [dogs, setDogs] = useState<Dog[]>([])
   const [selectedDogId, setSelectedDogId] = useState<string | null>(null)
+  // Cane da preselezionare non appena la lista cani del cliente è caricata
+  // (ricerca unificata cliente/cane, o cane appena creato al volo).
+  const pendingDogIdRef = useRef<string | null>(null)
   const [selectedUserId, setSelectedUserId] = useState<string>(prefilledSlot.userId ?? '')
   const [stationsList, setStationsList] = useState<{ id: string; name: string }[]>([])
   const [selectedStationId, setSelectedStationId] = useState<string | null>(prefilledSlot.stationId ?? null)
@@ -113,9 +131,12 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
     onSuccess: ({ data }) => {
       if (data?.dogs) {
         setDogs(data.dogs)
-        if (data.dogs.length === 1) {
-          handleDogChange(data.dogs[0].id)
-        }
+        const pending = pendingDogIdRef.current
+        const target = pending && data.dogs.some(d => d.id === pending)
+          ? pending
+          : data.dogs.length === 1 ? data.dogs[0].id : null
+        if (target) handleDogChange(target)
+        pendingDogIdRef.current = null
       }
     },
   })
@@ -158,6 +179,20 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
     },
   })
 
+  const { execute: submitUpdateAppointment, isPending: isUpdating } = useAction(updateAppointment, {
+    onSuccess: ({ data }) => {
+      if (data?.error) {
+        setBusinessError(data.error)
+        return
+      }
+      toast.success('Appuntamento aggiornato')
+      onSuccess()
+    },
+    onError: (error) => {
+      toast.error(error.error?.serverError || 'Errore durante il salvataggio')
+    },
+  })
+
   // Load stations for location and services on mount
   useEffect(() => {
     loadStations({ locationId: prefilledSlot.locationId })
@@ -167,6 +202,26 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
       loadServices({})
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Modalita' modifica: precarica cliente/cane, poi (una volta caricati i servizi) i restanti campi
+  useEffect(() => {
+    if (mode !== 'edit' || !initialValues) return
+    setSelectedClient({ id: initialValues.clientId, nominativo: initialValues.clientNominativo })
+    setSelectedStationId(initialValues.stationId)
+    setSelectedUserId(initialValues.userId ?? '')
+    pendingDogIdRef.current = initialValues.dogId
+    loadDogs({ clientId: initialValues.clientId })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (mode !== 'edit' || !initialValues || editInitialized) return
+    if (selectedDogId !== initialValues.dogId || services.length === 0) return
+    setSelectedServiceId(initialValues.serviceId)
+    setDuration(initialValues.duration)
+    setPriceEur(String(Math.round(initialValues.price / 100)))
+    setPriceIsManual(true)
+    setEditInitialized(true)
+  }, [mode, initialValues, selectedDogId, services, editInitialized])
 
   const handleDogChange = (dogId: string) => {
     setSelectedDogId(dogId)
@@ -191,25 +246,27 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
     }
   }
 
-  const handleClientSelect = (client: SelectedClient) => {
+  const handleSearchSelect = ({ client, dog }: { client: SelectedClient; dog: { id: string; name: string } | null }) => {
     setSelectedClient(client)
     setSelectedDogId(null)
     setDogs([])
     setShowQuickDog(false)
     setBusinessError(null)
+    pendingDogIdRef.current = dog?.id ?? null
     loadDogs({ clientId: client.id })
   }
 
   const handleDogCreated = (dog: { id: string; name: string }) => {
     setShowQuickDog(false)
     if (selectedClient) {
+      pendingDogIdRef.current = dog.id
       loadDogs({ clientId: selectedClient.id })
     }
   }
 
   const handleClientCreated = (client: { id: string; nominativo: string }) => {
     setShowQuickClient(false)
-    handleClientSelect(client)
+    handleSearchSelect({ client, dog: null })
   }
 
   const handleStationChange = (value: string) => {
@@ -294,11 +351,23 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
   }
 
   const handleSubmit = () => {
-    if (!selectedClient || !selectedDogId || !selectedServiceId || !selectedUserId) return
+    if (!selectedClient || !selectedDogId || !selectedServiceId || (!selectedUserId && !selectedStationId)) return
     setBusinessError(null)
     const priceCents = Math.round(parseFloat(priceEur) * 100)
+    if (mode === 'edit' && appointmentId) {
+      submitUpdateAppointment({
+        id: appointmentId,
+        clientId: selectedClient.id,
+        dogId: selectedDogId,
+        serviceId: selectedServiceId,
+        duration,
+        price: priceCents,
+        ...(selectedUserId && { userId: selectedUserId }),
+        ...(selectedStationId && { stationId: selectedStationId }),
+      })
+      return
+    }
     submitAppointment({
-      userId: selectedUserId,
       locationId: prefilledSlot.locationId,
       date: prefilledSlot.date,
       time: prefilledSlot.time,
@@ -307,6 +376,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
       serviceId: selectedServiceId,
       duration,
       price: priceCents,
+      ...(selectedUserId && { userId: selectedUserId }),
       ...(selectedStationId && { stationId: selectedStationId }),
     })
   }
@@ -317,10 +387,19 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
     month: 'short',
   }).format(new Date(prefilledSlot.date + 'T00:00:00.000Z'))
 
-  const isFormComplete = selectedClient && selectedDogId && selectedServiceId && duration >= 15 && parseFloat(priceEur) >= 0 && !!selectedUserId
+  const isFormComplete = selectedClient && selectedDogId && selectedServiceId && duration >= 15 && parseFloat(priceEur) >= 0 && (!!selectedUserId || !!selectedStationId)
+  const isSaving = isSubmitting || isUpdating
 
   return (
     <div className="space-y-4">
+      {mode === 'edit' && (
+        <div className="flex justify-end">
+          <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+            Annulla
+          </Button>
+        </div>
+      )}
+
       {/* Header: slot pre-compilato */}
       <div className="bg-muted/50 flex flex-wrap items-center gap-3 rounded-lg p-3">
         {prefilledSlot.stationName ? (
@@ -347,15 +426,20 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
         </div>
       </div>
 
-      {/* Collaboratore — mostrato quando non pre-compilato */}
+      {/* Collaboratore — mostrato quando non pre-compilato. Opzionale: se non assegnato,
+          l'appuntamento resta visibile in agenda tramite la postazione. */}
       {!prefilledSlot.userId && availableStaff && availableStaff.length > 0 && (
         <div>
-          <Label className="mb-1.5 block text-sm font-medium">Collaboratore</Label>
-          <Select value={selectedUserId || undefined} onValueChange={setSelectedUserId}>
+          <Label className="mb-1.5 block text-sm font-medium">Collaboratore (opzionale)</Label>
+          <Select
+            value={selectedUserId || '__none__'}
+            onValueChange={(value) => setSelectedUserId(value === '__none__' ? '' : value)}
+          >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Seleziona collaboratore" />
+              <SelectValue placeholder="Non assegnato" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="__none__">Non assegnato</SelectItem>
               {availableStaff.map((person) => (
                 <SelectItem key={person.id} value={person.id}>
                   {person.name}
@@ -406,8 +490,8 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
             </Button>
           </div>
         ) : (
-          <ClientSearch
-            onSelect={handleClientSelect}
+          <ClientDogSearch
+            onSelect={handleSearchSelect}
             onCreateNew={() => setShowQuickClient(true)}
           />
         )}
@@ -640,19 +724,28 @@ export function AppointmentForm({ prefilledSlot, availableStaff, onSuccess }: Ap
         </div>
       )}
 
+      {/* Avviso: senza collaboratore né postazione l'appuntamento non sarebbe visibile in agenda */}
+      {selectedServiceId && !selectedUserId && !selectedStationId && (
+        <p className="text-muted-foreground text-xs">
+          Seleziona una postazione o un collaboratore, altrimenti l&apos;appuntamento non sarà visibile in agenda.
+        </p>
+      )}
+
       {/* Bottone conferma */}
       {selectedServiceId && (
         <Button
           type="button"
           className="w-full"
-          disabled={!isFormComplete || isSubmitting}
+          disabled={!isFormComplete || isSaving}
           onClick={handleSubmit}
         >
-          {isSubmitting ? (
+          {isSaving ? (
             <>
               <Loader2 className="mr-2 size-4 animate-spin" />
               Salvataggio...
             </>
+          ) : mode === 'edit' ? (
+            'Salva modifiche'
           ) : (
             'Conferma'
           )}

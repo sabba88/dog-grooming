@@ -1,7 +1,7 @@
 'use server'
 
 import { authActionClient } from '@/lib/actions/client'
-import { getAppointmentsQuerySchema, createAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema, reassignStaffSchema } from '@/lib/validations/appointments'
+import { getAppointmentsQuerySchema, createAppointmentSchema, updateAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema, reassignStaffSchema } from '@/lib/validations/appointments'
 import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog, getWeeklyAppointmentsByPerson, getWeeklyAppointmentsByStation } from '@/lib/queries/appointments'
 import { getStaffStatusForDate, getActiveUsers, getWeeklyStaffShifts } from '@/lib/queries/staff'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
@@ -237,61 +237,87 @@ export const createAppointment = authActionClient
       }
     }
 
-    // 3. Verifica non-sovrapposizione per persona (userId)
-    const conflicts = await db
-      .select({ id: appointments.id })
-      .from(appointments)
-      .where(
-        and(
-          eq(appointments.userId, userId),
-          eq(appointments.tenantId, ctx.tenantId),
-          lt(appointments.startTime, endTime),
-          gt(appointments.endTime, startTime)
+    if (userId) {
+      // 3. Verifica non-sovrapposizione per persona (userId)
+      const conflicts = await db
+        .select({ id: appointments.id })
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.userId, userId),
+            eq(appointments.tenantId, ctx.tenantId),
+            lt(appointments.startTime, endTime),
+            gt(appointments.endTime, startTime)
+          )
         )
-      )
-      .limit(1)
+        .limit(1)
 
-    if (conflicts.length > 0) {
-      const [alternatives, alternativeStaff] = await Promise.all([
-        findAlternativeSlots(userId, date, duration, ctx.tenantId),
-        locationId
-          ? findAlternativeStaff(userId, locationId, date, startTime, endTime, ctx.tenantId)
-          : Promise.resolve([]),
-      ])
-      return {
-        error: {
-          code: 'SLOT_OCCUPIED' as const,
-          message: "Lo slot e' gia' occupato",
-          alternatives,
-          alternativeStaff,
-        },
-      }
-    }
-
-    // 4. Validazione turno persona (per data specifica)
-    const shiftsForDate = await db
-      .select({ startTime: userLocationAssignments.startTime, endTime: userLocationAssignments.endTime })
-      .from(userLocationAssignments)
-      .where(and(
-        eq(userLocationAssignments.userId, userId),
-        eq(userLocationAssignments.date, date),
-        eq(userLocationAssignments.tenantId, ctx.tenantId)
-      ))
-
-    if (shiftsForDate.length > 0) {
-      const appointmentStartMinutes = startTime.getUTCHours() * 60 + startTime.getUTCMinutes()
-      const appointmentEndMinutes = endTime.getUTCHours() * 60 + endTime.getUTCMinutes()
-      const coveringShift = shiftsForDate.find(s => {
-        const shiftStart = timeToMinutes(s.startTime)
-        const shiftEnd = timeToMinutes(s.endTime)
-        return appointmentStartMinutes >= shiftStart && appointmentStartMinutes < shiftEnd
-      })
-      if (coveringShift && appointmentEndMinutes > timeToMinutes(coveringShift.endTime)) {
+      if (conflicts.length > 0) {
+        const [alternatives, alternativeStaff] = await Promise.all([
+          findAlternativeSlots(userId, date, duration, ctx.tenantId),
+          locationId
+            ? findAlternativeStaff(userId, locationId, date, startTime, endTime, ctx.tenantId)
+            : Promise.resolve([]),
+        ])
         return {
           error: {
-            code: 'EXCEEDS_SHIFT_TIME' as const,
-            message: "L'appuntamento supera la fine del turno",
-            shiftEndTime: coveringShift.endTime,
+            code: 'SLOT_OCCUPIED' as const,
+            message: "Lo slot e' gia' occupato",
+            alternatives,
+            alternativeStaff,
+          },
+        }
+      }
+
+      // 4. Validazione turno persona (per data specifica)
+      const shiftsForDate = await db
+        .select({ startTime: userLocationAssignments.startTime, endTime: userLocationAssignments.endTime })
+        .from(userLocationAssignments)
+        .where(and(
+          eq(userLocationAssignments.userId, userId),
+          eq(userLocationAssignments.date, date),
+          eq(userLocationAssignments.tenantId, ctx.tenantId)
+        ))
+
+      if (shiftsForDate.length > 0) {
+        const appointmentStartMinutes = startTime.getUTCHours() * 60 + startTime.getUTCMinutes()
+        const appointmentEndMinutes = endTime.getUTCHours() * 60 + endTime.getUTCMinutes()
+        const coveringShift = shiftsForDate.find(s => {
+          const shiftStart = timeToMinutes(s.startTime)
+          const shiftEnd = timeToMinutes(s.endTime)
+          return appointmentStartMinutes >= shiftStart && appointmentStartMinutes < shiftEnd
+        })
+        if (coveringShift && appointmentEndMinutes > timeToMinutes(coveringShift.endTime)) {
+          return {
+            error: {
+              code: 'EXCEEDS_SHIFT_TIME' as const,
+              message: "L'appuntamento supera la fine del turno",
+              shiftEndTime: coveringShift.endTime,
+            },
+          }
+        }
+      }
+    } else if (stationId) {
+      // Nessun collaboratore assegnato: verifica non-sovrapposizione sulla postazione,
+      // altrimenti due appuntamenti "da assegnare" si impilerebbero senza avviso.
+      const stationConflicts = await db
+        .select({ id: appointments.id })
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.stationId, stationId),
+            eq(appointments.tenantId, ctx.tenantId),
+            lt(appointments.startTime, endTime),
+            gt(appointments.endTime, startTime)
+          )
+        )
+        .limit(1)
+
+      if (stationConflicts.length > 0) {
+        return {
+          error: {
+            code: 'SLOT_OCCUPIED' as const,
+            message: "Lo slot e' gia' occupato su questa postazione",
           },
         }
       }
@@ -304,7 +330,7 @@ export const createAppointment = authActionClient
         clientId,
         dogId,
         serviceId,
-        userId,
+        userId: userId ?? null,
         stationId: stationId ?? null,
         startTime,
         endTime,
@@ -314,6 +340,135 @@ export const createAppointment = authActionClient
       .returning()
 
     return { appointment: created }
+  })
+
+export const updateAppointment = authActionClient
+  .schema(updateAppointmentSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { id, userId, stationId, clientId, dogId, serviceId, duration, price } = parsedInput
+
+    const [existing] = await db
+      .select({ startTime: appointments.startTime })
+      .from(appointments)
+      .where(and(eq(appointments.id, id), eq(appointments.tenantId, ctx.tenantId)))
+      .limit(1)
+
+    if (!existing) throw new Error('Appuntamento non trovato')
+
+    const startTime = existing.startTime
+    const endTime = new Date(startTime.getTime() + duration * 60 * 1000)
+    const dateStr = format(startTime, 'yyyy-MM-dd')
+
+    // Validare servizio abilitato sulla postazione (solo se stationId fornito)
+    if (stationId) {
+      const [stationService] = await db
+        .select({ serviceId: stationServices.serviceId })
+        .from(stationServices)
+        .where(
+          and(
+            eq(stationServices.stationId, stationId),
+            eq(stationServices.serviceId, serviceId),
+            eq(stationServices.tenantId, ctx.tenantId)
+          )
+        )
+        .limit(1)
+
+      if (!stationService) {
+        throw new Error('Servizio non abilitato su questa postazione')
+      }
+    }
+
+    if (userId) {
+      const conflicts = await db
+        .select({ id: appointments.id })
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.userId, userId),
+            eq(appointments.tenantId, ctx.tenantId),
+            ne(appointments.id, id),
+            lt(appointments.startTime, endTime),
+            gt(appointments.endTime, startTime)
+          )
+        )
+        .limit(1)
+
+      if (conflicts.length > 0) {
+        return {
+          error: {
+            code: 'SLOT_OCCUPIED' as const,
+            message: "Lo slot e' gia' occupato",
+          },
+        }
+      }
+
+      const shiftsForDate = await db
+        .select({ startTime: userLocationAssignments.startTime, endTime: userLocationAssignments.endTime })
+        .from(userLocationAssignments)
+        .where(and(
+          eq(userLocationAssignments.userId, userId),
+          eq(userLocationAssignments.date, dateStr),
+          eq(userLocationAssignments.tenantId, ctx.tenantId)
+        ))
+
+      if (shiftsForDate.length > 0) {
+        const appointmentStartMinutes = startTime.getUTCHours() * 60 + startTime.getUTCMinutes()
+        const appointmentEndMinutes = endTime.getUTCHours() * 60 + endTime.getUTCMinutes()
+        const coveringShift = shiftsForDate.find(s => {
+          const shiftStart = timeToMinutes(s.startTime)
+          const shiftEnd = timeToMinutes(s.endTime)
+          return appointmentStartMinutes >= shiftStart && appointmentStartMinutes < shiftEnd
+        })
+        if (coveringShift && appointmentEndMinutes > timeToMinutes(coveringShift.endTime)) {
+          return {
+            error: {
+              code: 'EXCEEDS_SHIFT_TIME' as const,
+              message: "L'appuntamento supera la fine del turno",
+              shiftEndTime: coveringShift.endTime,
+            },
+          }
+        }
+      }
+    } else if (stationId) {
+      const stationConflicts = await db
+        .select({ id: appointments.id })
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.stationId, stationId),
+            eq(appointments.tenantId, ctx.tenantId),
+            ne(appointments.id, id),
+            lt(appointments.startTime, endTime),
+            gt(appointments.endTime, startTime)
+          )
+        )
+        .limit(1)
+
+      if (stationConflicts.length > 0) {
+        return {
+          error: {
+            code: 'SLOT_OCCUPIED' as const,
+            message: "Lo slot e' gia' occupato su questa postazione",
+          },
+        }
+      }
+    }
+
+    await db
+      .update(appointments)
+      .set({
+        clientId,
+        dogId,
+        serviceId,
+        userId: userId ?? null,
+        stationId: stationId ?? null,
+        endTime,
+        price,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(appointments.id, id), eq(appointments.tenantId, ctx.tenantId)))
+
+    return { success: true }
   })
 
 export const fetchAppointmentDetail = authActionClient

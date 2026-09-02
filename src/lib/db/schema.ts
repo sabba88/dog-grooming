@@ -184,7 +184,7 @@ export const appointments = pgTable('appointments', {
   clientId: uuid('client_id').notNull(),
   dogId: uuid('dog_id').notNull(),
   serviceId: uuid('service_id').notNull(),
-  userId: uuid('user_id').notNull(),
+  userId: uuid('user_id'), // opzionale: se assente, l'appuntamento è "da assegnare" e vive sulla postazione
   stationId: uuid('station_id'),
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time').notNull(),

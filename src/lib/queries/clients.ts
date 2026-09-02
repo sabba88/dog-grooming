@@ -137,26 +137,45 @@ export async function getClientAppointments(clientId: string, tenantId: string) 
     .orderBy(desc(appointments.startTime))
 }
 
-export async function searchClients(query: string, tenantId: string) {
+export interface ClientDogSearchResult {
+  clientId: string
+  nominativo: string
+  phone: string
+  dogId: string | null
+  dogName: string | null
+  breedName: string | null
+}
+
+// Ricerca unificata per il form appuntamento: nome cliente, telefono o nome cane.
+// Una riga per cane (i clienti senza cani hanno una riga con dogId null), così la
+// selezione precompila cliente + cane in un solo click.
+export async function searchClientsWithDogs(query: string, tenantId: string): Promise<ClientDogSearchResult[]> {
   const searchPattern = `%${query}%`
   return db
     .select({
-      id: clients.id,
+      clientId: clients.id,
       nominativo: clients.nominativo,
       phone: clients.phone,
-      email: clients.email,
+      dogId: dogs.id,
+      dogName: dogs.name,
+      breedName: breeds.name,
     })
     .from(clients)
+    .leftJoin(dogs, and(eq(dogs.clientId, clients.id), isNull(dogs.deletedAt)))
+    .leftJoin(breeds, eq(dogs.breedId, breeds.id))
     .where(
       and(
         eq(clients.tenantId, tenantId),
         isNull(clients.deletedAt),
         or(
           ilike(clients.nominativo, searchPattern),
-          ilike(clients.phone, searchPattern)
+          ilike(clients.phone, searchPattern),
+          ilike(clients.phone2, searchPattern),
+          ilike(clients.phone3, searchPattern),
+          ilike(dogs.name, searchPattern)
         )
       )
     )
-    .orderBy(asc(clients.nominativo))
-    .limit(10)
+    .orderBy(asc(clients.nominativo), asc(dogs.name))
+    .limit(25)
 }

@@ -116,7 +116,10 @@ export function AppointmentBlock({
               minHeight: '44px',
             }}
           >
-            <p className="text-xs font-medium text-foreground truncate">{clientName}</p>
+            <div className="flex items-center justify-between gap-1">
+              <p className="text-xs font-medium text-foreground truncate">{clientName}</p>
+              <span className="text-xs text-muted-foreground shrink-0">{formatTime(startTime)}</span>
+            </div>
             <p className="text-xs text-muted-foreground truncate">{dogName}</p>
             <p className="text-xs text-muted-foreground truncate">{serviceName}</p>
             <p className="text-xs text-muted-foreground truncate">{staffName}</p>

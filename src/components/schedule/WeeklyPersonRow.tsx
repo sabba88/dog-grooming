@@ -68,9 +68,9 @@ export function WeeklyPersonRow({
             if (isUnassigned) {
               badgeClass += 'border-border text-muted-foreground bg-muted'
             } else if (gapMinutes > 0) {
-              badgeClass += 'border-primary text-primary bg-transparent'
+              badgeClass += 'border-green-400 text-green-700 bg-green-50'
             } else {
-              badgeClass += 'border-border text-muted-foreground bg-transparent'
+              badgeClass += 'border-red-300 text-red-700 bg-red-50'
             }
 
             return (
