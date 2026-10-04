@@ -93,28 +93,6 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
     },
   })
 
-  useEffect(() => {
-    if (open) {
-      executeFetchSurcharges({})
-      if (isEditing && service) {
-        executeFetchMatrix({ serviceId: service.id })
-        form.reset({
-          id: service.id,
-          name: service.name,
-          price: service.price / 100,
-          duration: service.duration,
-          durationSurchargePer30min: service.durationSurchargePer30min / 100,
-        })
-      } else {
-        setMatrixCells({})
-        form.reset({ name: '', price: 0, duration: 0, durationSurchargePer30min: 0 })
-      }
-    }
-    if (!open) {
-      setMatrixCells({})
-    }
-  }, [open, isEditing]) // eslint-disable-line react-hooks/exhaustive-deps
-
   const form = useForm<CreateServiceFormData | UpdateServiceFormData>({
     resolver: zodResolver(isEditing ? updateServiceSchema : createServiceSchema),
     defaultValues: isEditing
@@ -127,6 +105,32 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
         }
       : { name: '', price: 0, duration: 0, durationSurchargePer30min: 0 },
   })
+
+  // La matrice prezzi appartiene al servizio aperto: si svuota a ogni apertura e
+  // alla chiusura durante il render, poi in modifica la ripopola executeFetchMatrix.
+  const formSource = open ? (isEditing && service ? service.id : 'new') : null
+  const [syncedSource, setSyncedSource] = useState<string | null>(null)
+  if (formSource !== syncedSource) {
+    setSyncedSource(formSource)
+    setMatrixCells({})
+  }
+
+  useEffect(() => {
+    if (!open) return
+    executeFetchSurcharges({})
+    if (isEditing && service) {
+      executeFetchMatrix({ serviceId: service.id })
+      form.reset({
+        id: service.id,
+        name: service.name,
+        price: service.price / 100,
+        duration: service.duration,
+        durationSurchargePer30min: service.durationSurchargePer30min / 100,
+      })
+    } else {
+      form.reset({ name: '', price: 0, duration: 0, durationSurchargePer30min: 0 })
+    }
+  }, [open, isEditing]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createService, {
     onSuccess: () => {

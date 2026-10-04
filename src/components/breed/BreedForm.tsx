@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useAction } from 'next-safe-action/hooks'
 import { createBreed, updateBreed } from '@/lib/actions/breeds'
@@ -51,13 +51,20 @@ export function BreedForm({ open, onOpenChange, onSuccess, breed }: BreedFormPro
   const [coatType, setCoatType] = useState<string>('')
   const [sizeType, setSizeType] = useState<string>('')
 
-  useEffect(() => {
-    if (!open) return
-    setNameError('')
-    setName(isEditing && breed ? breed.name : '')
-    setCoatType(isEditing && breed ? breed.coatType ?? '' : '')
-    setSizeType(isEditing && breed ? breed.sizeType ?? '' : '')
-  }, [open, breed, isEditing])
+  // I campi appartengono a una singola apertura del dialog: si riallineano durante
+  // il render (pattern React per lo stato derivato) invece che da un effect, che
+  // mostrerebbe per un render i valori dell'apertura precedente.
+  const formSource = open ? (breed?.id ?? 'new') : null
+  const [syncedSource, setSyncedSource] = useState<string | null>(null)
+  if (formSource !== syncedSource) {
+    setSyncedSource(formSource)
+    if (formSource !== null) {
+      setNameError('')
+      setName(breed?.name ?? '')
+      setCoatType(breed?.coatType ?? '')
+      setSizeType(breed?.sizeType ?? '')
+    }
+  }
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createBreed, {
     onSuccess: () => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useAction } from 'next-safe-action/hooks'
 import { updateProductStock } from '@/lib/actions/products'
@@ -39,11 +39,18 @@ export function StockUpdateForm({ open, onOpenChange, onSuccess, product }: Stoc
   const [stock, setStock] = useState('')
   const [error, setError] = useState('')
 
-  useEffect(() => {
-    if (!open || !product) return
-    setError('')
-    setStock(String(product.stock))
-  }, [open, product])
+  // I campi appartengono a una singola apertura del dialog: si riallineano durante
+  // il render (pattern React per lo stato derivato) invece che da un effect, che
+  // mostrerebbe per un render il valore dell'apertura precedente.
+  const formSource = open && product ? product.id : null
+  const [syncedSource, setSyncedSource] = useState<string | null>(null)
+  if (formSource !== syncedSource) {
+    setSyncedSource(formSource)
+    if (formSource !== null && product) {
+      setError('')
+      setStock(String(product.stock))
+    }
+  }
 
   const { execute, isPending } = useAction(updateProductStock, {
     onSuccess: () => {

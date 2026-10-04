@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
 const STORAGE_KEY = 'selectedLocationId'
 const CHANGE_EVENT = 'location-changed'
@@ -11,43 +11,45 @@ interface Location {
   address: string
 }
 
+// localStorage piu' l'evento custom sono a tutti gli effetti uno store esterno:
+// useSyncExternalStore lo legge senza passare da un effect e senza mismatch di
+// idratazione, perche' sul server la snapshot e' null come prima del mount.
+function subscribe(onStoreChange: () => void) {
+  window.addEventListener(CHANGE_EVENT, onStoreChange)
+  // Altre schede: scrivono localStorage senza passare dall'evento custom.
+  window.addEventListener('storage', onStoreChange)
+  return () => {
+    window.removeEventListener(CHANGE_EVENT, onStoreChange)
+    window.removeEventListener('storage', onStoreChange)
+  }
+}
+
+function getStoredLocationId(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+const noStoredLocationId = () => null
+const onClient = () => true
+const onServer = () => false
+
 export function useLocationSelector(locations: Location[]) {
-  const [selectedLocationId, setSelectedLocationIdState] = useState<string | null>(null)
-  const [isHydrated, setIsHydrated] = useState(false)
+  const storedLocationId = useSyncExternalStore(subscribe, getStoredLocationId, noStoredLocationId)
+  const isHydrated = useSyncExternalStore(subscribe, onClient, onServer)
 
-  // Read from localStorage after mount (SSR-safe)
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored && locations.some((l) => l.id === stored)) {
-      setSelectedLocationIdState(stored)
-    } else if (locations.length > 0) {
-      // Fallback: select first location if stored one doesn't exist
-      setSelectedLocationIdState(locations[0].id)
-      localStorage.setItem(STORAGE_KEY, locations[0].id)
-    }
-    setIsHydrated(true)
-  }, [locations])
+  // La sede memorizzata vale solo se esiste ancora tra quelle disponibili,
+  // altrimenti si ripiega sulla prima.
+  const storedIsValid = !!storedLocationId && locations.some((l) => l.id === storedLocationId)
+  const selectedLocationId = (storedIsValid ? storedLocationId : locations[0]?.id) ?? null
 
-  // Listen for changes from other hook instances in the same tab
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const id = (e as CustomEvent<string>).detail
-      if (id && locations.some((l) => l.id === id)) {
-        setSelectedLocationIdState(id)
-      }
-    }
-    window.addEventListener(CHANGE_EVENT, handler)
-    return () => window.removeEventListener(CHANGE_EVENT, handler)
-  }, [locations])
-
-  const setSelectedLocationId = useCallback(
-    (id: string) => {
-      setSelectedLocationIdState(id)
-      localStorage.setItem(STORAGE_KEY, id)
-      window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: id }))
-    },
-    []
-  )
+  const setSelectedLocationId = useCallback((id: string) => {
+    localStorage.setItem(STORAGE_KEY, id)
+    // Notifica le altre istanze dell'hook nella stessa scheda.
+    window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: id }))
+  }, [])
 
   return {
     selectedLocationId,

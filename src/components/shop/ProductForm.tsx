@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useAction } from 'next-safe-action/hooks'
 import { createProduct, updateProduct } from '@/lib/actions/products'
@@ -44,19 +44,20 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
   const [stock, setStock] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    if (!open) return
-    setErrors({})
-    if (product) {
-      setName(product.name)
-      setPriceEur((product.price / 100).toFixed(2))
-      setStock(String(product.stock))
-    } else {
-      setName('')
-      setPriceEur('')
-      setStock('0')
+  // I campi appartengono a una singola apertura del dialog: si riallineano durante
+  // il render (pattern React per lo stato derivato) invece che da un effect, che
+  // mostrerebbe per un render i valori dell'apertura precedente.
+  const formSource = open ? (product?.id ?? 'new') : null
+  const [syncedSource, setSyncedSource] = useState<string | null>(null)
+  if (formSource !== syncedSource) {
+    setSyncedSource(formSource)
+    if (formSource !== null) {
+      setErrors({})
+      setName(product?.name ?? '')
+      setPriceEur(product ? (product.price / 100).toFixed(2) : '')
+      setStock(product ? String(product.stock) : '0')
     }
-  }, [open, product])
+  }
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createProduct, {
     onSuccess: () => {
