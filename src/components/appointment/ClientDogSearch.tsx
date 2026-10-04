@@ -4,11 +4,16 @@ import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Search, UserPlus, Loader2 } from 'lucide-react'
+import { getCoOwners } from '@/lib/utils/formatting'
 
 interface ClientDogResult {
   clientId: string
   nominativo: string
   phone: string
+  owner2: string | null
+  phone2: string | null
+  owner3: string | null
+  phone3: string | null
   dogId: string | null
   dogName: string | null
   breedName: string | null
@@ -150,33 +155,50 @@ export function ClientDogSearch({ onSelect, onCreateNew, autoFocus = true }: Cli
           )}
 
           <div className="max-h-64 overflow-y-auto">
-            {results.map((result, index) => (
-              <button
-                key={`${result.clientId}-${result.dogId ?? 'none'}`}
-                type="button"
-                className={`flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors ${
-                  index === activeIndex ? 'bg-accent' : 'hover:bg-accent/50'
-                }`}
-                onClick={() => handleSelect(result)}
-                onMouseEnter={() => setActiveIndex(index)}
-              >
-                <Avatar size="sm">
-                  <AvatarFallback className="text-xs">
-                    {getInitials(result.nominativo)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">
-                    {result.dogName
-                      ? `${result.dogName}${result.breedName ? ` (${result.breedName})` : ''}`
-                      : result.nominativo}
+            {results.map((result, index) => {
+              const coOwners = getCoOwners(result)
+              return (
+                <button
+                  key={`${result.clientId}-${result.dogId ?? 'none'}`}
+                  type="button"
+                  className={`flex w-full items-start gap-3 px-3 py-2.5 text-left transition-colors ${
+                    index === activeIndex ? 'bg-accent' : 'hover:bg-accent/50'
+                  }`}
+                  onClick={() => handleSelect(result)}
+                  onMouseEnter={() => setActiveIndex(index)}
+                >
+                  <Avatar size="sm">
+                    <AvatarFallback className="text-xs">
+                      {getInitials(result.nominativo)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">
+                      {result.dogName
+                        ? `${result.dogName}${result.breedName ? ` (${result.breedName})` : ''}`
+                        : result.nominativo}
+                    </div>
+                    <div className="text-muted-foreground truncate text-xs">
+                      {result.dogName ? `${result.nominativo} · ${result.phone}` : `${result.phone} · Nessun cane`}
+                    </div>
+                    {coOwners.length > 0 && (
+                      <div className="text-muted-foreground mt-0.5 text-xs">
+                        {coOwners.map((owner, i) => (
+                          <div key={owner.slot} className="flex gap-1">
+                            <span className="w-5 shrink-0 tabular-nums">
+                              {i === 0 ? `+${coOwners.length}` : ''}
+                            </span>
+                            <span className="truncate">
+                              {owner.name || '—'} · {owner.phone || '—'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-muted-foreground truncate text-xs">
-                    {result.dogName ? `${result.nominativo} · ${result.phone}` : `${result.phone} · Nessun cane`}
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              )
+            })}
           </div>
 
           <button

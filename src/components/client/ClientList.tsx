@@ -15,9 +15,12 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ClientForm } from '@/components/client/ClientForm'
+import { MissingValue } from '@/components/client/MissingValue'
 import { Plus, Search, X } from 'lucide-react'
 import { COAT_LABELS, SIZE_LABELS } from '@/lib/types'
 import type { ClientDogSummary } from '@/lib/queries/clients'
+import { isMissingValue } from '@/lib/utils/formatting'
+import { cn } from '@/lib/utils'
 
 function formatDogDetails(dog: ClientDogSummary): string {
   const parts = [
@@ -213,8 +216,12 @@ export function ClientList({ clients }: ClientListProps) {
                           </AvatarFallback>
                         </Avatar>
                       </TableCell>
-                      <TableCell className="font-medium">{client.nominativo}</TableCell>
-                      <TableCell>{client.phone}</TableCell>
+                      <TableCell className={cn('font-medium', isMissingValue(client.nominativo) && 'bg-destructive/10')}>
+                        {isMissingValue(client.nominativo) ? <MissingValue /> : client.nominativo}
+                      </TableCell>
+                      <TableCell className={cn(isMissingValue(client.phone) && 'bg-destructive/10')}>
+                        {isMissingValue(client.phone) ? <MissingValue /> : client.phone}
+                      </TableCell>
                       <TableCell className="text-muted-foreground">
                         {client.email || '—'}
                       </TableCell>
@@ -282,8 +289,16 @@ export function ClientList({ clients }: ClientListProps) {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col min-w-0 flex-1">
-                    <span className="font-medium text-foreground truncate">{client.nominativo}</span>
-                    <span className="text-sm text-muted-foreground">{client.phone}</span>
+                    {isMissingValue(client.nominativo) ? (
+                      <MissingValue className="self-start" />
+                    ) : (
+                      <span className="font-medium text-foreground truncate">{client.nominativo}</span>
+                    )}
+                    {isMissingValue(client.phone) ? (
+                      <MissingValue className="mt-0.5 self-start" />
+                    ) : (
+                      <span className="text-sm text-muted-foreground">{client.phone}</span>
+                    )}
                     {client.dogs.length > 0 && (
                       <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
                         {client.dogs.map(dog => {

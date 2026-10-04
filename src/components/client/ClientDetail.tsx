@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { ClientForm } from '@/components/client/ClientForm'
 import { ClientNotes } from '@/components/client/ClientNotes'
+import { MissingValue } from '@/components/client/MissingValue'
+import { isMissingValue } from '@/lib/utils/formatting'
 import { DogList } from '@/components/dog/DogList'
 import { deleteClient } from '@/lib/actions/clients'
 import { useAction } from 'next-safe-action/hooks'
@@ -144,11 +146,19 @@ export function ClientDetail({ client, notes, dogs, breeds, appointments, userRo
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-muted-foreground mb-1">Nominativo</p>
-            <p className="text-sm text-foreground">{client.nominativo}</p>
+            {isMissingValue(client.nominativo) ? (
+              <MissingValue />
+            ) : (
+              <p className="text-sm text-foreground">{client.nominativo}</p>
+            )}
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Telefono</p>
-            <p className="text-sm text-foreground">{client.phone}</p>
+            {isMissingValue(client.phone) ? (
+              <MissingValue />
+            ) : (
+              <p className="text-sm text-foreground">{client.phone}</p>
+            )}
           </div>
           {(client.owner2 || client.phone2) && (
             <>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -13,6 +14,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
@@ -26,6 +28,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { MissingContactDialog } from '@/components/client/MissingContactDialog'
 import { toast } from 'sonner'
 import { useAction } from 'next-safe-action/hooks'
 
@@ -48,6 +51,8 @@ interface ClientFormProps {
 export function ClientForm({ open, onOpenChange, onSuccess, client }: ClientFormProps) {
   const isMobile = useIsMobile()
   const isEditing = !!client
+  const [missingContactOpen, setMissingContactOpen] = useState(false)
+  const [pendingCreate, setPendingCreate] = useState<CreateClientFormData | null>(null)
 
   const form = useForm<CreateClientFormData | UpdateClientFormData>({
     resolver: zodResolver(isEditing ? updateClientSchema : createClientSchema),
@@ -62,7 +67,7 @@ export function ClientForm({ open, onOpenChange, onSuccess, client }: ClientForm
           phone3: client.phone3 || '',
           email: client.email || '',
         }
-      : { nominativo: '', phone: '', owner2: '', phone2: '', owner3: '', phone3: '', email: '', consent: false },
+      : { nominativo: '', phone: '', owner2: '', phone2: '', owner3: '', phone3: '', email: '', notes: '', consent: false },
   })
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createClient, {
@@ -94,10 +99,33 @@ export function ClientForm({ open, onOpenChange, onSuccess, client }: ClientForm
   function onSubmit(data: CreateClientFormData | UpdateClientFormData) {
     if (isEditing) {
       executeUpdate(data as UpdateClientFormData)
-    } else {
-      executeCreate(data as CreateClientFormData)
+      return
+    }
+
+    const createData = data as CreateClientFormData
+    if (!createData.nominativo.trim() || !createData.phone.trim()) {
+      setPendingCreate(createData)
+      setMissingContactOpen(true)
+      return
+    }
+
+    executeCreate(createData)
+  }
+
+  function onConfirmMissingContact() {
+    if (pendingCreate) {
+      executeCreate(pendingCreate)
+      setPendingCreate(null)
     }
   }
+
+  const missingContactDialog = (
+    <MissingContactDialog
+      open={missingContactOpen}
+      onOpenChange={setMissingContactOpen}
+      onConfirm={onConfirmMissingContact}
+    />
+  )
 
   const formContent = (
     <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
@@ -187,6 +215,19 @@ export function ClientForm({ open, onOpenChange, onSuccess, client }: ClientForm
 
       {!isEditing && (
         <div className="flex flex-col gap-2">
+          <Label htmlFor="client-notes">Note (opzionale)</Label>
+          <Textarea
+            id="client-notes"
+            placeholder="Indicazioni utili sul cliente..."
+            rows={3}
+            maxLength={2000}
+            {...form.register('notes')}
+          />
+        </div>
+      )}
+
+      {!isEditing && (
+        <div className="flex flex-col gap-2">
           <Controller
             name="consent"
             control={form.control}
@@ -233,6 +274,7 @@ export function ClientForm({ open, onOpenChange, onSuccess, client }: ClientForm
             <SheetTitle>{title}</SheetTitle>
           </SheetHeader>
           <div className="mt-4">{formContent}</div>
+          {missingContactDialog}
         </SheetContent>
       </Sheet>
     )
@@ -245,6 +287,7 @@ export function ClientForm({ open, onOpenChange, onSuccess, client }: ClientForm
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         {formContent}
+        {missingContactDialog}
       </DialogContent>
     </Dialog>
   )

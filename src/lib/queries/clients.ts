@@ -141,6 +141,10 @@ export interface ClientDogSearchResult {
   clientId: string
   nominativo: string
   phone: string
+  owner2: string | null
+  phone2: string | null
+  owner3: string | null
+  phone3: string | null
   dogId: string | null
   dogName: string | null
   breedName: string | null
@@ -156,6 +160,10 @@ export async function searchClientsWithDogs(query: string, tenantId: string): Pr
       clientId: clients.id,
       nominativo: clients.nominativo,
       phone: clients.phone,
+      owner2: clients.owner2,
+      phone2: clients.phone2,
+      owner3: clients.owner3,
+      phone3: clients.phone3,
       dogId: dogs.id,
       dogName: dogs.name,
       breedName: breeds.name,
@@ -170,7 +178,9 @@ export async function searchClientsWithDogs(query: string, tenantId: string): Pr
         or(
           ilike(clients.nominativo, searchPattern),
           ilike(clients.phone, searchPattern),
+          ilike(clients.owner2, searchPattern),
           ilike(clients.phone2, searchPattern),
+          ilike(clients.owner3, searchPattern),
           ilike(clients.phone3, searchPattern),
           ilike(dogs.name, searchPattern)
         )

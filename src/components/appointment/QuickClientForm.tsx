@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAction } from 'next-safe-action/hooks'
@@ -8,8 +9,10 @@ import { createClientSchema, type CreateClientFormData } from '@/lib/validations
 import { createClient } from '@/lib/actions/clients'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { MissingContactDialog } from '@/components/client/MissingContactDialog'
 import { Loader2, ArrowLeft } from 'lucide-react'
 
 interface QuickClientFormProps {
@@ -18,12 +21,20 @@ interface QuickClientFormProps {
 }
 
 export function QuickClientForm({ onCreated, onCancel }: QuickClientFormProps) {
+  const [missingContactOpen, setMissingContactOpen] = useState(false)
+  const [pendingCreate, setPendingCreate] = useState<CreateClientFormData | null>(null)
+
   const form = useForm<CreateClientFormData>({
     resolver: zodResolver(createClientSchema),
     defaultValues: {
       nominativo: '',
       phone: '',
+      owner2: '',
+      phone2: '',
+      owner3: '',
+      phone3: '',
       email: '',
+      notes: '',
       consent: false,
     },
   })
@@ -42,7 +53,20 @@ export function QuickClientForm({ onCreated, onCancel }: QuickClientFormProps) {
   })
 
   function onSubmit(data: CreateClientFormData) {
+    if (!data.nominativo.trim() || !data.phone.trim()) {
+      setPendingCreate(data)
+      setMissingContactOpen(true)
+      return
+    }
+
     execute(data)
+  }
+
+  function onConfirmMissingContact() {
+    if (pendingCreate) {
+      execute(pendingCreate)
+      setPendingCreate(null)
+    }
   }
 
   return (
@@ -74,6 +98,36 @@ export function QuickClientForm({ onCreated, onCancel }: QuickClientFormProps) {
             <p className="text-destructive mt-1 text-xs">{form.formState.errors.phone.message}</p>
           )}
         </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label htmlFor="qc-owner2">Proprietario 2 (opzionale)</Label>
+            <Input id="qc-owner2" placeholder="Nome" {...form.register('owner2')} />
+          </div>
+          <div>
+            <Label htmlFor="qc-phone2">Telefono 2 (opzionale)</Label>
+            <Input id="qc-phone2" type="tel" placeholder="Numero" {...form.register('phone2')} />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label htmlFor="qc-owner3">Proprietario 3 (opzionale)</Label>
+            <Input id="qc-owner3" placeholder="Nome" {...form.register('owner3')} />
+          </div>
+          <div>
+            <Label htmlFor="qc-phone3">Telefono 3 (opzionale)</Label>
+            <Input id="qc-phone3" type="tel" placeholder="Numero" {...form.register('phone3')} />
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="qc-notes">Note (opzionale)</Label>
+          <Textarea
+            id="qc-notes"
+            placeholder="Indicazioni utili sul cliente..."
+            rows={2}
+            maxLength={2000}
+            {...form.register('notes')}
+          />
+        </div>
         <div className="flex items-start gap-2">
           <Checkbox
             id="qc-consent"
@@ -98,6 +152,11 @@ export function QuickClientForm({ onCreated, onCancel }: QuickClientFormProps) {
           )}
         </Button>
       </form>
+      <MissingContactDialog
+        open={missingContactOpen}
+        onOpenChange={setMissingContactOpen}
+        onConfirm={onConfirmMissingContact}
+      />
     </div>
   )
 }
