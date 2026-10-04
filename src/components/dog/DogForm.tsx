@@ -13,6 +13,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
@@ -80,7 +81,7 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, breeds, userR
           sex: (dog.sex as 'maschio' | 'femmina') || '',
           sterilized: dog.sterilized,
         }
-      : { name: '', breedId: null, coatType: '', sizeType: '', size: '', dateOfBirth: '', sex: '', sterilized: false, clientId },
+      : { name: '', breedId: null, coatType: '', sizeType: '', size: '', dateOfBirth: '', sex: '', sterilized: false, clientId, notes: '' },
   })
 
   const watchedBreedId = useWatch({ control: form.control, name: 'breedId' })
@@ -260,6 +261,19 @@ export function DogForm({ open, onOpenChange, onSuccess, clientId, breeds, userR
         />
         <Label htmlFor="sterilized" className="cursor-pointer">Sterilizzato</Label>
       </div>
+
+      {!isEditing && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="dog-notes">Note (opzionale)</Label>
+          <Textarea
+            id="dog-notes"
+            placeholder="Indicazioni utili sul cane..."
+            rows={3}
+            maxLength={2000}
+            {...form.register('notes')}
+          />
+        </div>
+      )}
 
       {!isEditing && <input type="hidden" {...form.register('clientId')} />}
       {isEditing && <input type="hidden" {...form.register('id')} />}

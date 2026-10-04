@@ -47,6 +47,16 @@ export const createDog = authActionClient
       })
       .returning({ id: dogs.id, name: dogs.name })
 
+    // Nota iniziale: riusa dog_notes invece di duplicare un campo sul cane.
+    if (parsedInput.notes?.trim()) {
+      await db.insert(dogNotes).values({
+        dogId: newDog.id,
+        content: parsedInput.notes.trim(),
+        authorId: ctx.userId,
+        tenantId: ctx.tenantId,
+      })
+    }
+
     return { dog: newDog }
   })
 

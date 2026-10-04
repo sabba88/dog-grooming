@@ -10,6 +10,7 @@ import { createDog } from '@/lib/actions/dogs'
 import { fetchBreeds } from '@/lib/actions/breeds'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { BreedCombobox } from '@/components/dog/BreedCombobox'
 import { Loader2, ArrowLeft } from 'lucide-react'
@@ -17,6 +18,7 @@ import { Loader2, ArrowLeft } from 'lucide-react'
 const quickDogSchema = z.object({
   name: z.string().min(2, 'Il nome deve avere almeno 2 caratteri'),
   breedId: z.string().uuid().nullable().optional(),
+  notes: z.string().trim().max(2000).optional(),
 })
 type QuickDogFormData = z.infer<typeof quickDogSchema>
 
@@ -41,7 +43,7 @@ export function QuickDogForm({ clientId, onCreated, onCancel }: QuickDogFormProp
 
   const form = useForm<QuickDogFormData>({
     resolver: zodResolver(quickDogSchema),
-    defaultValues: { name: '', breedId: null },
+    defaultValues: { name: '', breedId: null, notes: '' },
   })
 
   const { execute, isPending } = useAction(createDog, {
@@ -62,6 +64,7 @@ export function QuickDogForm({ clientId, onCreated, onCancel }: QuickDogFormProp
       breedId: data.breedId ?? null,
       sterilized: false,
       clientId,
+      ...(data.notes?.trim() && { notes: data.notes.trim() }),
     })
   }
 
@@ -88,6 +91,16 @@ export function QuickDogForm({ clientId, onCreated, onCancel }: QuickDogFormProp
             onChange={(val) => form.setValue('breedId', val)}
             breeds={breedsList}
             isAdmin={false}
+          />
+        </div>
+        <div>
+          <Label htmlFor="qd-notes">Note (opzionale)</Label>
+          <Textarea
+            id="qd-notes"
+            placeholder="Indicazioni utili sul cane..."
+            rows={2}
+            maxLength={2000}
+            {...form.register('notes')}
           />
         </div>
         <Button type="submit" className="w-full" disabled={isPending}>

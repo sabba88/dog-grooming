@@ -10,6 +10,8 @@ export const createDogSchema = z.object({
   sex: z.enum(['maschio', 'femmina']).optional().or(z.literal('')),
   sterilized: z.boolean(),
   clientId: z.string().uuid(),
+  // Nota iniziale facoltativa: salvata come prima voce in dog_notes.
+  notes: z.string().trim().max(2000, 'La nota non può superare 2000 caratteri').optional(),
 })
 
 export type CreateDogFormData = z.infer<typeof createDogSchema>

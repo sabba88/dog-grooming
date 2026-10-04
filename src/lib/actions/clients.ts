@@ -33,6 +33,16 @@ export const createClient = authActionClient
         nominativo: clients.nominativo,
       })
 
+    // Nota iniziale: riusa client_notes invece di duplicare un campo sul cliente.
+    if (parsedInput.notes?.trim()) {
+      await db.insert(clientNotes).values({
+        clientId: newClient.id,
+        content: parsedInput.notes.trim(),
+        authorId: ctx.userId,
+        tenantId: ctx.tenantId,
+      })
+    }
+
     return { client: newClient }
   })
 
