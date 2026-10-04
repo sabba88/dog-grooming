@@ -44,6 +44,88 @@ export function minutesToHoursLabel(minutes: number): string {
 export const SLOT_HEIGHT_PX = 30
 export const MINUTES_PER_SLOT = 15
 
+// Chiave della colonna/riga che raccoglie gli appuntamenti senza collaboratore (userId null).
+export const UNASSIGNED_KEY = '__unassigned__'
+export const UNASSIGNED_LABEL = 'Da assegnare'
+
+// Inverso di timeToMinutes: 570 -> "09:30".
+export function minutesToTime(minutes: number): string {
+  const h = String(Math.floor(minutes / 60)).padStart(2, '0')
+  const m = String(minutes % 60).padStart(2, '0')
+  return `${h}:${m}`
+}
+
+// Minuti dall'inizio della giornata, in UTC (gli orari sono salvati come UTC "nudo").
+export function utcMinutesOfDay(date: Date): number {
+  return date.getUTCHours() * 60 + date.getUTCMinutes()
+}
+
+export type LaidOutAppointment<T> = {
+  appointment: T
+  /** Indice della corsia occupata, da 0 a lanes-1. */
+  lane: number
+  /** Quante corsie affiancate servono al gruppo di sovrapposizioni. */
+  lanes: number
+}
+
+/**
+ * Affianca gli appuntamenti che si sovrappongono nel tempo, come fa un calendario.
+ *
+ * Gli appuntamenti vengono raggruppati in "cluster" di sovrapposizioni transitive; dentro
+ * ogni cluster ognuno prende la prima corsia libera, e tutti gli appuntamenti dello stesso
+ * cluster condividono lo stesso numero di corsie, cosi' i blocchi restano allineati.
+ *
+ * Serve ovunque due appuntamenti possano coesistere nella stessa colonna: due collaboratori
+ * diversi sulla stessa postazione, oppure piu' appuntamenti "da assegnare" su postazioni
+ * diverse che confluiscono tutti nella colonna "Da assegnare".
+ */
+export function computeOverlapLanes<T extends { startTime: Date; endTime: Date }>(
+  appointments: T[]
+): LaidOutAppointment<T>[] {
+  const items = appointments
+    .map(appointment => ({
+      appointment,
+      start: utcMinutesOfDay(appointment.startTime),
+      end: utcMinutesOfDay(appointment.endTime),
+    }))
+    // Piu' presto prima; a parita' di inizio, prima il piu' lungo.
+    .sort((a, b) => a.start - b.start || b.end - a.end)
+
+  const result: LaidOutAppointment<T>[] = []
+  let cluster: { appointment: T; lane: number }[] = []
+  let laneEnds: number[] = []
+  let clusterEnd = -1
+
+  const flushCluster = () => {
+    const lanes = laneEnds.length
+    for (const entry of cluster) {
+      result.push({ appointment: entry.appointment, lane: entry.lane, lanes })
+    }
+    cluster = []
+    laneEnds = []
+    clusterEnd = -1
+  }
+
+  for (const item of items) {
+    // Non tocca nulla del cluster corrente: il cluster si chiude e se ne apre uno nuovo.
+    if (cluster.length > 0 && item.start >= clusterEnd) flushCluster()
+
+    let lane = laneEnds.findIndex(end => end <= item.start)
+    if (lane === -1) {
+      lane = laneEnds.length
+      laneEnds.push(item.end)
+    } else {
+      laneEnds[lane] = item.end
+    }
+
+    cluster.push({ appointment: item.appointment, lane })
+    clusterEnd = Math.max(clusterEnd, item.end)
+  }
+  if (cluster.length > 0) flushCluster()
+
+  return result
+}
+
 export const SERVICE_COLORS = [
   { bg: '#DBEAFE', border: '#93C5FD', label: 'Azzurro' },
   { bg: '#DCFCE7', border: '#86EFAC', label: 'Verde' },

@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
-import { appointments, clients, dogs, services, stations, users } from '@/lib/db/schema'
-import { eq, and, gte, lt, asc, isNull, isNotNull, ne, desc } from 'drizzle-orm'
+import { appointments, breeds, clients, dogs, services, stations, users } from '@/lib/db/schema'
+import { eq, and, or, gte, lt, asc, isNull, isNotNull, ne, desc } from 'drizzle-orm'
 
 export async function getAppointmentById(id: string, tenantId: string) {
   const [result] = await db
@@ -15,6 +15,11 @@ export async function getAppointmentById(id: string, tenantId: string) {
       clientId: appointments.clientId,
       stationId: appointments.stationId,
       clientNominativo: clients.nominativo,
+      clientPhone: clients.phone,
+      owner2: clients.owner2,
+      phone2: clients.phone2,
+      owner3: clients.owner3,
+      phone3: clients.phone3,
       dogName: dogs.name,
       serviceName: services.name,
       serviceId: services.id,
@@ -54,6 +59,10 @@ export async function getAppointmentsByDateAndLocation(
       notes: appointments.notes,
       stationId: appointments.stationId,
       clientNominativo: clients.nominativo,
+      owner2: clients.owner2,
+      phone2: clients.phone2,
+      owner3: clients.owner3,
+      phone3: clients.phone3,
       dogName: dogs.name,
       serviceName: services.name,
       serviceId: services.id,
@@ -77,6 +86,7 @@ export async function getAppointmentsByDateAndLocation(
 
 export async function getAppointmentsByDateAndLocationGroupedByUser(
   date: string,
+  locationId: string,
   tenantId: string
 ) {
   const dayStart = new Date(date + 'T00:00:00.000Z')
@@ -92,16 +102,25 @@ export async function getAppointmentsByDateAndLocationGroupedByUser(
       userId: appointments.userId,
       stationId: appointments.stationId,
       clientNominativo: clients.nominativo,
+      owner2: clients.owner2,
+      phone2: clients.phone2,
+      owner3: clients.owner3,
+      phone3: clients.phone3,
       dogName: dogs.name,
+      breedName: breeds.name,
       serviceName: services.name,
       serviceId: services.id,
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))
     .innerJoin(dogs, eq(appointments.dogId, dogs.id))
+    .leftJoin(breeds, eq(dogs.breedId, breeds.id))
     .innerJoin(services, eq(appointments.serviceId, services.id))
+    .leftJoin(stations, eq(appointments.stationId, stations.id))
     .where(
       and(
+        // Un appuntamento senza postazione non ha legame con nessuna sede: lo si include sempre.
+        or(eq(stations.locationId, locationId), isNull(appointments.stationId)),
         gte(appointments.startTime, dayStart),
         lt(appointments.startTime, dayEnd),
         eq(appointments.tenantId, tenantId),
@@ -148,12 +167,14 @@ export async function getWeeklyAppointmentsByStation(
 export async function getWeeklyAppointmentsByPerson(
   weekStart: string,
   weekEnd: string,
+  locationId: string,
   tenantId: string
-): Promise<{ id: string; userId: string; startTime: Date; endTime: Date }[]> {
+): Promise<{ id: string; userId: string | null; startTime: Date; endTime: Date }[]> {
   const start = new Date(weekStart + 'T00:00:00.000Z')
   const end = new Date(weekEnd + 'T23:59:59.999Z')
 
-  const rows = await db
+  // userId puo' essere null: gli appuntamenti "da assegnare" finiscono in una riga dedicata.
+  return db
     .select({
       id: appointments.id,
       userId: appointments.userId,
@@ -162,9 +183,11 @@ export async function getWeeklyAppointmentsByPerson(
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))
+    .leftJoin(stations, eq(appointments.stationId, stations.id))
     .where(
       and(
-        isNotNull(appointments.userId),
+        // Un appuntamento senza postazione non ha legame con nessuna sede: lo si include sempre.
+        or(eq(stations.locationId, locationId), isNull(appointments.stationId)),
         gte(appointments.startTime, start),
         lt(appointments.startTime, end),
         eq(appointments.tenantId, tenantId),
@@ -172,8 +195,6 @@ export async function getWeeklyAppointmentsByPerson(
       )
     )
     .orderBy(asc(appointments.startTime))
-
-  return rows.map(r => ({ ...r, userId: r.userId! }))
 }
 
 export async function getServiceNotesByDog(

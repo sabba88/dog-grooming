@@ -6,11 +6,14 @@ import { toast } from 'sonner'
 import { createAppointment, updateAppointment, fetchDogsForClient, fetchAllServices, fetchStationsForLocation, fetchServicesForStation, fetchAppointmentPrice } from '@/lib/actions/appointments'
 import { formatPrice, formatDuration } from '@/lib/utils/formatting'
 import { COAT_LABELS, SIZE_LABELS, CoatType, SizeType } from '@/lib/types'
+import type { CreateAppointmentInput, UpdateAppointmentInput } from '@/lib/validations/appointments'
 import { ClientDogSearch } from '@/components/appointment/ClientDogSearch'
 import { QuickClientForm } from '@/components/appointment/QuickClientForm'
 import { QuickDogForm } from '@/components/appointment/QuickDogForm'
+import { ExceedsShiftDialog } from '@/components/appointment/ExceedsShiftDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -81,8 +84,12 @@ function getEffectiveCoatSize(dog: Dog) {
 }
 
 export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create', appointmentId, initialValues, onSuccess, onCancel }: AppointmentFormProps) {
+  // In modifica i valori di partenza arrivano dall'appuntamento esistente.
+  const editValues = mode === 'edit' ? initialValues : undefined
   const [editInitialized, setEditInitialized] = useState(false)
-  const [selectedClient, setSelectedClient] = useState<SelectedClient | null>(null)
+  const [selectedClient, setSelectedClient] = useState<SelectedClient | null>(
+    editValues ? { id: editValues.clientId, nominativo: editValues.clientNominativo } : null
+  )
   const [showQuickClient, setShowQuickClient] = useState(false)
   const [showQuickDog, setShowQuickDog] = useState(false)
   const [dogs, setDogs] = useState<Dog[]>([])
@@ -90,9 +97,13 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
   // Cane da preselezionare non appena la lista cani del cliente è caricata
   // (ricerca unificata cliente/cane, o cane appena creato al volo).
   const pendingDogIdRef = useRef<string | null>(null)
-  const [selectedUserId, setSelectedUserId] = useState<string>(prefilledSlot.userId ?? '')
+  const [selectedUserId, setSelectedUserId] = useState<string>(
+    editValues ? (editValues.userId ?? '') : (prefilledSlot.userId ?? '')
+  )
   const [stationsList, setStationsList] = useState<{ id: string; name: string }[]>([])
-  const [selectedStationId, setSelectedStationId] = useState<string | null>(prefilledSlot.stationId ?? null)
+  const [selectedStationId, setSelectedStationId] = useState<string | null>(
+    editValues ? editValues.stationId : (prefilledSlot.stationId ?? null)
+  )
   const [services, setServices] = useState<Service[]>([])
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [duration, setDuration] = useState<number>(0)
@@ -100,6 +111,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
   const [basePriceForMatrix, setBasePriceForMatrix] = useState<number | null>(null)
   const [priceIsManual, setPriceIsManual] = useState<boolean>(false)
   const [priceHint, setPriceHint] = useState<PriceHintState>(null)
+  const [notes, setNotes] = useState<string>('')
   const [businessError, setBusinessError] = useState<{
     code: string
     message: string
@@ -107,6 +119,10 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
     alternativeStaff?: { id: string; name: string }[]
     shiftEndTime?: string
   } | null>(null)
+  const [exceedsShiftOpen, setExceedsShiftOpen] = useState(false)
+  const [exceedsShiftEndTime, setExceedsShiftEndTime] = useState<string | undefined>(undefined)
+  const [pendingCreate, setPendingCreate] = useState<CreateAppointmentInput | null>(null)
+  const [pendingUpdate, setPendingUpdate] = useState<UpdateAppointmentInput | null>(null)
 
   function recalcPriceWithSurcharge(baseMatrixPrice: number, currentServiceId: string | null, currentDuration: number, isManual: boolean) {
     if (isManual) return
@@ -166,8 +182,17 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
   })
 
   const { execute: submitAppointment, isPending: isSubmitting } = useAction(createAppointment, {
-    onSuccess: ({ data }) => {
+    onSuccess: ({ data, input }) => {
+      if (data?.error?.code === 'EXCEEDS_SHIFT_TIME') {
+        setPendingCreate(input)
+        setExceedsShiftEndTime(data.error.shiftEndTime)
+        setExceedsShiftOpen(true)
+        return
+      }
       if (data?.error) {
+        // SLOT_OCCUPIED non e' piu' bloccante: si conserva il payload per poter
+        // rilanciare in parallelo, mostrando intanto gli slot alternativi.
+        if (data.error.code === 'SLOT_OCCUPIED') setPendingCreate(input)
         setBusinessError(data.error)
         return
       }
@@ -180,8 +205,15 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
   })
 
   const { execute: submitUpdateAppointment, isPending: isUpdating } = useAction(updateAppointment, {
-    onSuccess: ({ data }) => {
+    onSuccess: ({ data, input }) => {
+      if (data?.error?.code === 'EXCEEDS_SHIFT_TIME') {
+        setPendingUpdate(input)
+        setExceedsShiftEndTime(data.error.shiftEndTime)
+        setExceedsShiftOpen(true)
+        return
+      }
       if (data?.error) {
+        if (data.error.code === 'SLOT_OCCUPIED') setPendingUpdate(input)
         setBusinessError(data.error)
         return
       }
@@ -203,25 +235,24 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Modalita' modifica: precarica cliente/cane, poi (una volta caricati i servizi) i restanti campi
+  // Modalita' modifica: cliente, postazione e collaboratore sono gia' stato iniziale;
+  // qui resta solo da caricare i cani del cliente per poter preselezionare il suo.
   useEffect(() => {
-    if (mode !== 'edit' || !initialValues) return
-    setSelectedClient({ id: initialValues.clientId, nominativo: initialValues.clientNominativo })
-    setSelectedStationId(initialValues.stationId)
-    setSelectedUserId(initialValues.userId ?? '')
-    pendingDogIdRef.current = initialValues.dogId
-    loadDogs({ clientId: initialValues.clientId })
+    if (!editValues) return
+    pendingDogIdRef.current = editValues.dogId
+    loadDogs({ clientId: editValues.clientId })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (mode !== 'edit' || !initialValues || editInitialized) return
-    if (selectedDogId !== initialValues.dogId || services.length === 0) return
-    setSelectedServiceId(initialValues.serviceId)
-    setDuration(initialValues.duration)
-    setPriceEur(String(Math.round(initialValues.price / 100)))
+  // Servizio, durata e prezzo si possono impostare solo quando cani e servizi sono
+  // arrivati dal server. Lo stato si aggiorna durante il render (pattern React per
+  // lo stato derivato): un effect aggiungerebbe un render con il form a meta'.
+  if (editValues && !editInitialized && selectedDogId === editValues.dogId && services.length > 0) {
+    setSelectedServiceId(editValues.serviceId)
+    setDuration(editValues.duration)
+    setPriceEur(String(Math.round(editValues.price / 100)))
     setPriceIsManual(true)
     setEditInitialized(true)
-  }, [mode, initialValues, selectedDogId, services, editInitialized])
+  }
 
   const handleDogChange = (dogId: string) => {
     setSelectedDogId(dogId)
@@ -326,6 +357,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
         duration,
         price: priceCents,
         ...(selectedStationId && { stationId: selectedStationId }),
+        ...(notes.trim() && { notes: notes.trim() }),
       })
     }
   }
@@ -346,6 +378,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
         duration,
         price: priceCents,
         ...(selectedStationId && { stationId: selectedStationId }),
+        ...(notes.trim() && { notes: notes.trim() }),
       })
     }
   }
@@ -353,6 +386,8 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
   const handleSubmit = () => {
     if (!selectedClient || !selectedDogId || !selectedServiceId || (!selectedUserId && !selectedStationId)) return
     setBusinessError(null)
+    setPendingCreate(null)
+    setPendingUpdate(null)
     const priceCents = Math.round(parseFloat(priceEur) * 100)
     if (mode === 'edit' && appointmentId) {
       submitUpdateAppointment({
@@ -378,7 +413,42 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
       price: priceCents,
       ...(selectedUserId && { userId: selectedUserId }),
       ...(selectedStationId && { stationId: selectedStationId }),
+      ...(notes.trim() && { notes: notes.trim() }),
     })
+  }
+
+  function handleExceedsShiftOpenChange(open: boolean) {
+    setExceedsShiftOpen(open)
+    // Annullamento: scarta il payload in sospeso, il form resta compilato per una modifica.
+    if (!open) {
+      setPendingCreate(null)
+      setPendingUpdate(null)
+    }
+  }
+
+  function handleConfirmOverlap() {
+    setBusinessError(null)
+    if (pendingUpdate) {
+      submitUpdateAppointment({ ...pendingUpdate, allowOverlap: true })
+      setPendingUpdate(null)
+      return
+    }
+    if (pendingCreate) {
+      submitAppointment({ ...pendingCreate, allowOverlap: true })
+      setPendingCreate(null)
+    }
+  }
+
+  function handleConfirmExceedsShift() {
+    if (pendingUpdate) {
+      submitUpdateAppointment({ ...pendingUpdate, allowExceedShift: true })
+      setPendingUpdate(null)
+      return
+    }
+    if (pendingCreate) {
+      submitAppointment({ ...pendingCreate, allowExceedShift: true })
+      setPendingCreate(null)
+    }
   }
 
   const formattedDate = new Intl.DateTimeFormat('it-IT', {
@@ -610,6 +680,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
               id="af-duration"
               type="number"
               min={15}
+              step={15}
               value={duration}
               onChange={(e) => {
                 const newDuration = parseInt(e.target.value) || 0
@@ -676,6 +747,21 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
         </div>
       )}
 
+      {/* Note prestazione — solo in creazione: in modifica si usa la sezione note del dettaglio */}
+      {mode === 'create' && selectedServiceId && (
+        <div>
+          <Label htmlFor="af-notes" className="mb-1.5 block text-sm font-medium">Note (opzionale)</Label>
+          <Textarea
+            id="af-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Note sulla prestazione, indicazioni del cliente..."
+            rows={3}
+            maxLength={2000}
+          />
+        </div>
+      )}
+
       {/* Errori business */}
       {businessError && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
@@ -698,6 +784,16 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
               </div>
             </div>
           )}
+          {businessError.code === 'SLOT_OCCUPIED' && (pendingCreate || pendingUpdate) && (
+            <div className="mt-3">
+              <Button type="button" variant="secondary" size="sm" onClick={handleConfirmOverlap}>
+                Prenota comunque in parallelo
+              </Button>
+              <p className="text-muted-foreground mt-1.5 text-xs">
+                I due appuntamenti appariranno affiancati nell&apos;agenda.
+              </p>
+            </div>
+          )}
           {businessError.code === 'SLOT_OCCUPIED' && businessError.alternativeStaff && businessError.alternativeStaff.length > 0 && (
             <div className="mt-2">
               <p className="text-muted-foreground mb-1.5 text-xs">Collaboratori disponibili allo stesso orario:</p>
@@ -716,11 +812,6 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
               </div>
             </div>
           )}
-          {businessError.code === 'EXCEEDS_SHIFT_TIME' && businessError.shiftEndTime && (
-            <p className="text-muted-foreground mt-1 text-xs">
-              Fine turno alle {businessError.shiftEndTime}. Riduci la durata per procedere.
-            </p>
-          )}
         </div>
       )}
 
@@ -735,7 +826,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
       {selectedServiceId && (
         <Button
           type="button"
-          className="w-full"
+          className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
           disabled={!isFormComplete || isSaving}
           onClick={handleSubmit}
         >
@@ -752,6 +843,12 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
         </Button>
       )}
 
+      <ExceedsShiftDialog
+        open={exceedsShiftOpen}
+        onOpenChange={handleExceedsShiftOpenChange}
+        onConfirm={handleConfirmExceedsShift}
+        shiftEndTime={exceedsShiftEndTime}
+      />
     </div>
   )
 }

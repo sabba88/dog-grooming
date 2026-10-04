@@ -8,7 +8,7 @@ import { getLocationBusinessHours } from '@/lib/queries/locations'
 import { getDogsByClient } from '@/lib/queries/dogs'
 import { getStationsByLocation, getServicesForStation } from '@/lib/queries/stations'
 import { getServices, getServiceById, getAppointmentPrice } from '@/lib/queries/services'
-import { timeToMinutes } from '@/lib/utils/schedule'
+import { timeToMinutes, UNASSIGNED_KEY } from '@/lib/utils/schedule'
 import { addDays, parseISO, format } from 'date-fns'
 import { z } from 'zod'
 import { db } from '@/lib/db'
@@ -21,10 +21,11 @@ export const fetchWeeklyAgendaData = authActionClient
     const { locationId, weekStart } = parsedInput
     const weekEnd = format(addDays(parseISO(weekStart), 6), 'yyyy-MM-dd')
 
-    const [allUsers, staffShiftsRaw, stationAppts, stationsRaw, businessHoursRaw] = await Promise.all([
+    const [allUsers, staffShiftsRaw, stationAppts, personAppts, stationsRaw, businessHoursRaw] = await Promise.all([
       getActiveUsers(ctx.tenantId),
       getWeeklyStaffShifts(weekStart, weekEnd, locationId, ctx.tenantId),
       getWeeklyAppointmentsByStation(weekStart, weekEnd, locationId, ctx.tenantId),
+      getWeeklyAppointmentsByPerson(weekStart, weekEnd, locationId, ctx.tenantId),
       getStationsByLocation(locationId, ctx.tenantId),
       getLocationBusinessHours(locationId, ctx.tenantId),
     ])
@@ -37,11 +38,19 @@ export const fetchWeeklyAgendaData = authActionClient
       appointmentsByStation[appt.stationId].push(appt)
     }
 
+    const appointmentsByPerson: Record<string, { id: string; startTime: Date; endTime: Date }[]> = {}
+    for (const appt of personAppts) {
+      const key = appt.userId ?? UNASSIGNED_KEY
+      if (!appointmentsByPerson[key]) appointmentsByPerson[key] = []
+      appointmentsByPerson[key].push({ id: appt.id, startTime: appt.startTime, endTime: appt.endTime })
+    }
+
     return {
       staff: staffWithShifts,
       staffShifts: staffShiftsRaw,
       stations: stationsRaw.map(s => ({ id: s.id, name: s.name })),
       appointmentsByStation,
+      appointmentsByPerson,
       businessHours: businessHoursRaw,
     }
   })
@@ -51,7 +60,7 @@ export const getAgendaData = authActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { locationId, date } = parsedInput
     const [appts, staff, businessHours, stationsRaw] = await Promise.all([
-      getAppointmentsByDateAndLocationGroupedByUser(date, ctx.tenantId),
+      getAppointmentsByDateAndLocationGroupedByUser(date, locationId, ctx.tenantId),
       getStaffStatusForDate(locationId, date, ctx.tenantId),
       getLocationBusinessHours(locationId, ctx.tenantId),
       getStationsByLocation(locationId, ctx.tenantId),
@@ -64,6 +73,42 @@ export const getAgendaData = authActionClient
       stations: stationsRaw.map(s => ({ id: s.id, name: s.name })),
     }
   })
+
+/**
+ * Ritorna l'orario di fine turno se l'appuntamento lo supera, altrimenti null.
+ * Il controllo scatta solo se l'inizio dell'appuntamento cade dentro un turno del collaboratore.
+ */
+async function getExceededShiftEnd(
+  userId: string,
+  date: string,
+  startTime: Date,
+  endTime: Date,
+  tenantId: string
+): Promise<string | null> {
+  const shiftsForDate = await db
+    .select({ startTime: userLocationAssignments.startTime, endTime: userLocationAssignments.endTime })
+    .from(userLocationAssignments)
+    .where(and(
+      eq(userLocationAssignments.userId, userId),
+      eq(userLocationAssignments.date, date),
+      eq(userLocationAssignments.tenantId, tenantId)
+    ))
+
+  if (shiftsForDate.length === 0) return null
+
+  const appointmentStartMinutes = startTime.getUTCHours() * 60 + startTime.getUTCMinutes()
+  const appointmentEndMinutes = endTime.getUTCHours() * 60 + endTime.getUTCMinutes()
+  const coveringShift = shiftsForDate.find(s => {
+    const shiftStart = timeToMinutes(s.startTime)
+    const shiftEnd = timeToMinutes(s.endTime)
+    return appointmentStartMinutes >= shiftStart && appointmentStartMinutes < shiftEnd
+  })
+
+  if (coveringShift && appointmentEndMinutes > timeToMinutes(coveringShift.endTime)) {
+    return coveringShift.endTime
+  }
+  return null
+}
 
 async function findAlternativeSlots(
   userId: string,
@@ -212,7 +257,7 @@ export const fetchAllServices = authActionClient
 export const createAppointment = authActionClient
   .schema(createAppointmentSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const { userId, locationId, stationId, date, time, clientId, dogId, serviceId, duration, price } = parsedInput
+    const { userId, locationId, stationId, date, time, clientId, dogId, serviceId, duration, price, notes, allowExceedShift, allowOverlap } = parsedInput
 
     // 1. Calcola startTime e endTime
     const startTime = new Date(`${date}T${time}:00.000Z`)
@@ -252,7 +297,7 @@ export const createAppointment = authActionClient
         )
         .limit(1)
 
-      if (conflicts.length > 0) {
+      if (!allowOverlap && conflicts.length > 0) {
         const [alternatives, alternativeStaff] = await Promise.all([
           findAlternativeSlots(userId, date, duration, ctx.tenantId),
           locationId
@@ -269,30 +314,16 @@ export const createAppointment = authActionClient
         }
       }
 
-      // 4. Validazione turno persona (per data specifica)
-      const shiftsForDate = await db
-        .select({ startTime: userLocationAssignments.startTime, endTime: userLocationAssignments.endTime })
-        .from(userLocationAssignments)
-        .where(and(
-          eq(userLocationAssignments.userId, userId),
-          eq(userLocationAssignments.date, date),
-          eq(userLocationAssignments.tenantId, ctx.tenantId)
-        ))
-
-      if (shiftsForDate.length > 0) {
-        const appointmentStartMinutes = startTime.getUTCHours() * 60 + startTime.getUTCMinutes()
-        const appointmentEndMinutes = endTime.getUTCHours() * 60 + endTime.getUTCMinutes()
-        const coveringShift = shiftsForDate.find(s => {
-          const shiftStart = timeToMinutes(s.startTime)
-          const shiftEnd = timeToMinutes(s.endTime)
-          return appointmentStartMinutes >= shiftStart && appointmentStartMinutes < shiftEnd
-        })
-        if (coveringShift && appointmentEndMinutes > timeToMinutes(coveringShift.endTime)) {
+      // 4. Validazione turno persona (per data specifica).
+      // Superabile: il client richiede conferma e rilancia con allowExceedShift.
+      if (!allowExceedShift) {
+        const shiftEndTime = await getExceededShiftEnd(userId, date, startTime, endTime, ctx.tenantId)
+        if (shiftEndTime) {
           return {
             error: {
               code: 'EXCEEDS_SHIFT_TIME' as const,
               message: "L'appuntamento supera la fine del turno",
-              shiftEndTime: coveringShift.endTime,
+              shiftEndTime,
             },
           }
         }
@@ -313,7 +344,7 @@ export const createAppointment = authActionClient
         )
         .limit(1)
 
-      if (stationConflicts.length > 0) {
+      if (!allowOverlap && stationConflicts.length > 0) {
         return {
           error: {
             code: 'SLOT_OCCUPIED' as const,
@@ -335,6 +366,7 @@ export const createAppointment = authActionClient
         startTime,
         endTime,
         price,
+        notes: notes?.trim() ? notes.trim() : null,
         tenantId: ctx.tenantId,
       })
       .returning()
@@ -345,7 +377,7 @@ export const createAppointment = authActionClient
 export const updateAppointment = authActionClient
   .schema(updateAppointmentSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const { id, userId, stationId, clientId, dogId, serviceId, duration, price } = parsedInput
+    const { id, userId, stationId, clientId, dogId, serviceId, duration, price, allowExceedShift, allowOverlap } = parsedInput
 
     const [existing] = await db
       .select({ startTime: appointments.startTime })
@@ -393,7 +425,7 @@ export const updateAppointment = authActionClient
         )
         .limit(1)
 
-      if (conflicts.length > 0) {
+      if (!allowOverlap && conflicts.length > 0) {
         return {
           error: {
             code: 'SLOT_OCCUPIED' as const,
@@ -402,29 +434,14 @@ export const updateAppointment = authActionClient
         }
       }
 
-      const shiftsForDate = await db
-        .select({ startTime: userLocationAssignments.startTime, endTime: userLocationAssignments.endTime })
-        .from(userLocationAssignments)
-        .where(and(
-          eq(userLocationAssignments.userId, userId),
-          eq(userLocationAssignments.date, dateStr),
-          eq(userLocationAssignments.tenantId, ctx.tenantId)
-        ))
-
-      if (shiftsForDate.length > 0) {
-        const appointmentStartMinutes = startTime.getUTCHours() * 60 + startTime.getUTCMinutes()
-        const appointmentEndMinutes = endTime.getUTCHours() * 60 + endTime.getUTCMinutes()
-        const coveringShift = shiftsForDate.find(s => {
-          const shiftStart = timeToMinutes(s.startTime)
-          const shiftEnd = timeToMinutes(s.endTime)
-          return appointmentStartMinutes >= shiftStart && appointmentStartMinutes < shiftEnd
-        })
-        if (coveringShift && appointmentEndMinutes > timeToMinutes(coveringShift.endTime)) {
+      if (!allowExceedShift) {
+        const shiftEndTime = await getExceededShiftEnd(userId, dateStr, startTime, endTime, ctx.tenantId)
+        if (shiftEndTime) {
           return {
             error: {
               code: 'EXCEEDS_SHIFT_TIME' as const,
               message: "L'appuntamento supera la fine del turno",
-              shiftEndTime: coveringShift.endTime,
+              shiftEndTime,
             },
           }
         }
@@ -444,7 +461,7 @@ export const updateAppointment = authActionClient
         )
         .limit(1)
 
-      if (stationConflicts.length > 0) {
+      if (!allowOverlap && stationConflicts.length > 0) {
         return {
           error: {
             code: 'SLOT_OCCUPIED' as const,
@@ -556,7 +573,7 @@ export const fetchActiveUsers = authActionClient
 export const reassignStaff = authActionClient
   .schema(reassignStaffSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const { id, userId } = parsedInput
+    const { id, userId, allowOverlap } = parsedInput
 
     const [existing] = await db
       .select({ startTime: appointments.startTime, endTime: appointments.endTime })
@@ -580,7 +597,7 @@ export const reassignStaff = authActionClient
       )
       .limit(1)
 
-    if (conflicts.length > 0) {
+    if (!allowOverlap && conflicts.length > 0) {
       return {
         error: {
           code: 'SLOT_OCCUPIED' as const,
@@ -600,14 +617,16 @@ export const reassignStaff = authActionClient
 export const moveAppointment = authActionClient
   .schema(moveAppointmentSchema)
   .action(async ({ parsedInput, ctx }) => {
-    const { id, userId, stationId, date, time } = parsedInput
+    const { id, userId, stationId, date, time, allowExceedShift, allowOverlap } = parsedInput
 
-    // 1. Caricare appuntamento esistente per calcolare durata
+    // 1. Caricare appuntamento esistente per calcolare durata e stato corrente
     const [existing] = await db
       .select({
         id: appointments.id,
         startTime: appointments.startTime,
         endTime: appointments.endTime,
+        userId: appointments.userId,
+        stationId: appointments.stationId,
       })
       .from(appointments)
       .where(
@@ -629,56 +648,74 @@ export const moveAppointment = authActionClient
     const newStartTime = new Date(`${date}T${time}:00.000Z`)
     const newEndTime = new Date(newStartTime.getTime() + durationMs)
 
-    // 3. Validare sovrapposizione (escludere l'appuntamento stesso)
-    const conflicts = await db
-      .select({ id: appointments.id })
-      .from(appointments)
-      .where(
-        and(
-          eq(appointments.userId, userId),
-          eq(appointments.tenantId, ctx.tenantId),
-          ne(appointments.id, id),
-          lt(appointments.startTime, newEndTime),
-          gt(appointments.endTime, newStartTime)
+    // Campi non passati = invariati rispetto all'appuntamento esistente.
+    const effectiveUserId = userId !== undefined ? userId : existing.userId
+    const effectiveStationId = stationId !== undefined ? stationId : existing.stationId
+
+    // 3. Validare sovrapposizione (escludere l'appuntamento stesso).
+    // Come in createAppointment: se c'e' un collaboratore il vincolo e' sulla persona,
+    // altrimenti l'appuntamento "vive sulla postazione" e il vincolo e' sulla postazione.
+    if (effectiveUserId) {
+      const conflicts = await db
+        .select({ id: appointments.id })
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.userId, effectiveUserId),
+            eq(appointments.tenantId, ctx.tenantId),
+            ne(appointments.id, id),
+            lt(appointments.startTime, newEndTime),
+            gt(appointments.endTime, newStartTime)
+          )
         )
-      )
-      .limit(1)
+        .limit(1)
 
-    if (conflicts.length > 0) {
-      const alternatives = await findAlternativeSlots(userId, date, durationMinutes, ctx.tenantId)
-      return {
-        error: {
-          code: 'SLOT_OCCUPIED' as const,
-          message: "Lo slot non e' piu' disponibile",
-          alternatives,
-        },
-      }
-    }
-
-    // 4. Validazione turno persona destinazione (per data specifica)
-    const shiftsForMoveDate = await db
-      .select({ startTime: userLocationAssignments.startTime, endTime: userLocationAssignments.endTime })
-      .from(userLocationAssignments)
-      .where(and(
-        eq(userLocationAssignments.userId, userId),
-        eq(userLocationAssignments.date, date),
-        eq(userLocationAssignments.tenantId, ctx.tenantId)
-      ))
-
-    if (shiftsForMoveDate.length > 0) {
-      const apptStartMinutes = newStartTime.getUTCHours() * 60 + newStartTime.getUTCMinutes()
-      const apptEndMinutes = newEndTime.getUTCHours() * 60 + newEndTime.getUTCMinutes()
-      const coveringShift = shiftsForMoveDate.find(s => {
-        const shiftStart = timeToMinutes(s.startTime)
-        const shiftEnd = timeToMinutes(s.endTime)
-        return apptStartMinutes >= shiftStart && apptStartMinutes < shiftEnd
-      })
-      if (coveringShift && apptEndMinutes > timeToMinutes(coveringShift.endTime)) {
+      if (!allowOverlap && conflicts.length > 0) {
+        const alternatives = await findAlternativeSlots(effectiveUserId, date, durationMinutes, ctx.tenantId)
         return {
           error: {
-            code: 'EXCEEDS_SHIFT_TIME' as const,
-            message: "L'appuntamento supera la fine del turno",
-            shiftEndTime: coveringShift.endTime,
+            code: 'SLOT_OCCUPIED' as const,
+            message: "Lo slot non e' piu' disponibile",
+            alternatives,
+          },
+        }
+      }
+
+      // 4. Validazione turno persona destinazione (per data specifica).
+      // Superabile: il client richiede conferma e rilancia con allowExceedShift.
+      if (!allowExceedShift) {
+        const shiftEndTime = await getExceededShiftEnd(effectiveUserId, date, newStartTime, newEndTime, ctx.tenantId)
+        if (shiftEndTime) {
+          return {
+            error: {
+              code: 'EXCEEDS_SHIFT_TIME' as const,
+              message: "L'appuntamento supera la fine del turno",
+              shiftEndTime,
+            },
+          }
+        }
+      }
+    } else if (effectiveStationId) {
+      const stationConflicts = await db
+        .select({ id: appointments.id })
+        .from(appointments)
+        .where(
+          and(
+            eq(appointments.stationId, effectiveStationId),
+            eq(appointments.tenantId, ctx.tenantId),
+            ne(appointments.id, id),
+            lt(appointments.startTime, newEndTime),
+            gt(appointments.endTime, newStartTime)
+          )
+        )
+        .limit(1)
+
+      if (!allowOverlap && stationConflicts.length > 0) {
+        return {
+          error: {
+            code: 'SLOT_OCCUPIED' as const,
+            message: "La postazione e' gia' occupata in questo orario",
+            alternatives: [],
           },
         }
       }
@@ -688,7 +725,7 @@ export const moveAppointment = authActionClient
     await db
       .update(appointments)
       .set({
-        userId,
+        ...(userId !== undefined && { userId }),
         ...(stationId !== undefined && { stationId }),
         startTime: newStartTime,
         endTime: newEndTime,

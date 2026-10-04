@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAction } from 'next-safe-action/hooks'
 import { fetchAppointmentDetail, deleteAppointment, saveAppointmentNote, fetchServiceNotesByDog, fetchActiveUsers, reassignStaff } from '@/lib/actions/appointments'
-import { formatPrice, formatDuration } from '@/lib/utils/formatting'
+import { formatPrice, formatDuration, getCoOwners, isMissingValue } from '@/lib/utils/formatting'
+import { MissingValue } from '@/components/client/MissingValue'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { ArrowRightLeft, Trash2, Loader2, ShoppingBag, Pencil } from 'lucide-react'
+import { OverlapDialog } from './OverlapDialog'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { AppointmentForm } from '@/components/appointment/AppointmentForm'
@@ -87,10 +89,19 @@ export function AppointmentDetail({
       if (result.data?.users) setActiveUsers(result.data.users)
     },
   })
+  const [pendingReassignUserId, setPendingReassignUserId] = useState<string | null>(null)
+  const [overlapOpen, setOverlapOpen] = useState(false)
+
   const { execute: executeReassignStaff, isExecuting: isReassigning } = useAction(reassignStaff, {
-    onSuccess: (result) => {
-      if (result.data?.error) {
-        toast.error(result.data.error.message)
+    onSuccess: ({ data, input }) => {
+      if (data?.error) {
+        // Sovrapposizione non bloccante: si chiede conferma e si rilancia in parallelo.
+        if (data.error.code === 'SLOT_OCCUPIED') {
+          setPendingReassignUserId(input.userId)
+          setOverlapOpen(true)
+          return
+        }
+        toast.error(data.error.message)
         return
       }
       toast.success('Collaboratore aggiornato')
@@ -99,6 +110,18 @@ export function AppointmentDetail({
     },
     onError: () => toast.error('Errore durante il salvataggio'),
   })
+
+  const handleOverlapOpenChange = (open: boolean) => {
+    setOverlapOpen(open)
+    if (!open) setPendingReassignUserId(null)
+  }
+
+  const handleConfirmOverlap = () => {
+    if (!pendingReassignUserId) return
+    const userId = pendingReassignUserId
+    setPendingReassignUserId(null)
+    executeReassignStaff({ id: appointmentId, userId, allowOverlap: true })
+  }
 
   useEffect(() => {
     loadDetail({ id: appointmentId })
@@ -110,14 +133,20 @@ export function AppointmentDetail({
     loadActiveUsers({})
   }, [])
 
-  useEffect(() => {
-    if (!appointment) return
+  // Allinea i campi editabili all'appuntamento appena caricato. L'aggiornamento
+  // avviene durante il render (pattern React per lo stato derivato) invece che da un
+  // effect, che mostrerebbe per un render i campi ancora vuoti.
+  const [syncedAppointmentId, setSyncedAppointmentId] = useState<string | null>(null)
+  if (appointment && appointment.id !== syncedAppointmentId) {
+    setSyncedAppointmentId(appointment.id)
     setNoteText(appointment.notes ?? '')
     setSelectedUserId(appointment.userId ?? '')
-    if (appointment.dogId) {
-      loadServiceNotes({ dogId: appointment.dogId, excludeAppointmentId: appointmentId })
-    }
-  }, [appointment?.id])
+  }
+
+  useEffect(() => {
+    if (!appointment?.dogId) return
+    loadServiceNotes({ dogId: appointment.dogId, excludeAppointmentId: appointmentId })
+  }, [appointment?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (autoFocusNotes && appointment && notesTextareaRef.current) {
@@ -145,6 +174,7 @@ export function AppointmentDetail({
   }
 
   const clientName = appointment.clientNominativo
+  const coOwners = getCoOwners(appointment)
 
   if (isEditingAppointment) {
     return (
@@ -183,8 +213,24 @@ export function AppointmentDetail({
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground w-20">Cliente</span>
-          <span className="text-sm font-medium">{clientName}</span>
+          <span className="text-sm font-medium flex items-center gap-1.5">
+            {isMissingValue(clientName) ? <MissingValue /> : clientName}
+            {isMissingValue(appointment.clientPhone) ? (
+              <MissingValue />
+            ) : (
+              <span className="text-muted-foreground font-normal">· {appointment.clientPhone}</span>
+            )}
+          </span>
         </div>
+        {coOwners.map((owner) => (
+          <div key={owner.slot} className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground w-20">Proprietario {owner.slot}</span>
+            <span className="text-sm font-medium">
+              {owner.name || '—'}
+              <span className="text-muted-foreground font-normal"> · {owner.phone || '—'}</span>
+            </span>
+          </div>
+        ))}
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground w-20">Cane</span>
           <span className="text-sm font-medium">{appointment.dogName}</span>
@@ -342,6 +388,12 @@ export function AppointmentDetail({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <OverlapDialog
+        open={overlapOpen}
+        onOpenChange={handleOverlapOpenChange}
+        onConfirm={handleConfirmOverlap}
+      />
     </div>
   )
 }

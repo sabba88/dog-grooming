@@ -9,11 +9,13 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { useLocationSelector } from '@/hooks/useLocationSelector'
 import { DateNavigation } from './DateNavigation'
 import { DateStrip } from './DateStrip'
-import { ScheduleGrid } from './ScheduleGrid'
+import { ScheduleGrid, type AppointmentDropData } from './ScheduleGrid'
 import { ScheduleTimeline } from './ScheduleTimeline'
 import { WeeklyScheduleView } from './WeeklyScheduleView'
 import { AppointmentForm } from '@/components/appointment/AppointmentForm'
 import { AppointmentDetail } from '@/components/appointment/AppointmentDetail'
+import { ExceedsShiftDialog } from '@/components/appointment/ExceedsShiftDialog'
+import { OverlapDialog } from '@/components/appointment/OverlapDialog'
 import {
   getAgendaData,
   fetchAppointmentDetail,
@@ -22,6 +24,7 @@ import {
   fetchWeeklyAgendaData,
 } from '@/lib/actions/appointments'
 import { computeAgendaRange, timeToMinutes } from '@/lib/utils/schedule'
+import { useAgendaGroupBy } from '@/hooks/useAgendaGroupBy'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import {
@@ -35,7 +38,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Settings, X } from 'lucide-react'
+import { LayoutGrid, Settings, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -51,9 +54,21 @@ interface AgendaViewProps {
 
 type ContextAction = 'detail' | 'add-note' | 'move' | 'delete'
 
+type MovePayload = {
+  id: string
+  // Assente = il server mantiene il collaboratore attuale.
+  userId?: string | null
+  date: string
+  time: string
+  stationId?: string | null
+  allowExceedShift?: boolean
+  allowOverlap?: boolean
+}
+
 export function AgendaView({ locations }: AgendaViewProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [viewMode, setViewMode] = useState<'day' | 'week'>('week')
+  const { groupBy, setGroupBy } = useAgendaGroupBy()
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [appointmentSlot, setAppointmentSlot] = useState<{
     stationId?: string | null
@@ -74,6 +89,11 @@ export function AgendaView({ locations }: AgendaViewProps) {
     userId: string
     stationId: string | null
   } | null>(null)
+  const [pendingMove, setPendingMove] = useState<MovePayload | null>(null)
+  const [exceedsShiftOpen, setExceedsShiftOpen] = useState(false)
+  const [exceedsShiftEndTime, setExceedsShiftEndTime] = useState<string | undefined>(undefined)
+  const [overlapOpen, setOverlapOpen] = useState(false)
+  const [overlapAlternatives, setOverlapAlternatives] = useState<string[] | undefined>(undefined)
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
   const { selectedLocationId, isHydrated } = useLocationSelector(locations)
@@ -117,6 +137,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
         staffShifts: result.data.staffShifts,
         stations: result.data.stations,
         appointmentsByStation: result.data.appointmentsByStation,
+        appointmentsByPerson: result.data.appointmentsByPerson,
         businessHours: result.data.businessHours,
       }
     },
@@ -133,6 +154,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
       toast.success('Appuntamento cancellato')
       setDeletingAppointmentId(null)
       queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-weekly'] })
     },
     onError: () => {
       toast.error('Errore durante la cancellazione')
@@ -170,26 +192,21 @@ export function AgendaView({ locations }: AgendaViewProps) {
     }
   }
 
-  const handleMoveSlotClick = async (userId: string, date: string, time: string, stationId?: string | null) => {
-    if (!movingAppointment) return
-
-    const result = await moveAppointmentAction({
-      id: movingAppointment.id,
-      userId,
-      date,
-      time,
-      ...(stationId !== undefined && { stationId }),
-    })
+  const runMove = async (payload: MovePayload) => {
+    const result = await moveAppointmentAction(payload)
 
     if (result?.data?.error) {
       const error = result.data.error
       if (error.code === 'SLOT_OCCUPIED') {
-        toast.error("Lo slot non e' piu' disponibile")
-        if (error.alternatives && error.alternatives.length > 0) {
-          toast.info(`Slot alternativi: ${error.alternatives.join(', ')}`)
-        }
+        // Non bloccante: gli appuntamenti in contemporanea sono ammessi previa conferma.
+        setPendingMove(payload)
+        setOverlapAlternatives(error.alternatives)
+        setOverlapOpen(true)
       } else if (error.code === 'EXCEEDS_SHIFT_TIME') {
-        toast.warning(`L'appuntamento supera la fine del turno (${error.shiftEndTime})`)
+        // Non bloccante: si chiede conferma e si rilancia con allowExceedShift.
+        setPendingMove(payload)
+        setExceedsShiftEndTime(error.shiftEndTime)
+        setExceedsShiftOpen(true)
       }
       return
     }
@@ -198,7 +215,44 @@ export function AgendaView({ locations }: AgendaViewProps) {
       toast.success('Appuntamento spostato')
       setMovingAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
+      queryClient.invalidateQueries({ queryKey: ['agenda-weekly'] })
     }
+  }
+
+  const handleMoveSlotClick = async (userId: string, date: string, time: string, stationId?: string | null) => {
+    if (!movingAppointment) return
+
+    await runMove({
+      id: movingAppointment.id,
+      userId,
+      date,
+      time,
+      ...(stationId !== undefined && { stationId }),
+    })
+  }
+
+  const handleExceedsShiftOpenChange = (open: boolean) => {
+    setExceedsShiftOpen(open)
+    if (!open) setPendingMove(null)
+  }
+
+  const handleOverlapOpenChange = (open: boolean) => {
+    setOverlapOpen(open)
+    if (!open) setPendingMove(null)
+  }
+
+  const handleConfirmOverlap = () => {
+    if (!pendingMove) return
+    const payload = pendingMove
+    setPendingMove(null)
+    void runMove({ ...payload, allowOverlap: true })
+  }
+
+  const handleConfirmExceedsShift = () => {
+    if (!pendingMove) return
+    const payload = pendingMove
+    setPendingMove(null)
+    void runMove({ ...payload, allowExceedShift: true })
   }
 
   const handleMoveCancel = () => {
@@ -207,20 +261,37 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
   const handleEmptySlotClick = (slotData: { stationId?: string; stationName?: string; userId?: string; userName?: string; date: string; time: string }) => {
     if (movingAppointment) {
-      handleMoveSlotClick(movingAppointment.userId, slotData.date, slotData.time, slotData.stationId ?? null)
+      // "Da assegnare" non e' una destinazione valida: moveAppointment esige un userId.
+      if (groupBy === 'person' && !slotData.userId) return
+      // In vista persone la colonna di destinazione riassegna il collaboratore e
+      // lascia invariata la postazione (stationId undefined = non toccare).
+      handleMoveSlotClick(
+        slotData.userId ?? movingAppointment.userId,
+        slotData.date,
+        slotData.time,
+        groupBy === 'person' ? undefined : (slotData.stationId ?? null),
+      )
       return
     }
     setAppointmentSlot({ ...slotData, locationId: selectedLocationId! })
   }
 
+  // Drag & drop nella griglia giornaliera: la colonna di destinazione determina
+  // la postazione (vista postazioni) o il collaboratore (vista persone).
+  const handleAppointmentDrop = (data: AppointmentDropData) => {
+    void runMove(data)
+  }
+
   const handleAppointmentCreated = () => {
     setAppointmentSlot(null)
     queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
+    queryClient.invalidateQueries({ queryKey: ['agenda-weekly'] })
   }
 
   const handleAppointmentDeleted = () => {
     setSelectedAppointmentId(null)
     queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
+    queryClient.invalidateQueries({ queryKey: ['agenda-weekly'] })
   }
 
   const handleDetailClose = () => {
@@ -266,6 +337,27 @@ export function AgendaView({ locations }: AgendaViewProps) {
     setViewMode('week')
   }
 
+  const groupByToggle = (
+    <div className="flex items-center gap-1">
+      <Button
+        variant={groupBy === 'station' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => setGroupBy('station')}
+        title="Vista per postazioni"
+      >
+        {isMobile ? <LayoutGrid className="size-4" /> : 'Postazioni'}
+      </Button>
+      <Button
+        variant={groupBy === 'person' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => setGroupBy('person')}
+        title="Vista per persone"
+      >
+        {isMobile ? <Users className="size-4" /> : 'Persone'}
+      </Button>
+    </div>
+  )
+
   const toggleGroup = (
     <div className="flex items-center gap-1">
       <Button
@@ -285,18 +377,31 @@ export function AgendaView({ locations }: AgendaViewProps) {
     </div>
   )
 
-  // No stations configured (day mode only)
-  if (viewMode === 'day' && isHydrated && selectedLocationId && data && stations.length === 0) {
+  const dayHeader = (
+    <div className="flex items-center justify-between gap-2">
+      {/* Postazioni/Persone a sinistra, Giorno/Settimana a destra: i due switch
+          restano ben separati e non si confondono tra loro. */}
+      <div className="flex items-center gap-2 min-w-0">
+        {groupByToggle}
+        {isMobile ? (
+          <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        ) : (
+          <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        )}
+      </div>
+      {toggleGroup}
+    </div>
+  )
+
+  const dayDataReady = viewMode === 'day' && isHydrated && selectedLocationId && data
+  const hasActiveStaff = staff.some(p => p.overallStatus === 'active')
+  const hasUnassignedAppointments = appointments.some(a => a.userId === null)
+
+  // No stations configured (day mode only) — in vista persone le colonne sono le persone
+  if (dayDataReady && groupBy === 'station' && stations.length === 0) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-2">
-          {isMobile ? (
-            <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
-          ) : (
-            <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
-          )}
-          {toggleGroup}
-        </div>
+        {dayHeader}
         <div className="flex flex-col items-center justify-center gap-3 py-16">
           <Settings className="size-10 text-muted-foreground" />
           <p className="text-muted-foreground text-center">
@@ -307,6 +412,24 @@ export function AgendaView({ locations }: AgendaViewProps) {
             className="text-sm text-primary hover:underline"
           >
             Vai a Impostazioni per configurare le postazioni
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Nessuna colonna da mostrare in vista persone: nessuno in turno e nulla da assegnare
+  if (dayDataReady && groupBy === 'person' && !hasActiveStaff && !hasUnassignedAppointments) {
+    return (
+      <div className="flex flex-col gap-4">
+        {dayHeader}
+        <div className="flex flex-col items-center justify-center gap-3 py-16">
+          <Users className="size-10 text-muted-foreground" />
+          <p className="text-muted-foreground text-center">
+            Nessuna persona in turno in questa sede in questa giornata
+          </p>
+          <Link href="/staff" className="text-sm text-primary hover:underline">
+            Vai a Personale per assegnare i turni
           </Link>
         </div>
       </div>
@@ -334,19 +457,11 @@ export function AgendaView({ locations }: AgendaViewProps) {
       )}
 
       {/* Header navigazione + toggle */}
-      {viewMode === 'day' && (
-        <div className="flex items-center justify-between gap-2">
-          {isMobile ? (
-            <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
-          ) : (
-            <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
-          )}
-          {toggleGroup}
-        </div>
-      )}
+      {viewMode === 'day' && dayHeader}
 
       {viewMode === 'week' && (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-between gap-2">
+          {groupByToggle}
           {toggleGroup}
         </div>
       )}
@@ -355,6 +470,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
       {viewMode === 'day' && (
         isMobile ? (
           <ScheduleTimeline
+            groupBy={groupBy}
             stations={stations}
             staff={staff}
             appointments={appointments}
@@ -369,6 +485,8 @@ export function AgendaView({ locations }: AgendaViewProps) {
           />
         ) : (
           <ScheduleGrid
+            groupBy={groupBy}
+            onAppointmentDrop={handleAppointmentDrop}
             stations={stations}
             staff={staff}
             appointments={appointments}
@@ -393,7 +511,9 @@ export function AgendaView({ locations }: AgendaViewProps) {
           staffShifts={weeklyData?.staffShifts ?? {}}
           stations={weeklyData?.stations ?? []}
           appointmentsByStation={weeklyData?.appointmentsByStation ?? {}}
+          appointmentsByPerson={weeklyData?.appointmentsByPerson ?? {}}
           businessHours={weeklyData?.businessHours ?? []}
+          groupBy={groupBy}
           onDayClick={handleDayClick}
           onPrevWeek={handlePrevWeek}
           onNextWeek={handleNextWeek}
@@ -468,6 +588,20 @@ export function AgendaView({ locations }: AgendaViewProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <OverlapDialog
+        open={overlapOpen}
+        onOpenChange={handleOverlapOpenChange}
+        onConfirm={handleConfirmOverlap}
+        alternatives={overlapAlternatives}
+      />
+
+      <ExceedsShiftDialog
+        open={exceedsShiftOpen}
+        onOpenChange={handleExceedsShiftOpenChange}
+        onConfirm={handleConfirmExceedsShift}
+        shiftEndTime={exceedsShiftEndTime}
+      />
 
       {/* Form appuntamento — Dialog desktop / Sheet mobile */}
       {isMobile ? (

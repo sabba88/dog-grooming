@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { formatPrice } from '@/lib/utils/formatting'
+import { formatPrice, formatCoOwnerNames, formatCoOwnerFull, type CoOwner } from '@/lib/utils/formatting'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,9 @@ type ContextAction = 'detail' | 'add-note' | 'move' | 'delete'
 interface AppointmentBlockProps {
   id: string
   clientName: string
+  coOwners: CoOwner[]
   dogName: string
+  breedName: string | null
   serviceName: string
   staffName: string
   price: number
@@ -33,7 +35,9 @@ interface AppointmentBlockProps {
 export function AppointmentBlock({
   id,
   clientName,
+  coOwners,
   dogName,
+  breedName,
   serviceName,
   staffName,
   price,
@@ -54,6 +58,12 @@ export function AppointmentBlock({
     const m = String(date.getUTCMinutes()).padStart(2, '0')
     return `${h}:${m}`
   }
+
+  // Nella griglia lo spazio verticale e' minimo: i co-proprietari si accodano alla
+  // riga cliente invece di occupare una riga propria. Il title recupera cio' che viene troncato.
+  const coOwnerNames = coOwners.length > 0 ? formatCoOwnerNames(coOwners) : ''
+  const ownersTitle =
+    coOwners.length > 0 ? `${clientName} · ${formatCoOwnerFull(coOwners)}` : clientName
 
   const handleContextMenu = (e: React.MouseEvent) => {
     if (!onContextAction || isMoving) return
@@ -105,6 +115,7 @@ export function AppointmentBlock({
             onTouchStart={handleTouchStart}
             onTouchEnd={cancelLongPress}
             onTouchMove={cancelLongPress}
+            title={ownersTitle}
             className={cn(
               "absolute inset-x-0.5 rounded-md px-1.5 py-1 text-left overflow-hidden cursor-pointer transition-shadow hover:shadow-md z-10",
               isMoving && "opacity-40 pointer-events-none"
@@ -117,10 +128,16 @@ export function AppointmentBlock({
             }}
           >
             <div className="flex items-center justify-between gap-1">
-              <p className="text-xs font-medium text-foreground truncate">{clientName}</p>
+              <p className="text-xs font-medium text-foreground truncate">
+                {dogName}
+                {breedName && <span className="font-normal text-muted-foreground"> ({breedName})</span>}
+              </p>
               <span className="text-xs text-muted-foreground shrink-0">{formatTime(startTime)}</span>
             </div>
-            <p className="text-xs text-muted-foreground truncate">{dogName}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {clientName}
+              {coOwnerNames && <span> · {coOwnerNames}</span>}
+            </p>
             <p className="text-xs text-muted-foreground truncate">{serviceName}</p>
             <p className="text-xs text-muted-foreground truncate">{staffName}</p>
           </button>
@@ -140,6 +157,7 @@ export function AppointmentBlock({
           onTouchStart={handleTouchStart}
           onTouchEnd={cancelLongPress}
           onTouchMove={cancelLongPress}
+          title={ownersTitle}
           className={cn(
             "w-full rounded-lg p-3 text-left cursor-pointer transition-shadow hover:shadow-md",
             isMoving && "opacity-40 pointer-events-none"
@@ -149,13 +167,21 @@ export function AppointmentBlock({
             borderLeft: `4px solid ${color.border}`,
           }}
         >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-foreground">{clientName}</p>
-            <span className="text-xs text-muted-foreground">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium text-foreground truncate">
+              {dogName}
+              {breedName && <span className="font-normal text-muted-foreground"> ({breedName})</span>}
+            </p>
+            <span className="text-xs text-muted-foreground shrink-0">
               {formatTime(startTime)} - {formatTime(endTime)}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">{dogName}</p>
+          <p className="text-sm text-muted-foreground">{clientName}</p>
+          {coOwners.length > 0 && (
+            <p className="text-xs text-muted-foreground truncate">
+              + {formatCoOwnerFull(coOwners)}
+            </p>
+          )}
           <div className="flex items-center justify-between mt-1">
             <p className="text-xs text-muted-foreground">{serviceName}</p>
             <span className="text-xs font-medium text-foreground">{formatPrice(price)}</span>

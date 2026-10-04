@@ -18,6 +18,10 @@ export const createAppointmentSchema = z.object({
   serviceId: z.string().uuid(),
   duration: z.number().int().min(15),
   price: z.number().int().min(0),
+  notes: z.string().trim().max(2000, 'La nota non può superare 2000 caratteri').optional(),
+  allowExceedShift: z.boolean().optional(),
+  // Sovrapposizione consentita previa conferma dell'utente.
+  allowOverlap: z.boolean().optional(),
 }).refine((data) => !!data.userId || !!data.stationId, {
   message: 'Serve un collaboratore o una postazione',
   path: ['userId'],
@@ -34,6 +38,9 @@ export const updateAppointmentSchema = z.object({
   serviceId: z.string().uuid(),
   duration: z.number().int().min(15),
   price: z.number().int().min(0),
+  allowExceedShift: z.boolean().optional(),
+  // Sovrapposizione consentita previa conferma dell'utente.
+  allowOverlap: z.boolean().optional(),
 }).refine((data) => !!data.userId || !!data.stationId, {
   message: 'Serve un collaboratore o una postazione',
   path: ['userId'],
@@ -47,10 +54,15 @@ export const deleteAppointmentSchema = z.object({
 
 export const moveAppointmentSchema = z.object({
   id: z.string().uuid(),
-  userId: z.string().uuid(),
+  // Assente = lascia il collaboratore attuale; null = appuntamento "da assegnare".
+  userId: z.string().uuid().nullable().optional(),
+  // Assente = lascia la postazione attuale.
   stationId: z.string().uuid().nullable().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
+  allowExceedShift: z.boolean().optional(),
+  // Sovrapposizione consentita previa conferma dell'utente.
+  allowOverlap: z.boolean().optional(),
 })
 
 export const saveAppointmentNoteSchema = z.object({
@@ -77,4 +89,5 @@ export const fetchAppointmentPriceSchema = z.object({
 export const reassignStaffSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
+  allowOverlap: z.boolean().optional(),
 })

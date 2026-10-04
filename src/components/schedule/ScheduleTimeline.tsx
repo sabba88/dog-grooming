@@ -2,8 +2,18 @@
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { AppointmentBlock } from './AppointmentBlock'
+import { getCoOwners } from '@/lib/utils/formatting'
 import { EmptySlot } from './EmptySlot'
-import { generateTimeSlots, getServiceColor, getUserColor } from '@/lib/utils/schedule'
+import {
+  generateTimeSlots,
+  getServiceColor,
+  getUserColor,
+  timeToMinutes,
+  utcMinutesOfDay,
+  MINUTES_PER_SLOT,
+  UNASSIGNED_KEY,
+  UNASSIGNED_LABEL,
+} from '@/lib/utils/schedule'
 import type { StaffStatus, ShiftInfo } from '@/lib/queries/staff'
 
 interface Station {
@@ -29,10 +39,18 @@ interface Appointment {
   userId: string | null
   stationId: string | null
   clientNominativo: string
+  owner2: string | null
+  phone2: string | null
+  owner3: string | null
+  phone3: string | null
   dogName: string
+  breedName: string | null
   serviceName: string
   serviceId: string
 }
+
+// Un tab della timeline: una postazione, una persona, oppure "Da assegnare".
+type Column = { key: string; name: string; person?: Person }
 
 interface SlotData {
   stationId?: string
@@ -44,6 +62,7 @@ interface SlotData {
 }
 
 interface ScheduleTimelineProps {
+  groupBy: 'station' | 'person'
   stations: Station[]
   staff: Person[]
   appointments: Appointment[]
@@ -61,8 +80,9 @@ function isInOpenHours(slotMinutes: number, openIntervals: { start: number; end:
   return openIntervals.some(iv => slotMinutes >= iv.start && slotMinutes < iv.end)
 }
 
-function StationTimeline({
-  station,
+function ColumnTimeline({
+  column,
+  groupBy,
   appointments,
   allServiceIds,
   staff,
@@ -75,7 +95,8 @@ function StationTimeline({
   movingAppointmentId,
   onContextAction,
 }: {
-  station: Station
+  column: Column
+  groupBy: 'station' | 'person'
   appointments: Appointment[]
   allServiceIds: string[]
   staff: Person[]
@@ -89,48 +110,76 @@ function StationTimeline({
   onContextAction?: (action: 'detail' | 'add-note' | 'move' | 'delete', id: string) => void
 }) {
   const timeSlots = generateTimeSlots(globalOpen, globalClose)
+  const person = column.person
+  // "Da assegnare" non e' una destinazione valida: moveAppointment esige un userId.
+  const isMovingTarget = !!movingAppointmentId && !(groupBy === 'person' && !person)
+
+  const slotIdentity: Partial<SlotData> = groupBy === 'station'
+    ? { stationId: column.key, stationName: column.name }
+    : person
+      ? { userId: person.id, userName: person.name }
+      : {}
+
+  // Ogni appuntamento viene ancorato allo slot in cui inizia (o al primo slot visibile,
+  // se inizia prima dell'apertura) e reso una sola volta. Piu' appuntamenti possono
+  // cadere sullo stesso slot: nella timeline si impilano verticalmente.
+  const firstSlotMinutes = timeSlots.length > 0 ? timeToMinutes(timeSlots[0]) : 0
+  const apptsBySlot = new Map<number, Appointment[]>()
+  for (const appt of [...appointments].sort((a, b) => a.startTime.getTime() - b.startTime.getTime())) {
+    const anchored = Math.max(utcMinutesOfDay(appt.startTime), firstSlotMinutes)
+    const slotMinutes =
+      firstSlotMinutes +
+      Math.floor((anchored - firstSlotMinutes) / MINUTES_PER_SLOT) * MINUTES_PER_SLOT
+    const bucket = apptsBySlot.get(slotMinutes)
+    if (bucket) bucket.push(appt)
+    else apptsBySlot.set(slotMinutes, [appt])
+  }
 
   return (
     <div className="flex flex-col gap-2">
       {timeSlots.map((slot) => {
-        const [slotH, slotM] = slot.split(':').map(Number)
-        const slotMinutes = slotH * 60 + slotM
+        const slotMinutes = timeToMinutes(slot)
+        const startingHere = apptsBySlot.get(slotMinutes) ?? []
 
-        const appt = appointments.find((a) => {
-          const startMinutes = a.startTime.getUTCHours() * 60 + a.startTime.getUTCMinutes()
-          const endMinutes = a.endTime.getUTCHours() * 60 + a.endTime.getUTCMinutes()
-          return slotMinutes >= startMinutes && slotMinutes < endMinutes
-        })
-
-        if (appt) {
-          const apptStartMinutes = appt.startTime.getUTCHours() * 60 + appt.startTime.getUTCMinutes()
-          if (slotMinutes !== apptStartMinutes) return null
-
-          const staffMember = staff.find(p => p.id === appt.userId)
-          const color = staffMember?.color ? getUserColor(staffMember.color) : getServiceColor(appt.serviceId, allServiceIds)
+        if (startingHere.length > 0) {
           return (
             <div key={slot} className="flex gap-3 items-start">
               <span className="text-xs text-muted-foreground w-12 pt-3 shrink-0">{slot}</span>
-              <div className="flex-1">
-                <AppointmentBlock
-                  id={appt.id}
-                  clientName={appt.clientNominativo}
-                  dogName={appt.dogName}
-                  serviceName={appt.serviceName}
-                  staffName={staffMember?.name ?? 'Da assegnare'}
-                  price={appt.price}
-                  startTime={appt.startTime}
-                  endTime={appt.endTime}
-                  color={color}
-                  variant="timeline"
-                  onClick={onAppointmentClick}
-                  isMoving={movingAppointmentId === appt.id}
-                  onContextAction={onContextAction}
-                />
+              <div className="flex-1 flex flex-col gap-2">
+                {startingHere.map((appt) => {
+                  const staffMember = staff.find(p => p.id === appt.userId)
+                  const color = staffMember?.color ? getUserColor(staffMember.color) : getServiceColor(appt.serviceId, allServiceIds)
+                  return (
+                    <AppointmentBlock
+                      key={appt.id}
+                      id={appt.id}
+                      clientName={appt.clientNominativo}
+                      coOwners={getCoOwners(appt)}
+                      dogName={appt.dogName}
+                      breedName={appt.breedName}
+                      serviceName={appt.serviceName}
+                      staffName={staffMember?.name ?? UNASSIGNED_LABEL}
+                      price={appt.price}
+                      startTime={appt.startTime}
+                      endTime={appt.endTime}
+                      color={color}
+                      variant="timeline"
+                      onClick={onAppointmentClick}
+                      isMoving={movingAppointmentId === appt.id}
+                      onContextAction={onContextAction}
+                    />
+                  )
+                })}
               </div>
             </div>
           )
         }
+
+        // Slot coperto da un appuntamento gia' reso in uno slot precedente
+        const isCovered = appointments.some((a) =>
+          slotMinutes >= utcMinutesOfDay(a.startTime) && slotMinutes < utcMinutesOfDay(a.endTime)
+        )
+        if (isCovered) return null
 
         const isClosed = !isInOpenHours(slotMinutes, openIntervals)
 
@@ -139,14 +188,13 @@ function StationTimeline({
             <span className="text-xs text-muted-foreground w-12 pt-3 shrink-0">{slot}</span>
             <div className="flex-1">
               <EmptySlot
-                stationId={station.id}
-                stationName={station.name}
+                {...slotIdentity}
                 date={dateString}
                 time={slot}
                 variant="timeline"
                 closed={isClosed}
                 onClick={onEmptySlotClick}
-                isMovingTarget={!!movingAppointmentId}
+                isMovingTarget={isMovingTarget}
               />
             </div>
           </div>
@@ -157,6 +205,7 @@ function StationTimeline({
 }
 
 export function ScheduleTimeline({
+  groupBy,
   stations,
   staff,
   appointments,
@@ -172,18 +221,47 @@ export function ScheduleTimeline({
   const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
   const activeStaff = staff.filter(p => p.overallStatus === 'active')
 
+  // Il tab "Da assegnare" compare solo se ci sono davvero appuntamenti senza collaboratore.
+  const hasUnassigned = appointments.some(a => a.userId === null)
+  const columns: Column[] = groupBy === 'station'
+    ? stations.map(s => ({ key: s.id, name: s.name }))
+    : [
+        ...activeStaff.map(p => ({ key: p.id, name: p.name, person: p })),
+        ...(hasUnassigned ? [{ key: UNASSIGNED_KEY, name: UNASSIGNED_LABEL }] : []),
+      ]
+
+  const appointmentsFor = (column: Column) =>
+    groupBy === 'station'
+      ? appointments.filter(a => a.stationId === column.key)
+      : appointments.filter(a => (a.userId ?? UNASSIGNED_KEY) === column.key)
+
+  const timelineProps = {
+    groupBy,
+    allServiceIds,
+    staff,
+    dateString,
+    globalOpen,
+    globalClose,
+    openIntervals,
+    onAppointmentClick,
+    onEmptySlotClick,
+    movingAppointmentId,
+    onContextAction,
+  }
+
   return (
     <Tabs defaultValue="all" className="w-full">
       <TabsList className="w-full overflow-x-auto">
         <TabsTrigger value="all">Tutte</TabsTrigger>
-        {stations.map((station) => (
-          <TabsTrigger key={station.id} value={station.id}>
-            {station.name}
+        {columns.map((column) => (
+          <TabsTrigger key={column.key} value={column.key}>
+            {column.name}
           </TabsTrigger>
         ))}
       </TabsList>
 
-      {activeStaff.length > 0 && (
+      {/* Legenda turni — ridondante in vista persone, dove i turni sono gia' i tab */}
+      {groupBy === 'station' && activeStaff.length > 0 && (
         <div className="flex flex-wrap gap-x-4 gap-y-1 py-2 px-1">
           {activeStaff.map((person) => {
             const shifts = person.shifts.filter(s => s.status === 'active')
@@ -200,52 +278,28 @@ export function ScheduleTimeline({
 
       <TabsContent value="all" className="mt-0">
         <div className="flex flex-col gap-6">
-          {stations.map((station) => {
-            const stationAppts = appointments.filter(a => a.stationId === station.id)
-            return (
-              <div key={station.id}>
-                <h3 className="text-sm font-semibold mb-2">{station.name}</h3>
-                <StationTimeline
-                  station={station}
-                  appointments={stationAppts}
-                  allServiceIds={allServiceIds}
-                  staff={staff}
-                  dateString={dateString}
-                  globalOpen={globalOpen}
-                  globalClose={globalClose}
-                  openIntervals={openIntervals}
-                  onAppointmentClick={onAppointmentClick}
-                  onEmptySlotClick={onEmptySlotClick}
-                  movingAppointmentId={movingAppointmentId}
-                  onContextAction={onContextAction}
-                />
-              </div>
-            )
-          })}
+          {columns.map((column) => (
+            <div key={column.key}>
+              <h3 className="text-sm font-semibold mb-2">{column.name}</h3>
+              <ColumnTimeline
+                column={column}
+                appointments={appointmentsFor(column)}
+                {...timelineProps}
+              />
+            </div>
+          ))}
         </div>
       </TabsContent>
 
-      {stations.map((station) => {
-        const stationAppts = appointments.filter(a => a.stationId === station.id)
-        return (
-          <TabsContent key={station.id} value={station.id} className="mt-4">
-            <StationTimeline
-              station={station}
-              appointments={stationAppts}
-              allServiceIds={allServiceIds}
-              staff={staff}
-              dateString={dateString}
-              globalOpen={globalOpen}
-              globalClose={globalClose}
-              openIntervals={openIntervals}
-              onAppointmentClick={onAppointmentClick}
-              onEmptySlotClick={onEmptySlotClick}
-              movingAppointmentId={movingAppointmentId}
-              onContextAction={onContextAction}
-            />
-          </TabsContent>
-        )
-      })}
+      {columns.map((column) => (
+        <TabsContent key={column.key} value={column.key} className="mt-4">
+          <ColumnTimeline
+            column={column}
+            appointments={appointmentsFor(column)}
+            {...timelineProps}
+          />
+        </TabsContent>
+      ))}
     </Tabs>
   )
 }

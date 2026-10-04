@@ -3,13 +3,15 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { WeeklyStationRow } from './WeeklyStationRow'
+import { WeeklyPersonRow } from './WeeklyPersonRow'
 import { formatDayHeader } from './WeeklyDayCell'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { timeToMinutes, MINUTES_PER_SLOT } from '@/lib/utils/schedule'
+import { timeToMinutes, MINUTES_PER_SLOT, UNASSIGNED_KEY, UNASSIGNED_LABEL } from '@/lib/utils/schedule'
 
 interface User {
   id: string
   name: string
+  role: 'admin' | 'collaborator'
 }
 
 interface Station {
@@ -29,7 +31,9 @@ interface WeeklyScheduleViewProps {
   staffShifts: Record<string, { date: string; shifts: { startTime: string; endTime: string }[] }[]>
   stations: Station[]
   appointmentsByStation: Record<string, { startTime: Date; endTime: Date }[]>
+  appointmentsByPerson: Record<string, { startTime: Date; endTime: Date }[]>
   businessHours: BusinessHour[]
+  groupBy: 'station' | 'person'
   onDayClick: (date: string) => void
   onPrevWeek: () => void
   onNextWeek: () => void
@@ -142,7 +146,9 @@ export function WeeklyScheduleView({
   staffShifts,
   stations,
   appointmentsByStation,
+  appointmentsByPerson,
   businessHours,
+  groupBy,
   onDayClick,
   onPrevWeek,
   onNextWeek,
@@ -176,6 +182,91 @@ export function WeeklyScheduleView({
     )
   }
 
+  // Orari negozio per ogni giorno della settimana (usati come finestra per rettangoli e heatmap)
+  const businessHoursPerDate = Object.fromEntries(
+    weekDates.map(date => [date, getBusinessHoursForDate(date, businessHours)])
+  )
+
+  const dayHeaderRow = (
+    <>
+      <div className="bg-muted px-3 py-2 text-xs font-medium text-muted-foreground border-b border-r" />
+      {weekDates.map(date => (
+        <div
+          key={date}
+          className="bg-muted px-2 py-2 text-xs font-medium text-muted-foreground border-b border-r text-center capitalize"
+        >
+          {formatDayHeader(date)}
+        </div>
+      ))}
+    </>
+  )
+
+  if (groupBy === 'person') {
+    const unassignedAppts = appointmentsByPerson[UNASSIGNED_KEY] ?? []
+
+    if (staff.length === 0 && unassignedAppts.length === 0) {
+      return (
+        <div className="flex flex-col gap-2">
+          {navHeader}
+          <p className="text-center text-muted-foreground py-8 text-sm">
+            Nessuna persona in turno in questa sede questa settimana
+          </p>
+        </div>
+      )
+    }
+
+    const personRows = staff.map(person => ({
+      person,
+      shiftsPerDate: Object.fromEntries(
+        (staffShifts[person.id] ?? []).map(e => [e.date, e.shifts])
+      ) as Record<string, { startTime: string; endTime: string }[]>,
+      appointmentsPerDate: groupByDate(appointmentsByPerson[person.id] ?? []),
+    }))
+
+    if (unassignedAppts.length > 0) {
+      personRows.push({
+        person: { id: UNASSIGNED_KEY, name: UNASSIGNED_LABEL, role: 'collaborator' },
+        // Nessun turno da mostrare: la finestra di riferimento sono gli orari del negozio.
+        shiftsPerDate: businessHoursPerDate,
+        appointmentsPerDate: groupByDate(unassignedAppts),
+      })
+    }
+
+    const rows = personRows.map(row => (
+      <WeeklyPersonRow
+        key={row.person.id}
+        person={row.person}
+        weekDates={weekDates}
+        shiftsPerDate={row.shiftsPerDate}
+        appointmentsPerDate={row.appointmentsPerDate}
+        onDayClick={onDayClick}
+        isMobile={isMobile}
+      />
+    ))
+
+    if (isMobile) {
+      return (
+        <div className="flex flex-col gap-0">
+          {navHeader}
+          <div className="flex flex-col">{rows}</div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex flex-col gap-0">
+        {navHeader}
+        <div
+          className="grid border-t border-l"
+          style={{ gridTemplateColumns: `180px repeat(${weekDates.length}, 1fr)` }}
+        >
+          {dayHeaderRow}
+          {rows}
+        </div>
+      </div>
+    )
+  }
+
   if (stations.length === 0) {
     return (
       <div className="flex flex-col gap-2">
@@ -193,11 +284,6 @@ export function WeeklyScheduleView({
 
   const apptPerDateByStation = Object.fromEntries(
     stations.map(s => [s.id, groupByDate(appointmentsByStation[s.id] ?? [])])
-  )
-
-  // Orari negozio per ogni giorno della settimana (usati come finestra per rettangoli e heatmap)
-  const businessHoursPerDate = Object.fromEntries(
-    weekDates.map(date => [date, getBusinessHoursForDate(date, businessHours)])
   )
 
   if (isMobile) {
@@ -229,16 +315,7 @@ export function WeeklyScheduleView({
         className="grid border-t border-l"
         style={{ gridTemplateColumns: `180px repeat(${weekDates.length}, 1fr)` }}
       >
-        {/* Header row */}
-        <div className="bg-muted px-3 py-2 text-xs font-medium text-muted-foreground border-b border-r" />
-        {weekDates.map(date => (
-          <div
-            key={date}
-            className="bg-muted px-2 py-2 text-xs font-medium text-muted-foreground border-b border-r text-center capitalize"
-          >
-            {formatDayHeader(date)}
-          </div>
-        ))}
+        {dayHeaderRow}
 
         {/* Station rows */}
         {stations.map(station => (
