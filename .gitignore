@@ -41,6 +41,10 @@ yarn-error.log*
 next-env.d.ts
 .gstack/
 
+# impostazioni locali di Claude Code: contengono comandi autorizzati che possono
+# includere credenziali (es. DATABASE_URL in chiaro). Restano sulla macchina.
+.claude/settings.local.json
+
 # dati / manuale / script di debug locali
 *.xlsx
 MANUALE_UTENTE.pdf
