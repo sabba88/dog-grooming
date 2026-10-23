@@ -5,7 +5,7 @@ import { Users, MapPin, Percent } from 'lucide-react'
 
 export default async function SettingsPage() {
   if (!(await checkPermission('manageUsers'))) {
-    redirect('/agenda')
+    redirect('/bookings')
   }
 
   return (

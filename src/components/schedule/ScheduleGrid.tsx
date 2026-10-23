@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { isToday } from 'date-fns'
 import { AppointmentBlock } from './AppointmentBlock'
 import { getCoOwners } from '@/lib/utils/formatting'
+import { isDaPianificare } from '@/lib/utils/appointment'
 import { EmptySlot } from './EmptySlot'
 import { PersonHeader } from './PersonHeader'
 import {
@@ -40,7 +41,7 @@ interface Appointment {
   id: string
   startTime: Date
   endTime: Date
-  price: number
+  price: number | null
   notes: string | null
   userId: string | null
   stationId: string | null
@@ -51,8 +52,8 @@ interface Appointment {
   phone3: string | null
   dogName: string
   breedName: string | null
-  serviceName: string
-  serviceId: string
+  serviceName: string | null
+  serviceId: string | null
 }
 
 // Una colonna della griglia: una postazione, una persona, oppure la colonna "Da assegnare".
@@ -636,6 +637,7 @@ export function ScheduleGrid({
                       serviceName={appt.serviceName}
                       staffName={staffMember?.name ?? UNASSIGNED_LABEL}
                       price={appt.price}
+                      daPianificare={isDaPianificare(appt)}
                       startTime={appt.startTime}
                       endTime={appt.endTime}
                       color={color}

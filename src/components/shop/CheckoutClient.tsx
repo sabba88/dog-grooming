@@ -103,7 +103,7 @@ export function CheckoutClient({ appointment, availableProducts, initialSoldProd
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6 pb-12">
       <div className="flex items-center gap-3">
-        <Link href="/agenda">
+        <Link href="/bookings">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Torna all&apos;agenda

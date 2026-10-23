@@ -1,5 +1,6 @@
 import {
   Calendar,
+  CalendarPlus,
   Users,
   UserCog,
   PawPrint,
@@ -20,7 +21,9 @@ export type NavItem = {
 }
 
 export const mainNavItems: NavItem[] = [
-  { label: 'Agenda', href: '/agenda', icon: Calendar, roles: ['admin', 'collaborator'] },
+  // Prenotazioni e' la schermata di lavoro quotidiana: viene prima.
+  { label: 'Prenotazioni', href: '/bookings', icon: CalendarPlus, roles: ['admin', 'collaborator'] },
+  { label: 'Pianificazione', href: '/agenda', icon: Calendar, roles: ['admin', 'collaborator'] },
   { label: 'Clienti', href: '/clients', icon: Users, roles: ['admin', 'collaborator'] },
   { label: 'Cani', href: '/dogs', icon: PawPrint, roles: ['admin', 'collaborator'] },
   { label: 'Servizi', href: '/services', icon: Scissors, roles: ['admin', 'collaborator'] },
@@ -35,9 +38,9 @@ export const footerNavItems: NavItem[] = [
 ]
 
 export const bottomBarItems: NavItem[] = [
-  { label: 'Agenda', href: '/agenda', icon: Calendar, roles: ['admin', 'collaborator'] },
+  { label: 'Prenota', href: '/bookings', icon: CalendarPlus, roles: ['admin', 'collaborator'] },
+  { label: 'Piano', href: '/agenda', icon: Calendar, roles: ['admin', 'collaborator'] },
   { label: 'Clienti', href: '/clients', icon: Users, roles: ['admin', 'collaborator'] },
-  { label: 'Cani', href: '/dogs', icon: PawPrint, roles: ['admin', 'collaborator'] },
   { label: 'Home', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'collaborator'] },
 ]
 
@@ -46,7 +49,8 @@ export function getVisibleItems(items: NavItem[], role: UserRole): NavItem[] {
 }
 
 export const pageTitles: Record<string, string> = {
-  '/agenda': 'Agenda',
+  '/bookings': 'Prenotazioni',
+  '/agenda': 'Pianificazione',
   '/clients': 'Clienti',
   '/dogs': 'Cani',
   '/services': 'Servizi',

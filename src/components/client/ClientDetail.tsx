@@ -17,7 +17,7 @@ import {
 import { ClientForm } from '@/components/client/ClientForm'
 import { ClientNotes } from '@/components/client/ClientNotes'
 import { MissingValue } from '@/components/client/MissingValue'
-import { isMissingValue } from '@/lib/utils/formatting'
+import { isMissingValue, formatPriceOrDash, formatServiceName } from '@/lib/utils/formatting'
 import { DogList } from '@/components/dog/DogList'
 import { deleteClient } from '@/lib/actions/clients'
 import { useAction } from 'next-safe-action/hooks'
@@ -75,10 +75,10 @@ interface Appointment {
   id: string
   startTime: Date
   endTime: Date
-  price: number
+  price: number | null
   notes: string | null
   dogName: string
-  serviceName: string
+  serviceName: string | null
 }
 
 interface ClientDetailProps {
@@ -235,7 +235,7 @@ export function ClientDetail({ client, notes, dogs, breeds, appointments, userRo
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <p className="text-sm font-medium text-foreground">
-                            {a.dogName} — {a.serviceName}
+                            {a.dogName} — {formatServiceName(a.serviceName)}
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -243,7 +243,7 @@ export function ClientDetail({ client, notes, dogs, breeds, appointments, userRo
                           </p>
                         </div>
                         <span className="text-sm font-medium text-brand-primary shrink-0">
-                          {(a.price / 100).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}
+                          {formatPriceOrDash(a.price)}
                         </span>
                       </div>
                     </div>
@@ -267,7 +267,7 @@ export function ClientDetail({ client, notes, dogs, breeds, appointments, userRo
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <p className="text-sm font-medium text-foreground">
-                            {a.dogName} — {a.serviceName}
+                            {a.dogName} — {formatServiceName(a.serviceName)}
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                             <Clock className="h-3 w-3" />
@@ -278,7 +278,7 @@ export function ClientDetail({ client, notes, dogs, breeds, appointments, userRo
                           )}
                         </div>
                         <span className="text-sm text-muted-foreground shrink-0">
-                          {(a.price / 100).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' })}
+                          {formatPriceOrDash(a.price)}
                         </span>
                       </div>
                     </div>

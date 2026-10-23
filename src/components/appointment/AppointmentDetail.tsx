@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAction } from 'next-safe-action/hooks'
 import { fetchAppointmentDetail, deleteAppointment, saveAppointmentNote, fetchServiceNotesByDog, fetchActiveUsers, reassignStaff } from '@/lib/actions/appointments'
-import { formatPrice, formatDuration, getCoOwners, isMissingValue } from '@/lib/utils/formatting'
+import { formatPriceOrDash, formatDuration, getCoOwners, isMissingValue } from '@/lib/utils/formatting'
+import { isDaPianificare, missingPlanningFields } from '@/lib/utils/appointment'
 import { MissingValue } from '@/components/client/MissingValue'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
@@ -208,8 +209,16 @@ export function AppointmentDetail({
     )
   }
 
+  const planningGaps = missingPlanningFields(appointment)
+
   return (
     <div className="flex flex-col gap-4 p-4">
+      {isDaPianificare(appointment) && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
+          <p className="text-sm font-medium text-amber-800">Da pianificare</p>
+          <p className="text-xs text-amber-700">Manca ancora: {planningGaps.join(', ')}.</p>
+        </div>
+      )}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground w-20">Cliente</span>
@@ -237,7 +246,11 @@ export function AppointmentDetail({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground w-20">Servizio</span>
-          <span className="text-sm font-medium">{appointment.serviceName}</span>
+          {appointment.serviceName ? (
+            <span className="text-sm font-medium">{appointment.serviceName}</span>
+          ) : (
+            <span className="text-sm font-medium text-amber-700 italic">Da definire</span>
+          )}
         </div>
         <div className="flex items-start gap-2">
           <span className="text-sm text-muted-foreground w-20 pt-1">Persona</span>
@@ -290,7 +303,7 @@ export function AppointmentDetail({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground w-20">Prezzo</span>
-            <span className="text-sm font-medium">{formatPrice(appointment.price)}</span>
+            <span className="text-sm font-medium">{formatPriceOrDash(appointment.price)}</span>
           </div>
         </div>
       </div>
@@ -341,12 +354,19 @@ export function AppointmentDetail({
           <Pencil className="size-4 mr-2" />
           Modifica appuntamento
         </Button>
-        <Link href={`/appointments/${appointmentId}/checkout`} className="w-full">
-          <Button variant="outline" className="w-full">
+        {appointment.serviceId ? (
+          <Link href={`/appointments/${appointmentId}/checkout`} className="w-full">
+            <Button variant="outline" className="w-full">
+              <ShoppingBag className="size-4 mr-2" />
+              Vendi Prodotti
+            </Button>
+          </Link>
+        ) : (
+          <Button variant="outline" className="w-full" disabled title="Serve prima il servizio">
             <ShoppingBag className="size-4 mr-2" />
             Vendi Prodotti
           </Button>
-        </Link>
+        )}
         <div className="flex gap-2">
           <Button
             variant="outline"

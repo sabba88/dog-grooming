@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { appointments, breeds, clients, dogs, services, stations, users } from '@/lib/db/schema'
-import { eq, and, or, gte, lt, asc, isNull, isNotNull, ne, desc } from 'drizzle-orm'
+import { eq, and, gte, lt, asc, isNull, isNotNull, ne, desc } from 'drizzle-orm'
 
 export async function getAppointmentById(id: string, tenantId: string) {
   const [result] = await db
@@ -14,6 +14,7 @@ export async function getAppointmentById(id: string, tenantId: string) {
       dogId: appointments.dogId,
       clientId: appointments.clientId,
       stationId: appointments.stationId,
+      locationId: appointments.locationId,
       clientNominativo: clients.nominativo,
       clientPhone: clients.phone,
       owner2: clients.owner2,
@@ -21,14 +22,15 @@ export async function getAppointmentById(id: string, tenantId: string) {
       owner3: clients.owner3,
       phone3: clients.phone3,
       dogName: dogs.name,
+      // Servizio assente finche' non lo si sceglie in pianificazione.
       serviceName: services.name,
-      serviceId: services.id,
+      serviceId: appointments.serviceId,
       userName: users.name,
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))
     .innerJoin(dogs, eq(appointments.dogId, dogs.id))
-    .innerJoin(services, eq(appointments.serviceId, services.id))
+    .leftJoin(services, eq(appointments.serviceId, services.id))
     .leftJoin(users, eq(appointments.userId, users.id))
     .where(
       and(
@@ -65,16 +67,17 @@ export async function getAppointmentsByDateAndLocation(
       phone3: clients.phone3,
       dogName: dogs.name,
       serviceName: services.name,
-      serviceId: services.id,
+      serviceId: appointments.serviceId,
     })
     .from(appointments)
-    .innerJoin(stations, eq(appointments.stationId, stations.id))
     .innerJoin(clients, eq(appointments.clientId, clients.id))
     .innerJoin(dogs, eq(appointments.dogId, dogs.id))
-    .innerJoin(services, eq(appointments.serviceId, services.id))
+    .leftJoin(services, eq(appointments.serviceId, services.id))
     .where(
       and(
-        eq(stations.locationId, locationId),
+        // La sede e' sull'appuntamento: non si passa piu' dalla postazione,
+        // che in prenotazione non c'e' ancora.
+        eq(appointments.locationId, locationId),
         gte(appointments.startTime, dayStart),
         lt(appointments.startTime, dayEnd),
         eq(appointments.tenantId, tenantId),
@@ -109,18 +112,16 @@ export async function getAppointmentsByDateAndLocationGroupedByUser(
       dogName: dogs.name,
       breedName: breeds.name,
       serviceName: services.name,
-      serviceId: services.id,
+      serviceId: appointments.serviceId,
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))
     .innerJoin(dogs, eq(appointments.dogId, dogs.id))
     .leftJoin(breeds, eq(dogs.breedId, breeds.id))
-    .innerJoin(services, eq(appointments.serviceId, services.id))
-    .leftJoin(stations, eq(appointments.stationId, stations.id))
+    .leftJoin(services, eq(appointments.serviceId, services.id))
     .where(
       and(
-        // Un appuntamento senza postazione non ha legame con nessuna sede: lo si include sempre.
-        or(eq(stations.locationId, locationId), isNull(appointments.stationId)),
+        eq(appointments.locationId, locationId),
         gte(appointments.startTime, dayStart),
         lt(appointments.startTime, dayEnd),
         eq(appointments.tenantId, tenantId),
@@ -147,12 +148,12 @@ export async function getWeeklyAppointmentsByStation(
       endTime: appointments.endTime,
     })
     .from(appointments)
-    .innerJoin(stations, eq(appointments.stationId, stations.id))
     .innerJoin(clients, eq(appointments.clientId, clients.id))
     .where(
       and(
+        // Solo gli appuntamenti gia' assegnati a una postazione hanno una riga qui.
         isNotNull(appointments.stationId),
-        eq(stations.locationId, locationId),
+        eq(appointments.locationId, locationId),
         gte(appointments.startTime, start),
         lt(appointments.startTime, end),
         eq(appointments.tenantId, tenantId),
@@ -183,11 +184,9 @@ export async function getWeeklyAppointmentsByPerson(
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))
-    .leftJoin(stations, eq(appointments.stationId, stations.id))
     .where(
       and(
-        // Un appuntamento senza postazione non ha legame con nessuna sede: lo si include sempre.
-        or(eq(stations.locationId, locationId), isNull(appointments.stationId)),
+        eq(appointments.locationId, locationId),
         gte(appointments.startTime, start),
         lt(appointments.startTime, end),
         eq(appointments.tenantId, tenantId),
@@ -195,6 +194,51 @@ export async function getWeeklyAppointmentsByPerson(
       )
     )
     .orderBy(asc(appointments.startTime))
+}
+
+/**
+ * Appuntamenti della settimana ancora privi di postazione, collaboratore o servizio.
+ * Alimenta il vassoio "Da pianificare" e il contatore in testata.
+ */
+export async function getUnplannedAppointments(
+  weekStart: string,
+  weekEnd: string,
+  locationId: string,
+  tenantId: string
+) {
+  const start = new Date(weekStart + 'T00:00:00.000Z')
+  const end = new Date(weekEnd + 'T23:59:59.999Z')
+
+  const rows = await db
+    .select({
+      id: appointments.id,
+      startTime: appointments.startTime,
+      endTime: appointments.endTime,
+      userId: appointments.userId,
+      stationId: appointments.stationId,
+      serviceId: appointments.serviceId,
+      clientNominativo: clients.nominativo,
+      dogName: dogs.name,
+      serviceName: services.name,
+    })
+    .from(appointments)
+    .innerJoin(clients, eq(appointments.clientId, clients.id))
+    .innerJoin(dogs, eq(appointments.dogId, dogs.id))
+    .leftJoin(services, eq(appointments.serviceId, services.id))
+    .where(
+      and(
+        eq(appointments.locationId, locationId),
+        gte(appointments.startTime, start),
+        lt(appointments.startTime, end),
+        eq(appointments.tenantId, tenantId),
+        isNull(clients.deletedAt)
+      )
+    )
+    .orderBy(asc(appointments.startTime))
+
+  // Il filtro "incompleto" vive in `isDaPianificare`: tenerlo in SQL significherebbe
+  // duplicare la regola in due posti e vederla divergere.
+  return rows
 }
 
 export async function getServiceNotesByDog(
@@ -220,7 +264,7 @@ export async function getServiceNotesByDog(
       notes: appointments.notes,
     })
     .from(appointments)
-    .innerJoin(services, eq(appointments.serviceId, services.id))
+    .leftJoin(services, eq(appointments.serviceId, services.id))
     .where(and(...conditions))
     .orderBy(desc(appointments.startTime))
 }

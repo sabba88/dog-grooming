@@ -134,6 +134,8 @@ export async function getServicesDistribution(tenantId: string) {
       revenue: sum(appointments.price),
     })
     .from(appointments)
+    // innerJoin voluto: gli appuntamenti ancora da pianificare non hanno servizio
+    // e non devono entrare nella distribuzione.
     .innerJoin(services, eq(appointments.serviceId, services.id))
     .where(and(
       eq(appointments.tenantId, tenantId),

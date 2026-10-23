@@ -9,7 +9,8 @@ export type GetAppointmentsQuery = z.infer<typeof getAppointmentsQuerySchema>
 
 export const createAppointmentSchema = z.object({
   userId: z.string().uuid().optional(),
-  locationId: z.string().uuid().optional(),
+  // Obbligatoria da CC-2026-10-23: la sede vive sull'appuntamento, non sulla postazione.
+  locationId: z.string().uuid(),
   stationId: z.string().uuid().optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
@@ -22,28 +23,25 @@ export const createAppointmentSchema = z.object({
   allowExceedShift: z.boolean().optional(),
   // Sovrapposizione consentita previa conferma dell'utente.
   allowOverlap: z.boolean().optional(),
-}).refine((data) => !!data.userId || !!data.stationId, {
-  message: 'Serve un collaboratore o una postazione',
-  path: ['userId'],
 })
 
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>
 
+// La pianificazione puo' salvare un appuntamento ancora incompleto: servizio e
+// prezzo restano facoltativi, e senza collaboratore ne' postazione l'appuntamento
+// resta semplicemente nel vassoio "Da pianificare".
 export const updateAppointmentSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid().optional(),
   stationId: z.string().uuid().optional(),
   clientId: z.string().uuid(),
   dogId: z.string().uuid(),
-  serviceId: z.string().uuid(),
+  serviceId: z.string().uuid().optional(),
   duration: z.number().int().min(15),
-  price: z.number().int().min(0),
+  price: z.number().int().min(0).optional(),
   allowExceedShift: z.boolean().optional(),
   // Sovrapposizione consentita previa conferma dell'utente.
   allowOverlap: z.boolean().optional(),
-}).refine((data) => !!data.userId || !!data.stationId, {
-  message: 'Serve un collaboratore o una postazione',
-  path: ['userId'],
 })
 
 export type UpdateAppointmentInput = z.infer<typeof updateAppointmentSchema>

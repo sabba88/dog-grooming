@@ -17,7 +17,7 @@ export default auth((req) => {
 
   if (isLoginPage) {
     if (isLoggedIn) {
-      return NextResponse.redirect(new URL('/agenda', req.url))
+      return NextResponse.redirect(new URL('/bookings', req.url))
     }
     return NextResponse.next()
   }
@@ -30,7 +30,7 @@ export default auth((req) => {
   if (isAdminOnlyRoute(req.nextUrl.pathname)) {
     const userRole = req.auth?.user?.role
     if (userRole !== 'admin') {
-      return NextResponse.redirect(new URL('/agenda', req.url))
+      return NextResponse.redirect(new URL('/bookings', req.url))
     }
   }
 

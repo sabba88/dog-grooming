@@ -34,9 +34,11 @@ interface EditInitialValues {
   clientId: string
   clientNominativo: string
   dogId: string
-  serviceId: string
+  // Un appuntamento prenotato ma non ancora pianificato arriva qui senza servizio
+  // ne' prezzo: il form li fa scegliere, non li presume.
+  serviceId: string | null
   duration: number
-  price: number
+  price: number | null
   userId: string | null
   stationId: string | null
 }
@@ -249,8 +251,11 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
   if (editValues && !editInitialized && selectedDogId === editValues.dogId && services.length > 0) {
     setSelectedServiceId(editValues.serviceId)
     setDuration(editValues.duration)
-    setPriceEur(String(Math.round(editValues.price / 100)))
-    setPriceIsManual(true)
+    // Senza prezzo si lascia il campo vuoto: lo valorizzera' la scelta del servizio.
+    if (editValues.price !== null) {
+      setPriceEur(String(Math.round(editValues.price / 100)))
+      setPriceIsManual(true)
+    }
     setEditInitialized(true)
   }
 
@@ -384,7 +389,9 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
   }
 
   const handleSubmit = () => {
-    if (!selectedClient || !selectedDogId || !selectedServiceId || (!selectedUserId && !selectedStationId)) return
+    // Postazione e collaboratore restano facoltativi: senza, l'appuntamento resta
+    // nel vassoio "Da pianificare" invece di sparire.
+    if (!selectedClient || !selectedDogId || !selectedServiceId) return
     setBusinessError(null)
     setPendingCreate(null)
     setPendingUpdate(null)
@@ -457,7 +464,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
     month: 'short',
   }).format(new Date(prefilledSlot.date + 'T00:00:00.000Z'))
 
-  const isFormComplete = selectedClient && selectedDogId && selectedServiceId && duration >= 15 && parseFloat(priceEur) >= 0 && (!!selectedUserId || !!selectedStationId)
+  const isFormComplete = selectedClient && selectedDogId && selectedServiceId && duration >= 15 && parseFloat(priceEur) >= 0
   const isSaving = isSubmitting || isUpdating
 
   return (
@@ -815,10 +822,10 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
         </div>
       )}
 
-      {/* Avviso: senza collaboratore né postazione l'appuntamento non sarebbe visibile in agenda */}
+      {/* Senza collaboratore né postazione l'appuntamento resta nel vassoio "Da pianificare" */}
       {selectedServiceId && !selectedUserId && !selectedStationId && (
         <p className="text-muted-foreground text-xs">
-          Seleziona una postazione o un collaboratore, altrimenti l&apos;appuntamento non sarà visibile in agenda.
+          Senza postazione né collaboratore l&apos;appuntamento resta tra quelli da pianificare.
         </p>
       )}
 

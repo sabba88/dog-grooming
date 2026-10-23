@@ -14,7 +14,7 @@ interface LocationDetailPageProps {
 
 export default async function LocationDetailPage({ params }: LocationDetailPageProps) {
   if (!(await checkPermission('manageLocations'))) {
-    redirect('/agenda')
+    redirect('/bookings')
   }
 
   const session = await auth()

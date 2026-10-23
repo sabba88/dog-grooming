@@ -22,7 +22,9 @@ import {
   moveAppointment as moveAppointmentAction,
   deleteAppointment,
   fetchWeeklyAgendaData,
+  fetchUnplannedAppointments,
 } from '@/lib/actions/appointments'
+import { missingPlanningFields } from '@/lib/utils/appointment'
 import { computeAgendaRange, timeToMinutes } from '@/lib/utils/schedule'
 import { useAgendaGroupBy } from '@/hooks/useAgendaGroupBy'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -38,7 +40,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { LayoutGrid, Settings, Users, X } from 'lucide-react'
+import { ClipboardList, LayoutGrid, Settings, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -94,6 +96,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
   const [exceedsShiftEndTime, setExceedsShiftEndTime] = useState<string | undefined>(undefined)
   const [overlapOpen, setOverlapOpen] = useState(false)
   const [overlapAlternatives, setOverlapAlternatives] = useState<string[] | undefined>(undefined)
+  const [trayOpen, setTrayOpen] = useState(false)
   const isMobile = useIsMobile()
   const queryClient = useQueryClient()
   const { selectedLocationId, isHydrated } = useLocationSelector(locations)
@@ -144,6 +147,24 @@ export function AgendaView({ locations }: AgendaViewProps) {
     enabled: !!selectedLocationId && isHydrated && viewMode === 'week',
   })
 
+  // Il vassoio segue la settimana a video: in vista giorno, quella del giorno scelto.
+  const trayWeekStart = format(
+    viewMode === 'week' ? weekStart : startOfWeek(selectedDate, { weekStartsOn: 1 }),
+    'yyyy-MM-dd'
+  )
+  const { data: unplannedData } = useQuery({
+    queryKey: ['agenda-unplanned', selectedLocationId, trayWeekStart],
+    queryFn: async () => {
+      if (!selectedLocationId) return null
+      const result = await fetchUnplannedAppointments({
+        locationId: selectedLocationId,
+        weekStart: trayWeekStart,
+      })
+      return result?.data?.unplanned ?? []
+    },
+    enabled: !!selectedLocationId && isHydrated,
+  })
+
   const weekDates = Array.from({ length: 7 }, (_, i) =>
     format(addDays(weekStart, i), 'yyyy-MM-dd')
   )
@@ -155,6 +176,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
       setDeletingAppointmentId(null)
       queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
       queryClient.invalidateQueries({ queryKey: ['agenda-weekly'] })
+    queryClient.invalidateQueries({ queryKey: ['agenda-unplanned'] })
     },
     onError: () => {
       toast.error('Errore durante la cancellazione')
@@ -187,7 +209,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
       const start = new Date(appt.startTime)
       const end = new Date(appt.endTime)
       const duration = (end.getTime() - start.getTime()) / (60 * 1000)
-      setMovingAppointment({ id: appointmentId, duration, serviceName: appt.serviceName, userId: appt.userId ?? '', stationId: appt.stationId ?? null })
+      setMovingAppointment({ id: appointmentId, duration, serviceName: appt.serviceName ?? 'Appuntamento', userId: appt.userId ?? '', stationId: appt.stationId ?? null })
       setSelectedAppointmentId(null)
     }
   }
@@ -216,6 +238,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
       setMovingAppointment(null)
       queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
       queryClient.invalidateQueries({ queryKey: ['agenda-weekly'] })
+    queryClient.invalidateQueries({ queryKey: ['agenda-unplanned'] })
     }
   }
 
@@ -224,7 +247,9 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
     await runMove({
       id: movingAppointment.id,
-      userId,
+      // Un appuntamento senza collaboratore non ne ha uno da riproporre: si omette
+      // il campo, cosi' il server lascia invariato quello attuale.
+      ...(userId ? { userId } : {}),
       date,
       time,
       ...(stationId !== undefined && { stationId }),
@@ -286,12 +311,14 @@ export function AgendaView({ locations }: AgendaViewProps) {
     setAppointmentSlot(null)
     queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
     queryClient.invalidateQueries({ queryKey: ['agenda-weekly'] })
+    queryClient.invalidateQueries({ queryKey: ['agenda-unplanned'] })
   }
 
   const handleAppointmentDeleted = () => {
     setSelectedAppointmentId(null)
     queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
     queryClient.invalidateQueries({ queryKey: ['agenda-weekly'] })
+    queryClient.invalidateQueries({ queryKey: ['agenda-unplanned'] })
   }
 
   const handleDetailClose = () => {
@@ -358,6 +385,23 @@ export function AgendaView({ locations }: AgendaViewProps) {
     </div>
   )
 
+  const unplanned = unplannedData ?? []
+  const trayButton = unplanned.length > 0 && (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={() => setTrayOpen(true)}
+      className="border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 hover:text-amber-900"
+      title="Appuntamenti prenotati ma non ancora pianificati"
+    >
+      <ClipboardList className="size-4" />
+      <span className="ml-1">
+        {unplanned.length}
+        {!isMobile && ' da pianificare'}
+      </span>
+    </Button>
+  )
+
   const toggleGroup = (
     <div className="flex items-center gap-1">
       <Button
@@ -382,6 +426,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
       {/* Postazioni/Persone a sinistra, Giorno/Settimana a destra: i due switch
           restano ben separati e non si confondono tra loro. */}
       <div className="flex items-center gap-2 min-w-0">
+        {trayButton}
         {groupByToggle}
         {isMobile ? (
           <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
@@ -461,7 +506,10 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
       {viewMode === 'week' && (
         <div className="flex items-center justify-between gap-2">
-          {groupByToggle}
+          <div className="flex items-center gap-2">
+            {trayButton}
+            {groupByToggle}
+          </div>
           {toggleGroup}
         </div>
       )}
@@ -560,6 +608,71 @@ export function AgendaView({ locations }: AgendaViewProps) {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Vassoio "Da pianificare": prenotazioni a cui manca ancora qualcosa */}
+      <Sheet open={trayOpen} onOpenChange={setTrayOpen}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-sm">
+          <SheetHeader>
+            <SheetTitle>Da pianificare ({unplanned.length})</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col gap-2 p-4">
+            {unplanned.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Tutte le prenotazioni di questa settimana sono pianificate.
+              </p>
+            ) : (
+              unplanned.map((appt) => {
+                const start = new Date(appt.startTime)
+                return (
+                  <div key={appt.id} className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-sm font-medium">
+                        {appt.dogName}
+                        <span className="font-normal text-muted-foreground"> · {appt.clientNominativo}</span>
+                      </p>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {format(start, 'EEE d MMM', { locale: it })} ·{' '}
+                        {String(start.getUTCHours()).padStart(2, '0')}:
+                        {String(start.getUTCMinutes()).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-amber-700">
+                      Manca: {missingPlanningFields(appt).join(', ')}
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => {
+                          setTrayOpen(false)
+                          setAutoFocusNotes(false)
+                          setSelectedAppointmentId(appt.id)
+                        }}
+                      >
+                        Apri
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => {
+                          setTrayOpen(false)
+                          setSelectedDate(start)
+                          setViewMode('day')
+                          void handleMoveStart(appt.id)
+                        }}
+                      >
+                        Posiziona
+                      </Button>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* AlertDialog cancellazione rapida da context menu */}
       <AlertDialog

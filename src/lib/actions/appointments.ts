@@ -2,7 +2,8 @@
 
 import { authActionClient } from '@/lib/actions/client'
 import { getAppointmentsQuerySchema, createAppointmentSchema, updateAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema, reassignStaffSchema } from '@/lib/validations/appointments'
-import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog, getWeeklyAppointmentsByPerson, getWeeklyAppointmentsByStation } from '@/lib/queries/appointments'
+import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog, getUnplannedAppointments, getWeeklyAppointmentsByPerson, getWeeklyAppointmentsByStation } from '@/lib/queries/appointments'
+import { isDaPianificare } from '@/lib/utils/appointment'
 import { getStaffStatusForDate, getActiveUsers, getWeeklyStaffShifts } from '@/lib/queries/staff'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
 import { getDogsByClient } from '@/lib/queries/dogs'
@@ -53,6 +54,20 @@ export const fetchWeeklyAgendaData = authActionClient
       appointmentsByPerson,
       businessHours: businessHoursRaw,
     }
+  })
+
+/**
+ * Vassoio "Da pianificare": gli appuntamenti della settimana a cui manca ancora
+ * postazione, collaboratore o servizio.
+ */
+export const fetchUnplannedAppointments = authActionClient
+  .schema(fetchWeeklyAgendaDataSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { locationId, weekStart } = parsedInput
+    const weekEnd = format(addDays(parseISO(weekStart), 6), 'yyyy-MM-dd')
+
+    const rows = await getUnplannedAppointments(weekStart, weekEnd, locationId, ctx.tenantId)
+    return { unplanned: rows.filter(isDaPianificare) }
   })
 
 export const getAgendaData = authActionClient
@@ -300,9 +315,7 @@ export const createAppointment = authActionClient
       if (!allowOverlap && conflicts.length > 0) {
         const [alternatives, alternativeStaff] = await Promise.all([
           findAlternativeSlots(userId, date, duration, ctx.tenantId),
-          locationId
-            ? findAlternativeStaff(userId, locationId, date, startTime, endTime, ctx.tenantId)
-            : Promise.resolve([]),
+          findAlternativeStaff(userId, locationId, date, startTime, endTime, ctx.tenantId),
         ])
         return {
           error: {
@@ -360,6 +373,7 @@ export const createAppointment = authActionClient
       .values({
         clientId,
         dogId,
+        locationId,
         serviceId,
         userId: userId ?? null,
         stationId: stationId ?? null,
@@ -391,8 +405,10 @@ export const updateAppointment = authActionClient
     const endTime = new Date(startTime.getTime() + duration * 60 * 1000)
     const dateStr = format(startTime, 'yyyy-MM-dd')
 
-    // Validare servizio abilitato sulla postazione (solo se stationId fornito)
-    if (stationId) {
+    // Validare servizio abilitato sulla postazione: ha senso solo quando entrambi
+    // sono stati decisi. Un appuntamento ancora da pianificare puo' avere l'uno
+    // senza l'altro.
+    if (stationId && serviceId) {
       const [stationService] = await db
         .select({ serviceId: stationServices.serviceId })
         .from(stationServices)
@@ -476,11 +492,11 @@ export const updateAppointment = authActionClient
       .set({
         clientId,
         dogId,
-        serviceId,
+        serviceId: serviceId ?? null,
         userId: userId ?? null,
         stationId: stationId ?? null,
         endTime,
-        price,
+        price: price ?? null,
         updatedAt: new Date(),
       })
       .where(and(eq(appointments.id, id), eq(appointments.tenantId, ctx.tenantId)))

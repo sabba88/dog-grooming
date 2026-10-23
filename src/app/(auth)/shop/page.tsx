@@ -6,7 +6,7 @@ import { ProductList } from '@/components/shop/ProductList'
 export default async function ShopPage() {
   const session = await auth()
   if (!session?.user?.tenantId) redirect('/login')
-  if (session.user.role !== 'admin') redirect('/agenda')
+  if (session.user.role !== 'admin') redirect('/bookings')
 
   const productsList = await getProducts(session.user.tenantId)
 

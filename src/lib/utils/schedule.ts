@@ -134,9 +134,15 @@ export const SERVICE_COLORS = [
   { bg: '#F1F5F9', border: '#CBD5E1', label: 'Grigio' },
 ] as const
 
-export function getServiceColor(serviceId: string, allServiceIds: string[]) {
-  const sorted = [...allServiceIds].sort()
+/** Tinta neutra degli appuntamenti prenotati ma non ancora pianificati. */
+export const UNPLANNED_COLOR = { bg: '#FEF3C7', border: '#F59E0B', label: 'Ambra' } as const
+
+export function getServiceColor(serviceId: string | null, allServiceIds: (string | null)[]) {
+  // Senza servizio non c'e' nulla da colorare per tipo: si usa la tinta "da pianificare".
+  if (!serviceId) return UNPLANNED_COLOR
+  const sorted = allServiceIds.filter((id): id is string => id !== null).sort()
   const index = sorted.indexOf(serviceId)
+  if (index < 0) return UNPLANNED_COLOR
   return SERVICE_COLORS[index % SERVICE_COLORS.length]
 }
 

@@ -132,7 +132,9 @@ export async function getClientAppointments(clientId: string, tenantId: string) 
     })
     .from(appointments)
     .innerJoin(dogs, eq(appointments.dogId, dogs.id))
-    .innerJoin(services, eq(appointments.serviceId, services.id))
+    // Un appuntamento prenotato ma non ancora pianificato non ha servizio:
+    // deve comunque comparire nello storico del cliente.
+    .leftJoin(services, eq(appointments.serviceId, services.id))
     .where(and(eq(appointments.clientId, clientId), eq(appointments.tenantId, tenantId)))
     .orderBy(desc(appointments.startTime))
 }

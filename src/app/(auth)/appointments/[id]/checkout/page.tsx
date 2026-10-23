@@ -30,11 +30,16 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))
     .innerJoin(dogs, eq(appointments.dogId, dogs.id))
-    .innerJoin(services, eq(appointments.serviceId, services.id))
+    .leftJoin(services, eq(appointments.serviceId, services.id))
     .where(and(eq(appointments.id, id), eq(appointments.tenantId, tenantId)))
     .limit(1)
 
   if (!appt) notFound()
+
+  // Senza servizio non c'e' una prestazione da incassare: si torna in pianificazione.
+  if (appt.serviceName === null || appt.price === null) {
+    redirect('/agenda?dapianificare=' + id)
+  }
 
   const [availableProducts, soldProducts] = await Promise.all([
     getProducts(tenantId),
@@ -43,7 +48,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
 
   return (
     <CheckoutClient
-      appointment={appt}
+      appointment={{ ...appt, serviceName: appt.serviceName, price: appt.price }}
       availableProducts={availableProducts}
       initialSoldProducts={soldProducts}
     />

@@ -6,7 +6,7 @@ import { LocationList } from '@/components/location/LocationList'
 
 export default async function LocationsPage() {
   if (!(await checkPermission('manageLocations'))) {
-    redirect('/agenda')
+    redirect('/bookings')
   }
 
   const session = await auth()

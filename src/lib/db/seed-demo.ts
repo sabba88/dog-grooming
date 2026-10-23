@@ -5,7 +5,7 @@
  */
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { users, clients, dogs, appointments, services } from './schema'
+import { users, clients, dogs, appointments, services, locations } from './schema'
 import { eq } from 'drizzle-orm'
 import dotenv from 'dotenv'
 import crypto from 'crypto'
@@ -58,6 +58,7 @@ interface ApptRow {
   id: string
   clientId: string
   dogId: string
+  locationId: string
   serviceId: string
   userId: string
   stationId: null
@@ -100,6 +101,15 @@ async function seedDemo() {
     process.exit(1)
   }
   console.log(`Servizi (${svcList.length}): ${svcList.map((s) => s.name).join(', ')}`)
+
+  // Sede di destinazione: dal CC-2026-10-23 ogni appuntamento ne ha una.
+  const locList = await db.select().from(locations).where(eq(locations.tenantId, tenantId))
+  if (locList.length === 0) {
+    console.error('Nessuna sede per il tenant: creane una prima di lanciare il seed.')
+    process.exit(1)
+  }
+  const seedLocationId = locList[0].id
+  console.log(`Sede: ${locList[0].name}`)
 
   // 3. Crea clienti demo
   console.log('\nCreazione clienti e cani...')
@@ -177,6 +187,7 @@ async function seedDemo() {
           dogId: dog.id,
           serviceId: svc.id,
           userId: user.id,
+          locationId: seedLocationId,
           stationId: null,
           startTime: slot,
           endTime,

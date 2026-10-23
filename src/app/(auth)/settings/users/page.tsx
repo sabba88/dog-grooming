@@ -6,7 +6,7 @@ import { UserList } from '@/components/user/UserList'
 
 export default async function UsersPage() {
   if (!(await checkPermission('manageUsers'))) {
-    redirect('/agenda')
+    redirect('/bookings')
   }
 
   const session = await auth()

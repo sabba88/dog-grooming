@@ -6,7 +6,7 @@ import { BreedList } from '@/components/breed/BreedList'
 export default async function BreedsPage() {
   const session = await auth()
   if (!session?.user?.tenantId) redirect('/login')
-  if (session.user.role !== 'admin') redirect('/agenda')
+  if (session.user.role !== 'admin') redirect('/bookings')
 
   const breedsList = await getBreeds(session.user.tenantId)
 

@@ -2,7 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { formatPrice, formatCoOwnerNames, formatCoOwnerFull, type CoOwner } from '@/lib/utils/formatting'
+import { formatPriceOrDash, formatServiceName, formatCoOwnerNames, formatCoOwnerFull, type CoOwner } from '@/lib/utils/formatting'
+import { DA_PIANIFICARE_LABEL } from '@/lib/utils/appointment'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,9 +20,11 @@ interface AppointmentBlockProps {
   coOwners: CoOwner[]
   dogName: string
   breedName: string | null
-  serviceName: string
+  serviceName: string | null
   staffName: string
-  price: number
+  price: number | null
+  /** Manca postazione, collaboratore o servizio: il blocco si segnala a vista. */
+  daPianificare?: boolean
   startTime: Date
   endTime: Date
   color: { bg: string; border: string }
@@ -41,6 +44,7 @@ export function AppointmentBlock({
   serviceName,
   staffName,
   price,
+  daPianificare,
   startTime,
   endTime,
   color,
@@ -118,6 +122,7 @@ export function AppointmentBlock({
             title={ownersTitle}
             className={cn(
               "absolute inset-x-0.5 rounded-md px-1.5 py-1 text-left overflow-hidden cursor-pointer transition-shadow hover:shadow-md z-10",
+              daPianificare && "border border-dashed border-amber-500",
               isMoving && "opacity-40 pointer-events-none"
             )}
             style={{
@@ -138,8 +143,12 @@ export function AppointmentBlock({
               {clientName}
               {coOwnerNames && <span> · {coOwnerNames}</span>}
             </p>
-            <p className="text-xs text-muted-foreground truncate">{serviceName}</p>
-            <p className="text-xs text-muted-foreground truncate">{staffName}</p>
+            <p className={cn("text-xs truncate", serviceName ? "text-muted-foreground" : "text-amber-700 italic")}>
+              {formatServiceName(serviceName)}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {daPianificare ? DA_PIANIFICARE_LABEL : staffName}
+            </p>
           </button>
         </DropdownMenuTrigger>
         {dropdownContent}
@@ -160,6 +169,7 @@ export function AppointmentBlock({
           title={ownersTitle}
           className={cn(
             "w-full rounded-lg p-3 text-left cursor-pointer transition-shadow hover:shadow-md",
+            daPianificare && "border border-dashed border-amber-500",
             isMoving && "opacity-40 pointer-events-none"
           )}
           style={{
@@ -183,10 +193,14 @@ export function AppointmentBlock({
             </p>
           )}
           <div className="flex items-center justify-between mt-1">
-            <p className="text-xs text-muted-foreground">{serviceName}</p>
-            <span className="text-xs font-medium text-foreground">{formatPrice(price)}</span>
+            <p className={cn("text-xs", serviceName ? "text-muted-foreground" : "text-amber-700 italic")}>
+              {formatServiceName(serviceName)}
+            </p>
+            <span className="text-xs font-medium text-foreground">{formatPriceOrDash(price)}</span>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">{staffName}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {daPianificare ? DA_PIANIFICARE_LABEL : staffName}
+          </p>
         </button>
       </DropdownMenuTrigger>
       {dropdownContent}

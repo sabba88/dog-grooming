@@ -6,7 +6,7 @@ import { PricingSurchargesEditor } from '@/components/settings/PricingSurcharges
 
 export default async function SurchargesPage() {
   if (!(await checkPermission('manageServices'))) {
-    redirect('/agenda')
+    redirect('/bookings')
   }
 
   const session = await auth()

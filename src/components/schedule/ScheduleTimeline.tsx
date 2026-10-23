@@ -3,6 +3,7 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { AppointmentBlock } from './AppointmentBlock'
 import { getCoOwners } from '@/lib/utils/formatting'
+import { isDaPianificare } from '@/lib/utils/appointment'
 import { EmptySlot } from './EmptySlot'
 import {
   generateTimeSlots,
@@ -34,7 +35,7 @@ interface Appointment {
   id: string
   startTime: Date
   endTime: Date
-  price: number
+  price: number | null
   notes: string | null
   userId: string | null
   stationId: string | null
@@ -45,8 +46,8 @@ interface Appointment {
   phone3: string | null
   dogName: string
   breedName: string | null
-  serviceName: string
-  serviceId: string
+  serviceName: string | null
+  serviceId: string | null
 }
 
 // Un tab della timeline: una postazione, una persona, oppure "Da assegnare".
@@ -98,7 +99,7 @@ function ColumnTimeline({
   column: Column
   groupBy: 'station' | 'person'
   appointments: Appointment[]
-  allServiceIds: string[]
+  allServiceIds: (string | null)[]
   staff: Person[]
   dateString: string
   globalOpen: string
@@ -160,6 +161,7 @@ function ColumnTimeline({
                       serviceName={appt.serviceName}
                       staffName={staffMember?.name ?? UNASSIGNED_LABEL}
                       price={appt.price}
+                      daPianificare={isDaPianificare(appt)}
                       startTime={appt.startTime}
                       endTime={appt.endTime}
                       color={color}

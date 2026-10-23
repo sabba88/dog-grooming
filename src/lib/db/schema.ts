@@ -179,16 +179,21 @@ export const pricingSurcharges = pgTable('pricing_surcharges', {
 (t) => [uniqueIndex('unique_surcharge_key').on(t.tenantId, t.dimension, t.valueKey)]
 )
 
+// CC-2026-10-23: l'appuntamento nasce in prenotazione con il minimo indispensabile
+// (sede, orario, cliente, cane) e si completa in pianificazione: servizio, prezzo,
+// postazione e collaboratore sono tutti facoltativi fino a quel momento.
 export const appointments = pgTable('appointments', {
   id: uuid('id').primaryKey().defaultRandom(),
   clientId: uuid('client_id').notNull(),
   dogId: uuid('dog_id').notNull(),
-  serviceId: uuid('service_id').notNull(),
+  // La sede e' l'unico legame stabile con il negozio: la postazione arriva dopo.
+  locationId: uuid('location_id').notNull().references(() => locations.id),
+  serviceId: uuid('service_id'), // assente finche' non lo si decide in pianificazione
   userId: uuid('user_id'), // opzionale: se assente, l'appuntamento è "da assegnare" e vive sulla postazione
   stationId: uuid('station_id'),
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('end_time').notNull(),
-  price: integer('price').notNull(),
+  price: integer('price'), // assente finche' non si sceglie il servizio
   notes: text('notes'),
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

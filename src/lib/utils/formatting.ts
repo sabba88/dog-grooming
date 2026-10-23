@@ -2,6 +2,18 @@ export function formatPrice(cents: number): string {
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(cents / 100)
 }
 
+/** Come formatPrice, ma per gli appuntamenti il cui prezzo non e' ancora stato deciso. */
+export function formatPriceOrDash(cents: number | null | undefined): string {
+  return cents == null ? '—' : formatPrice(cents)
+}
+
+/** Etichetta del servizio per un appuntamento ancora da pianificare. */
+export const SERVIZIO_DA_DEFINIRE = 'Servizio da definire'
+
+export function formatServiceName(name: string | null | undefined): string {
+  return name ?? SERVIZIO_DA_DEFINIRE
+}
+
 export function formatDuration(minutes: number): string {
   if (minutes < 60) return `${minutes} min`
   const h = Math.floor(minutes / 60)

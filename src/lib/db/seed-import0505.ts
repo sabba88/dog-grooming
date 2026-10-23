@@ -14,7 +14,7 @@
  */
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { users, clients, dogs, breeds, services, appointments } from './schema'
+import { users, clients, dogs, breeds, services, appointments, locations } from './schema'
 import * as XLSX from 'xlsx'
 import { eq } from 'drizzle-orm'
 import dotenv from 'dotenv'
@@ -175,6 +175,18 @@ async function main() {
   console.log(`\nTenant: ${tenantId}`)
 
   // ── 3. Dati di riferimento ───────────────────────────────────────────────────
+  // Sede di destinazione: dal CC-2026-10-23 ogni appuntamento ne ha una.
+  const allLocations = await db
+    .select({ id: locations.id, name: locations.name })
+    .from(locations)
+    .where(eq(locations.tenantId, tenantId))
+  if (allLocations.length === 0) {
+    console.error('Nessuna sede per il tenant: creane una prima di lanciare il seed.')
+    process.exit(1)
+  }
+  const seedLocationId = allLocations[0].id
+  console.log(`Sede: ${allLocations[0].name}`)
+
   const allUsers = await db
     .select({ id: users.id, name: users.name })
     .from(users)
@@ -398,6 +410,7 @@ async function main() {
       id: crypto.randomUUID(),
       clientId,
       dogId,
+      locationId: seedLocationId,
       serviceId,
       userId,
       startTime,

@@ -13,7 +13,7 @@ interface PageProps {
 
 export default async function StaffSchedulePage({ searchParams }: PageProps) {
   if (!(await checkPermission('manageStaff'))) {
-    redirect('/agenda')
+    redirect('/bookings')
   }
 
   const session = await auth()

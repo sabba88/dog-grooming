@@ -22,6 +22,7 @@ import { toast } from 'sonner'
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
+import { formatServiceName } from '@/lib/utils/formatting'
 
 interface Dog {
   id: string
@@ -52,7 +53,7 @@ interface Note {
 interface ServiceNote {
   id: string
   startTime: Date
-  serviceName: string
+  serviceName: string | null
   notes: string | null
 }
 
@@ -225,7 +226,7 @@ export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDet
                 {index > 0 && <Separator className="my-3" />}
                 <div className="flex flex-col gap-1">
                   <p className="text-xs text-muted-foreground">
-                    {format(new Date(note.startTime), 'd MMM yyyy', { locale: it })} · {note.serviceName}
+                    {format(new Date(note.startTime), 'd MMM yyyy', { locale: it })} · {formatServiceName(note.serviceName)}
                   </p>
                   <p className="text-sm text-foreground">{note.notes}</p>
                 </div>
