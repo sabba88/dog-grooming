@@ -6,8 +6,14 @@ import {
   updateBookingSchema,
   moveBookingSchema,
   getBookingDayQuerySchema,
+  getBookingWeekQuerySchema,
 } from '@/lib/validations/bookings'
-import { getBookingsByDateAndLocation, getStationCount } from '@/lib/queries/bookings'
+import {
+  getBookingsByDateAndLocation,
+  getBookingsByWeekAndLocation,
+  getStationCount,
+} from '@/lib/queries/bookings'
+import { addDays, format, parseISO } from 'date-fns'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
 import { getStaffStatusForDate } from '@/lib/queries/staff'
 import { db } from '@/lib/db'
@@ -37,6 +43,27 @@ export const getBookingDayData = authActionClient
     ])
 
     return { bookings, stationCount, businessHours, staff }
+  })
+
+/**
+ * Dati della settimana per la vista a disponibilita'.
+ *
+ * Torna solo inizio e fine di ogni appuntamento: la griglia settimanale non mostra
+ * chi viene, ma quanti posti restano in ogni quarto d'ora.
+ */
+export const getBookingWeekData = authActionClient
+  .schema(getBookingWeekQuerySchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const { locationId, weekStart } = parsedInput
+    const weekEnd = format(addDays(parseISO(weekStart), 6), 'yyyy-MM-dd')
+
+    const [bookings, stationCount, businessHours] = await Promise.all([
+      getBookingsByWeekAndLocation(locationId, weekStart, weekEnd, ctx.tenantId),
+      getStationCount(locationId, ctx.tenantId),
+      getLocationBusinessHours(locationId, ctx.tenantId),
+    ])
+
+    return { bookings, stationCount, businessHours }
   })
 
 /**

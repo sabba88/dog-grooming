@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { format, getDay } from 'date-fns'
+import { addWeeks, format, getDay, parseISO, startOfWeek, subWeeks } from 'date-fns'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAction } from 'next-safe-action/hooks'
 import { toast } from 'sonner'
@@ -11,7 +11,8 @@ import { DateNavigation } from '@/components/schedule/DateNavigation'
 import { DateStrip } from '@/components/schedule/DateStrip'
 import { BookingBlock } from './BookingBlock'
 import { BookingForm, type BookingInitialValues } from './BookingForm'
-import { getBookingDayData, deleteBooking, moveBooking } from '@/lib/actions/bookings'
+import { BookingWeekGrid } from './BookingWeekGrid'
+import { getBookingDayData, getBookingWeekData, deleteBooking, moveBooking } from '@/lib/actions/bookings'
 import {
   computeOverlapLanes,
   generateTimeSlots,
@@ -93,6 +94,8 @@ function clamp(value: number, min: number, max: number): number {
 
 export function BookingCalendar({ locations }: BookingCalendarProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date())
+  const [viewMode, setViewMode] = useState<'day' | 'week'>('day')
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [newSlotTime, setNewSlotTime] = useState<string | null>(null)
   const [editing, setEditing] = useState<BookingInitialValues | null>(null)
   const [editingTime, setEditingTime] = useState<string | null>(null)
@@ -125,12 +128,36 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
     enabled: !!selectedLocationId && isHydrated,
   })
 
+  const weekStartStr = format(weekStart, 'yyyy-MM-dd')
+  const { data: weekData, isLoading: isWeekLoading } = useQuery({
+    queryKey: ['bookings-week', selectedLocationId, weekStartStr],
+    queryFn: async () => {
+      if (!selectedLocationId) return null
+      const result = await getBookingWeekData({
+        locationId: selectedLocationId,
+        weekStart: weekStartStr,
+      })
+      if (!result?.data) return null
+      return {
+        bookings: result.data.bookings.map((b) => ({
+          ...b,
+          startTime: new Date(b.startTime),
+          endTime: new Date(b.endTime),
+        })),
+        stationCount: result.data.stationCount,
+        businessHours: result.data.businessHours,
+      }
+    },
+    enabled: !!selectedLocationId && isHydrated && viewMode === 'week',
+  })
+
   const { execute: executeDelete } = useAction(deleteBooking, {
     onSuccess: () => {
       toast.success('Prenotazione cancellata')
       setDeletingId(null)
       setEditing(null)
       queryClient.invalidateQueries({ queryKey })
+      queryClient.invalidateQueries({ queryKey: ['bookings-week'] })
     },
     onError: () => toast.error('Errore durante la cancellazione'),
   })
@@ -139,6 +166,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
     onSuccess: () => {
       toast.success('Prenotazione spostata')
       queryClient.invalidateQueries({ queryKey })
+      queryClient.invalidateQueries({ queryKey: ['bookings-week'] })
       queryClient.invalidateQueries({ queryKey: ['agenda-unplanned'] })
     },
     onError: () => toast.error('Errore durante lo spostamento'),
@@ -293,6 +321,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
     setEditing(null)
     setEditingTime(null)
     queryClient.invalidateQueries({ queryKey })
+      queryClient.invalidateQueries({ queryKey: ['bookings-week'] })
   }
 
   const handleBlockClick = (id: string) => {
@@ -313,13 +342,38 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
     })
   }
 
+  const viewToggle = (
+    <div className="flex items-center gap-1">
+      <Button
+        variant={viewMode === 'day' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => setViewMode('day')}
+      >
+        {isMobile ? 'G' : 'Giorno'}
+      </Button>
+      <Button
+        variant={viewMode === 'week' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => {
+          setWeekStart(startOfWeek(selectedDate, { weekStartsOn: 1 }))
+          setViewMode('week')
+        }}
+      >
+        {isMobile ? 'S' : 'Settimana'}
+      </Button>
+    </div>
+  )
+
   const header = (
     <div className="flex flex-wrap items-center justify-between gap-2">
-      {isMobile ? (
-        <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
-      ) : (
-        <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
-      )}
+      <div className="flex min-w-0 items-center gap-2">
+        {viewToggle}
+        {isMobile ? (
+          <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        ) : (
+          <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
+        )}
+      </div>
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <span>
           {bookings.length} {bookings.length === 1 ? 'prenotazione' : 'prenotazioni'}
@@ -373,8 +427,37 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      {header}
+      {viewMode === 'week' ? (
+        <div className="flex items-center justify-between gap-2">
+          {viewToggle}
+        </div>
+      ) : (
+        header
+      )}
 
+      {viewMode === 'week' && (
+        <BookingWeekGrid
+          weekStart={weekStart}
+          bookings={weekData?.bookings ?? []}
+          stationCount={weekData?.stationCount ?? 0}
+          businessHours={weekData?.businessHours ?? []}
+          isLoading={isWeekLoading}
+          onSlotClick={(date, time) => {
+            // Si prenota direttamente dalla settimana: la scheda si apre sul
+            // giorno e l'ora della cella, senza passare dalla vista giornaliera.
+            setSelectedDate(parseISO(date))
+            setNewSlotTime(time)
+          }}
+          onDayClick={(date) => {
+            setSelectedDate(parseISO(date))
+            setViewMode('day')
+          }}
+          onPrevWeek={() => setWeekStart((prev) => subWeeks(prev, 1))}
+          onNextWeek={() => setWeekStart((prev) => addWeeks(prev, 1))}
+        />
+      )}
+
+      {viewMode === 'day' && (
       <div className="overflow-auto rounded-lg border">
         <div className="flex" style={{ height: `${totalHeight}px` }}>
           {/* Colonna degli orari: ogni passo di 15 minuti e' etichettato */}
@@ -545,6 +628,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
           </div>
         </div>
       </div>
+      )}
 
       {/* Form — Dialog su desktop, Sheet su mobile */}
       {isMobile ? (

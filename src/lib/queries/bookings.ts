@@ -57,6 +57,39 @@ export async function getBookingsByDateAndLocation(
 }
 
 /**
+ * Inizio e fine di ogni appuntamento della settimana, il minimo che serve per
+ * calcolare quante postazioni sono occupate in un dato quarto d'ora.
+ */
+export async function getBookingsByWeekAndLocation(
+  locationId: string,
+  weekStart: string,
+  weekEnd: string,
+  tenantId: string
+) {
+  const start = new Date(weekStart + 'T00:00:00.000Z')
+  const end = new Date(weekEnd + 'T23:59:59.999Z')
+
+  return db
+    .select({
+      id: appointments.id,
+      startTime: appointments.startTime,
+      endTime: appointments.endTime,
+    })
+    .from(appointments)
+    .innerJoin(clients, eq(appointments.clientId, clients.id))
+    .where(
+      and(
+        eq(appointments.locationId, locationId),
+        gte(appointments.startTime, start),
+        lt(appointments.startTime, end),
+        eq(appointments.tenantId, tenantId),
+        isNull(clients.deletedAt)
+      )
+    )
+    .orderBy(asc(appointments.startTime))
+}
+
+/**
  * Quante postazioni ha la sede. Non e' un vincolo: e' il numero di corsie che il
  * calendario disegna come riferimento visivo della capacita' del negozio.
  */

@@ -402,6 +402,36 @@ salva e `Esc` che annulla. Il drag simulato in un colpo solo dagli strumenti di 
 non innesca il gesto — serve una sequenza di `pointermove`, come produce un mouse
 vero: **vale la pena una prova a mano con il mouse.**
 
+### Vista settimanale di disponibilita' (24/10/2026)
+
+In Prenotazioni si passa fra Giorno e Settimana. La settimana non mostra chi viene,
+ma **quanti posti restano**: giorni in colonna, quarti d'ora in riga, una cella per
+incrocio.
+
+- **verde** = almeno una postazione libera; piu' si riempie, piu' il verde si scurisce
+- **rosso** = tutte le postazioni occupate in quel quarto d'ora
+- **grigio** = negozio chiuso in quella fascia, quel giorno
+
+La capacita' e' il numero di postazioni della sede, e l'occupazione e' il numero di
+appuntamenti che si sovrappongono a quel quarto d'ora. Il tooltip di ogni cella dice
+"N di M libere". Senza postazioni configurate il pieno non e' calcolabile: le celle
+diventano azzurre e un avviso lo spiega.
+
+La griglia copre l'arco fra l'apertura piu' mattiniera e la chiusura piu' tarda della
+settimana, non una fascia fissa. Tutti e sette i giorni sono in colonna: quelli di
+chiusura restano grigi da cima a fondo, quindi non serve configurare quali nascondere.
+
+Click su una cella → si prenota per quel giorno e quell'ora, senza passare dalla vista
+giornaliera. Click sull'intestazione di un giorno → si apre quella giornata.
+
+Nuova action `getBookingWeekData`, che torna solo `id`, `startTime` e `endTime`.
+
+**Verificato nel browser** sulla settimana 19–25 ottobre: colonne dei giorni con il
+conteggio, righe al quarto d'ora, lunedi' e domenica grigi (chiusura), sabato grigio
+dalle 14:00 mentre gli altri giorni riaprono. Creando un terzo appuntamento sovrapposto
+su tre postazioni, le celle 11:30 e 11:45 passano a rosso ("0 di 3 libere") e tornano
+verdi alle 12:00; il dato di prova e' stato rimosso.
+
 ### Fix collaterali entrati con questa modifica
 
 - Gli appuntamenti senza postazione non compaiono piu' in **tutte** le sedi del tenant

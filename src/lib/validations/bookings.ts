@@ -46,3 +46,8 @@ export const getBookingDayQuerySchema = z.object({
   locationId: z.string().uuid('ID sede non valido'),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato data non valido (YYYY-MM-DD)'),
 })
+
+export const getBookingWeekQuerySchema = z.object({
+  locationId: z.string().uuid('ID sede non valido'),
+  weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato data non valido (YYYY-MM-DD)'),
+})
