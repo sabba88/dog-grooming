@@ -16,19 +16,81 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ClientForm } from '@/components/client/ClientForm'
 import { MissingValue } from '@/components/client/MissingValue'
-import { Plus, Search, X } from 'lucide-react'
+import { AlertTriangle, Plus, Search, X } from 'lucide-react'
 import { COAT_LABELS, SIZE_LABELS } from '@/lib/types'
 import type { ClientDogSummary } from '@/lib/queries/clients'
 import { isMissingValue } from '@/lib/utils/formatting'
 import { cn } from '@/lib/utils'
 
+// Le tre caratteristiche del cane che contano: la razza per riconoscerlo,
+// pelo e taglia perche' da quelli dipende il prezzo del servizio.
+function dogDetailParts(dog: ClientDogSummary): { label: string; missing: boolean }[] {
+  return [
+    { label: dog.breedName ?? 'Razza', missing: !dog.breedName },
+    {
+      label: dog.coatType
+        ? `Pelo ${COAT_LABELS[dog.coatType as keyof typeof COAT_LABELS] ?? dog.coatType}`
+        : 'Pelo',
+      missing: !dog.coatType,
+    },
+    {
+      label: dog.sizeType
+        ? `Taglia ${SIZE_LABELS[dog.sizeType as keyof typeof SIZE_LABELS] ?? dog.sizeType}`
+        : 'Taglia',
+      missing: !dog.sizeType,
+    },
+  ]
+}
+
 function formatDogDetails(dog: ClientDogSummary): string {
-  const parts = [
-    dog.breedName,
-    dog.coatType ? `Pelo ${COAT_LABELS[dog.coatType as keyof typeof COAT_LABELS] ?? dog.coatType}` : null,
-    dog.sizeType ? `Taglia ${SIZE_LABELS[dog.sizeType as keyof typeof SIZE_LABELS] ?? dog.sizeType}` : null,
-  ].filter(Boolean)
-  return parts.join(' · ')
+  return dogDetailParts(dog)
+    .map((p) => (p.missing ? `${p.label} mancante` : p.label))
+    .join(' · ')
+}
+
+/**
+ * Elenco in italiano dei dati mancanti del cliente, per l'avviso in riga.
+ * Si ferma a cio' che blocca il lavoro: contatti per richiamarlo, pelo e taglia
+ * dei cani perche' senza quelli il prezzo del servizio non si calcola.
+ */
+function missingClientData(client: Client): string[] {
+  const missing: string[] = []
+  if (isMissingValue(client.nominativo)) missing.push('nominativo')
+  if (isMissingValue(client.phone)) missing.push('telefono')
+  for (const dog of client.dogs) {
+    for (const part of dogDetailParts(dog)) {
+      if (part.missing) missing.push(`${part.label.toLowerCase()} di ${dog.name}`)
+    }
+  }
+  return missing
+}
+
+function MissingDataWarning({ missing }: { missing: string[] }) {
+  if (missing.length === 0) return null
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-destructive"
+      title={`Dati mancanti: ${missing.join(', ')}`}
+    >
+      <AlertTriangle className="h-3.5 w-3.5" />
+      <span className="text-xs font-medium">{missing.length}</span>
+    </span>
+  )
+}
+
+function DogDetails({ dog }: { dog: ClientDogSummary }) {
+  return (
+    <span className="text-xs text-muted-foreground">
+      {dogDetailParts(dog).map((part, i) => (
+        <span key={part.label}>
+          {i > 0 && ' · '}
+          <span className={part.missing ? 'font-medium text-destructive' : undefined}>
+            {part.missing ? `${part.label} mancante` : part.label}
+          </span>
+        </span>
+      ))}
+    </span>
+  )
 }
 
 function getInitials(nominativo: string): string {
@@ -91,15 +153,20 @@ export function ClientList({ clients }: ClientListProps) {
   const [filterNome, setFilterNome] = useState('')
   const [filterTelefono, setFilterTelefono] = useState('')
   const [filterCane, setFilterCane] = useState('')
+  const [soloDatiMancanti, setSoloDatiMancanti] = useState(false)
+
+  const missingByClient = new Map(clients.map(c => [c.id, missingClientData(c)]))
+  const clientiConDatiMancanti = clients.filter(c => (missingByClient.get(c.id) ?? []).length > 0).length
 
   const filteredClients = clients.filter(c => {
+    if (soloDatiMancanti && (missingByClient.get(c.id) ?? []).length === 0) return false
     if (filterNome.trim() && !c.nominativo.toLowerCase().includes(filterNome.toLowerCase())) return false
     if (filterTelefono.trim() && !c.phone.includes(filterTelefono.trim())) return false
     if (filterCane.trim() && !c.dogNames.toLowerCase().includes(filterCane.toLowerCase())) return false
     return true
   })
 
-  const hasFilter = filterNome.trim() || filterTelefono.trim() || filterCane.trim()
+  const hasFilter = filterNome.trim() || filterTelefono.trim() || filterCane.trim() || soloDatiMancanti
 
   function handleNew() {
     setFormOpen(true)
@@ -164,6 +231,18 @@ export function ClientList({ clients }: ClientListProps) {
             </button>
           )}
         </div>
+        {clientiConDatiMancanti > 0 && (
+          <Button
+            type="button"
+            variant={soloDatiMancanti ? 'default' : 'outline'}
+            onClick={() => setSoloDatiMancanti(v => !v)}
+            title="Mostra solo i clienti a cui manca qualche dato"
+            className="shrink-0"
+          >
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Dati mancanti ({clientiConDatiMancanti})
+          </Button>
+        )}
       </div>
 
       {clients.length === 0 ? (
@@ -180,7 +259,7 @@ export function ClientList({ clients }: ClientListProps) {
           <button
             type="button"
             className="text-sm text-primary hover:underline"
-            onClick={() => { setFilterNome(''); setFilterTelefono(''); setFilterCane('') }}
+            onClick={() => { setFilterNome(''); setFilterTelefono(''); setFilterCane(''); setSoloDatiMancanti(false) }}
           >
             Rimuovi tutti i filtri
           </button>
@@ -205,10 +284,11 @@ export function ClientList({ clients }: ClientListProps) {
                 {filteredClients.map((client) => {
                   const lastAppt = formatLastAppointment(client.lastAppointmentAt)
                   const nextAppt = formatNextAppointment(client.nextAppointmentAt)
+                  const missing = missingByClient.get(client.id) ?? []
                   return (
                     <TableRow
                       key={client.id}
-                      className="cursor-pointer"
+                      className={cn('cursor-pointer', missing.length > 0 && 'bg-destructive/5')}
                       onClick={() => router.push(`/clients/${client.id}`)}
                     >
                       <TableCell>
@@ -219,7 +299,10 @@ export function ClientList({ clients }: ClientListProps) {
                         </Avatar>
                       </TableCell>
                       <TableCell className={cn('font-medium', isMissingValue(client.nominativo) && 'bg-destructive/10')}>
-                        {isMissingValue(client.nominativo) ? <MissingValue /> : client.nominativo}
+                        <span className="flex items-center gap-2">
+                          {isMissingValue(client.nominativo) ? <MissingValue /> : client.nominativo}
+                          <MissingDataWarning missing={missing} />
+                        </span>
                       </TableCell>
                       <TableCell className={cn(isMissingValue(client.phone) && 'bg-destructive/10')}>
                         {isMissingValue(client.phone) ? <MissingValue /> : client.phone}
@@ -232,17 +315,12 @@ export function ClientList({ clients }: ClientListProps) {
                           <span className="text-muted-foreground">—</span>
                         ) : (
                           <div className="flex flex-col gap-1">
-                            {client.dogs.map(dog => {
-                              const details = formatDogDetails(dog)
-                              return (
-                                <div key={dog.id} className="flex items-baseline gap-1.5">
-                                  <Badge variant="secondary" className="font-normal">{dog.name}</Badge>
-                                  {details && (
-                                    <span className="text-xs text-muted-foreground">{details}</span>
-                                  )}
-                                </div>
-                              )
-                            })}
+                            {client.dogs.map(dog => (
+                              <div key={dog.id} className="flex items-baseline gap-1.5">
+                                <Badge variant="secondary" className="font-normal">{dog.name}</Badge>
+                                <DogDetails dog={dog} />
+                              </div>
+                            ))}
                           </div>
                         )}
                       </TableCell>
@@ -278,11 +356,15 @@ export function ClientList({ clients }: ClientListProps) {
             {filteredClients.map((client) => {
               const lastAppt = formatLastAppointment(client.lastAppointmentAt)
               const nextAppt = formatNextAppointment(client.nextAppointmentAt)
+              const missing = missingByClient.get(client.id) ?? []
               return (
                 <button
                   key={client.id}
                   type="button"
-                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-left w-full hover:bg-muted/50"
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-left w-full hover:bg-muted/50',
+                    missing.length > 0 && 'border-destructive/40 bg-destructive/5'
+                  )}
                   onClick={() => router.push(`/clients/${client.id}`)}
                 >
                   <Avatar className="h-10 w-10">
@@ -291,11 +373,14 @@ export function ClientList({ clients }: ClientListProps) {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col min-w-0 flex-1">
-                    {isMissingValue(client.nominativo) ? (
-                      <MissingValue className="self-start" />
-                    ) : (
-                      <span className="font-medium text-foreground truncate">{client.nominativo}</span>
-                    )}
+                    <span className="flex items-center gap-2 min-w-0">
+                      {isMissingValue(client.nominativo) ? (
+                        <MissingValue className="self-start" />
+                      ) : (
+                        <span className="font-medium text-foreground truncate">{client.nominativo}</span>
+                      )}
+                      <MissingDataWarning missing={missing} />
+                    </span>
                     {isMissingValue(client.phone) ? (
                       <MissingValue className="mt-0.5 self-start" />
                     ) : (
