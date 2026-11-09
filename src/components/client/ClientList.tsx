@@ -119,7 +119,9 @@ export function ClientList({ clients }: ClientListProps) {
         </Button>
       </div>
 
-      <div className="mb-4 flex flex-col sm:flex-row gap-2">
+      {/* I filtri restano agganciati in alto: su elenchi lunghi scorrendo
+          sparivano e per cambiare ricerca bisognava risalire in cima. */}
+      <div className="sticky top-0 z-20 -mx-4 mb-4 flex flex-col gap-2 border-b border-border bg-background px-4 py-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
