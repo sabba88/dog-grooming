@@ -114,14 +114,18 @@ function ColumnTimeline({
 }) {
   const timeSlots = generateTimeSlots(globalOpen, globalClose)
   const person = column.person
-  // "Da assegnare" non e' una destinazione valida: moveAppointment esige un userId.
-  const isMovingTarget = !!movingAppointmentId && !(groupBy === 'person' && !person)
+  const isUnassignedColumn = column.key === UNASSIGNED_KEY
+  // "Da assegnare" non e' una destinazione valida: da li' si puo' solo assegnare
+  // una postazione o un collaboratore, non toglierli.
+  const isMovingTarget = !!movingAppointmentId && !isUnassignedColumn
 
-  const slotIdentity: Partial<SlotData> = groupBy === 'station'
-    ? { stationId: column.key, stationName: column.name }
-    : person
-      ? { userId: person.id, userName: person.name }
-      : {}
+  const slotIdentity: Partial<SlotData> = isUnassignedColumn
+    ? {}
+    : groupBy === 'station'
+      ? { stationId: column.key, stationName: column.name }
+      : person
+        ? { userId: person.id, userName: person.name }
+        : {}
 
   // Ogni appuntamento viene ancorato allo slot in cui inizia (o al primo slot visibile,
   // se inizia prima dell'apertura) e reso una sola volta. Piu' appuntamenti possono
@@ -227,10 +231,16 @@ export function ScheduleTimeline({
   const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
   const activeStaff = staff.filter(p => p.overallStatus === 'active')
 
-  // Il tab "Da assegnare" compare solo se ci sono davvero appuntamenti senza collaboratore.
-  const hasUnassigned = appointments.some(a => a.userId === null)
+  // Il tab "Da assegnare" compare solo se ci sono davvero appuntamenti senza
+  // postazione (vista postazioni) o senza collaboratore (vista persone).
+  const hasUnassigned = groupBy === 'station'
+    ? appointments.some(a => a.stationId === null)
+    : appointments.some(a => a.userId === null)
   const columns: Column[] = groupBy === 'station'
-    ? stations.map(s => ({ key: s.id, name: s.name }))
+    ? [
+        ...stations.map(s => ({ key: s.id, name: s.name })),
+        ...(hasUnassigned ? [{ key: UNASSIGNED_KEY, name: UNASSIGNED_LABEL }] : []),
+      ]
     : [
         ...activeStaff.map(p => ({ key: p.id, name: p.name, person: p })),
         ...(hasUnassigned ? [{ key: UNASSIGNED_KEY, name: UNASSIGNED_LABEL }] : []),
@@ -238,7 +248,7 @@ export function ScheduleTimeline({
 
   const appointmentsFor = (column: Column) =>
     groupBy === 'station'
-      ? appointments.filter(a => a.stationId === column.key)
+      ? appointments.filter(a => (a.stationId ?? UNASSIGNED_KEY) === column.key)
       : appointments.filter(a => (a.userId ?? UNASSIGNED_KEY) === column.key)
 
   const timelineProps = {

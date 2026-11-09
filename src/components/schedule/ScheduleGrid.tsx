@@ -115,9 +115,10 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
-// "Da assegnare" non e' una destinazione valida: da li' si puo' solo assegnare qualcuno.
-function isDroppableColumn(column: Column | undefined, mode: 'station' | 'person'): column is Column {
-  return !!column && !(mode === 'person' && !column.person)
+// "Da assegnare" non e' una destinazione valida: da li' si puo' solo assegnare
+// una postazione o un collaboratore, non toglierli.
+function isDroppableColumn(column: Column | undefined): column is Column {
+  return !!column && column.key !== UNASSIGNED_KEY
 }
 
 export function ScheduleGrid({
@@ -147,10 +148,17 @@ export function ScheduleGrid({
   const stationNameById = new Map(stations.map(s => [s.id, s.name]))
   const activeStaff = staff.filter(p => p.overallStatus === 'active')
 
-  // La colonna "Da assegnare" compare solo se ci sono davvero appuntamenti senza collaboratore.
-  const hasUnassigned = appointments.some(a => a.userId === null)
+  // La colonna "Da assegnare" compare solo se ci sono davvero appuntamenti senza
+  // postazione (vista postazioni) o senza collaboratore (vista persone). Senza di
+  // essa le prenotazioni non ancora pianificate sparivano dalla griglia.
+  const hasUnassigned = groupBy === 'station'
+    ? appointments.some(a => a.stationId === null)
+    : appointments.some(a => a.userId === null)
   const columns: Column[] = groupBy === 'station'
-    ? stations.map(s => ({ key: s.id, name: s.name }))
+    ? [
+        ...stations.map(s => ({ key: s.id, name: s.name })),
+        ...(hasUnassigned ? [{ key: UNASSIGNED_KEY, name: UNASSIGNED_LABEL }] : []),
+      ]
     : [
         ...activeStaff.map(p => ({ key: p.id, name: p.name, person: p })),
         ...(hasUnassigned ? [{ key: UNASSIGNED_KEY, name: UNASSIGNED_LABEL }] : []),
@@ -292,7 +300,7 @@ export function ScheduleGrid({
       setTimeout(() => { didDragRef.current = false }, 0)
 
       const target = g.columns[drag.targetColumnIndex]
-      if (!isDroppableColumn(target, g.groupBy)) return
+      if (!isDroppableColumn(target)) return
 
       const unchanged =
         target.key === drag.originColumnKey && drag.targetStartMinutes === drag.originStartMinutes
@@ -366,7 +374,7 @@ export function ScheduleGrid({
             ) : (
               <div className="px-2 py-1.5">
                 <span
-                  className={`text-sm font-medium truncate${groupBy === 'person' ? ' text-muted-foreground' : ''}`}
+                  className={`text-sm font-medium truncate${column.key === UNASSIGNED_KEY ? ' text-muted-foreground' : ''}`}
                 >
                   {column.name}
                 </span>
@@ -463,18 +471,18 @@ export function ScheduleGrid({
         {/* Colonne: postazioni oppure persone */}
         {columns.map((column, columnIndex) => {
           const columnAppointments = groupBy === 'station'
-            ? appointments.filter(a => a.stationId === column.key)
+            ? appointments.filter(a => (a.stationId ?? UNASSIGNED_KEY) === column.key)
             : appointments.filter(a => (a.userId ?? UNASSIGNED_KEY) === column.key)
 
           const person = column.person
-          const isUnassignedColumn = groupBy === 'person' && !person
+          const isUnassignedColumn = column.key === UNASSIGNED_KEY
           // "Da assegnare" non e' una destinazione valida per lo spostamento a click.
           const isMovingTarget = !!movingAppointmentId && !isUnassignedColumn
 
           const showPreview =
             dragPreview !== null &&
             dragPreview.columnIndex === columnIndex &&
-            isDroppableColumn(column, groupBy)
+            isDroppableColumn(column)
 
           return (
             <div
@@ -534,11 +542,13 @@ export function ScheduleGrid({
                 return (
                   <EmptySlot
                     key={`${column.key}-${slot}`}
-                    {...(groupBy === 'station'
-                      ? { stationId: column.key, stationName: column.name }
-                      : person
-                        ? { userId: person.id, userName: person.name }
-                        : {})}
+                    {...(isUnassignedColumn
+                      ? {}
+                      : groupBy === 'station'
+                        ? { stationId: column.key, stationName: column.name }
+                        : person
+                          ? { userId: person.id, userName: person.name }
+                          : {})}
                     date={dateString}
                     time={slot}
                     variant="grid"
@@ -584,11 +594,13 @@ export function ScheduleGrid({
                     type="button"
                     title={`Nuovo appuntamento in parallelo alle ${slot}`}
                     onClick={() => onEmptySlotClick({
-                      ...(groupBy === 'station'
-                        ? { stationId: column.key, stationName: column.name }
-                        : person
-                          ? { userId: person.id, userName: person.name }
-                          : {}),
+                      ...(isUnassignedColumn
+                        ? {}
+                        : groupBy === 'station'
+                          ? { stationId: column.key, stationName: column.name }
+                          : person
+                            ? { userId: person.id, userName: person.name }
+                            : {}),
                       date: dateString,
                       time: slot,
                     })}

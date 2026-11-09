@@ -286,8 +286,10 @@ export function AgendaView({ locations }: AgendaViewProps) {
 
   const handleEmptySlotClick = (slotData: { stationId?: string; stationName?: string; userId?: string; userName?: string; date: string; time: string }) => {
     if (movingAppointment) {
-      // "Da assegnare" non e' una destinazione valida: moveAppointment esige un userId.
+      // "Da assegnare" non e' una destinazione valida: da li' si puo' solo assegnare,
+      // e in vista persone moveAppointment esige comunque un userId.
       if (groupBy === 'person' && !slotData.userId) return
+      if (groupBy === 'station' && !slotData.stationId) return
       // In vista persone la colonna di destinazione riassegna il collaboratore e
       // lascia invariata la postazione (stationId undefined = non toccare).
       handleMoveSlotClick(
