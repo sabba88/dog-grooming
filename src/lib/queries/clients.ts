@@ -166,6 +166,9 @@ export async function searchClientsWithDogs(query: string, tenantId: string): Pr
   // perche' di un numero si ricorda spesso solo un pezzo centrale.
   const namePattern = `\\m${escapeRegex(query.trim())}`
   const phonePattern = `%${query.trim()}%`
+  // Chi digita un numero sta cercando per telefono: ordinare per nominativo
+  // sparpaglierebbe i numeri simili. Con un testo resta l'ordine alfabetico.
+  const isPhoneQuery = /^[\d\s+./-]+$/.test(query.trim()) && /\d/.test(query)
   return db
     .select({
       clientId: clients.id,
@@ -197,6 +200,11 @@ export async function searchClientsWithDogs(query: string, tenantId: string): Pr
         )
       )
     )
-    .orderBy(asc(clients.nominativo), asc(dogs.name))
+    .orderBy(
+      ...(isPhoneQuery
+        ? [asc(clients.phone), asc(clients.nominativo)]
+        : [asc(clients.nominativo)]),
+      asc(dogs.name)
+    )
     .limit(25)
 }
