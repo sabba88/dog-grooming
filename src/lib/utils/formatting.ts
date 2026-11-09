@@ -59,6 +59,21 @@ export function formatCoOwnerFull(coOwners: CoOwner[]): string {
     .join(', ')
 }
 
+/**
+ * Ricerca per inizio di parola, non per contenuto: cercando "ola" non deve
+ * uscire "Lola", ma cercando "rossi" deve uscire "Mario Rossi". Vale per i
+ * campi di testo (nomi); i numeri di telefono restano cercabili per frammento.
+ */
+export function matchesWordPrefix(value: string | null | undefined, query: string): boolean {
+  const q = query.trim().toLowerCase()
+  if (q === '') return true
+  if (!value) return false
+  return value
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .some((word) => word.startsWith(q))
+}
+
 // Nominativo e telefono sono facoltativi in creazione (vedi MissingContactDialog):
 // dove mancano vanno segnalati invece di lasciare la cella vuota.
 export function isMissingValue(value: string | null | undefined): boolean {

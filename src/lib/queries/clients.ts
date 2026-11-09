@@ -152,11 +152,20 @@ export interface ClientDogSearchResult {
   breedName: string | null
 }
 
+/** Metacaratteri POSIX neutralizzati: la ricerca e' testo, non un'espressione regolare. */
+function escapeRegex(value: string): string {
+  return value.replace(/[\\^$.|?*+()[\]{}]/g, '\\$&')
+}
+
 // Ricerca unificata per il form appuntamento: nome cliente, telefono o nome cane.
 // Una riga per cane (i clienti senza cani hanno una riga con dogId null), così la
 // selezione precompila cliente + cane in un solo click.
 export async function searchClientsWithDogs(query: string, tenantId: string): Promise<ClientDogSearchResult[]> {
-  const searchPattern = `%${query}%`
+  // I nomi si cercano per inizio di parola (\m): "ola" non deve far uscire "Lola",
+  // ma "rossi" deve far uscire "Mario Rossi". Il telefono resta per frammento,
+  // perche' di un numero si ricorda spesso solo un pezzo centrale.
+  const namePattern = `\\m${escapeRegex(query.trim())}`
+  const phonePattern = `%${query.trim()}%`
   return db
     .select({
       clientId: clients.id,
@@ -178,13 +187,13 @@ export async function searchClientsWithDogs(query: string, tenantId: string): Pr
         eq(clients.tenantId, tenantId),
         isNull(clients.deletedAt),
         or(
-          ilike(clients.nominativo, searchPattern),
-          ilike(clients.phone, searchPattern),
-          ilike(clients.owner2, searchPattern),
-          ilike(clients.phone2, searchPattern),
-          ilike(clients.owner3, searchPattern),
-          ilike(clients.phone3, searchPattern),
-          ilike(dogs.name, searchPattern)
+          sql`${clients.nominativo} ~* ${namePattern}`,
+          ilike(clients.phone, phonePattern),
+          sql`${clients.owner2} ~* ${namePattern}`,
+          ilike(clients.phone2, phonePattern),
+          sql`${clients.owner3} ~* ${namePattern}`,
+          ilike(clients.phone3, phonePattern),
+          sql`${dogs.name} ~* ${namePattern}`
         )
       )
     )

@@ -19,7 +19,7 @@ import { MissingValue } from '@/components/client/MissingValue'
 import { AlertTriangle, Plus, Search, X } from 'lucide-react'
 import { COAT_LABELS, SIZE_LABELS } from '@/lib/types'
 import type { ClientDogSummary } from '@/lib/queries/clients'
-import { isMissingValue } from '@/lib/utils/formatting'
+import { isMissingValue, matchesWordPrefix } from '@/lib/utils/formatting'
 import { cn } from '@/lib/utils'
 
 // Le tre caratteristiche del cane che contano: la razza per riconoscerlo,
@@ -160,9 +160,11 @@ export function ClientList({ clients }: ClientListProps) {
 
   const filteredClients = clients.filter(c => {
     if (soloDatiMancanti && (missingByClient.get(c.id) ?? []).length === 0) return false
-    if (filterNome.trim() && !c.nominativo.toLowerCase().includes(filterNome.toLowerCase())) return false
+    // Nomi per inizio di parola: cercando "ola" non deve uscire "Lola".
+    // Il telefono resta per frammento, di un numero si ricorda spesso un pezzo.
+    if (!matchesWordPrefix(c.nominativo, filterNome)) return false
     if (filterTelefono.trim() && !c.phone.includes(filterTelefono.trim())) return false
-    if (filterCane.trim() && !c.dogNames.toLowerCase().includes(filterCane.toLowerCase())) return false
+    if (!matchesWordPrefix(c.dogNames, filterCane)) return false
     return true
   })
 
