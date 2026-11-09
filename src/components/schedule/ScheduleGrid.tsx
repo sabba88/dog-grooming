@@ -142,6 +142,9 @@ export function ScheduleGrid({
   const totalHeight = (totalMinutes / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
 
   const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
+  // In vista persone la colonna e' il collaboratore: la postazione non si legge
+  // da nessuna parte, quindi va scritta sul blocco.
+  const stationNameById = new Map(stations.map(s => [s.id, s.name]))
   const activeStaff = staff.filter(p => p.overallStatus === 'active')
 
   // La colonna "Da assegnare" compare solo se ci sono davvero appuntamenti senza collaboratore.
@@ -639,6 +642,8 @@ export function ScheduleGrid({
                       breedName={appt.breedName}
                       serviceName={appt.serviceName}
                       staffName={staffMember?.name ?? UNASSIGNED_LABEL}
+                      stationName={appt.stationId ? stationNameById.get(appt.stationId) ?? null : null}
+                      showStation={groupBy === 'person'}
                       price={appt.price}
                       daPianificare={isDaPianificare(appt)}
                       startTime={appt.startTime}

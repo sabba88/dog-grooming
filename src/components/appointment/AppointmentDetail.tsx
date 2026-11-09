@@ -298,6 +298,15 @@ export function AppointmentDetail({
           )}
         </div>
 
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground w-20">Postazione</span>
+          {appointment.stationName ? (
+            <span className="text-sm font-medium">{appointment.stationName}</span>
+          ) : (
+            <span className="text-sm font-medium text-amber-700 italic">Da assegnare</span>
+          )}
+        </div>
+
         <div className="border-t pt-3 flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground w-20">Data</span>

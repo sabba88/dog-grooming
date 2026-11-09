@@ -95,12 +95,14 @@ function ColumnTimeline({
   onEmptySlotClick,
   movingAppointmentId,
   onContextAction,
+  stationNameById,
 }: {
   column: Column
   groupBy: 'station' | 'person'
   appointments: Appointment[]
   allServiceIds: (string | null)[]
   staff: Person[]
+  stationNameById: Map<string, string>
   dateString: string
   globalOpen: string
   globalClose: string
@@ -160,6 +162,8 @@ function ColumnTimeline({
                       breedName={appt.breedName}
                       serviceName={appt.serviceName}
                       staffName={staffMember?.name ?? UNASSIGNED_LABEL}
+                      stationName={appt.stationId ? stationNameById.get(appt.stationId) ?? null : null}
+                      showStation={groupBy === 'person'}
                       price={appt.price}
                       daPianificare={isDaPianificare(appt)}
                       startTime={appt.startTime}
@@ -241,6 +245,8 @@ export function ScheduleTimeline({
     groupBy,
     allServiceIds,
     staff,
+    // In vista persone la colonna e' il collaboratore: la postazione va scritta sul blocco.
+    stationNameById: new Map(stations.map(s => [s.id, s.name])),
     dateString,
     globalOpen,
     globalClose,

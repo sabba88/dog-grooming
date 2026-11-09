@@ -22,6 +22,13 @@ interface AppointmentBlockProps {
   breedName: string | null
   serviceName: string | null
   staffName: string
+  /**
+   * Postazione dell'appuntamento, usata solo in vista persone: li' la colonna e'
+   * gia' il collaboratore, quindi al suo posto si mostra dove lavora.
+   * Non passata (vista postazioni) la riga continua a mostrare il collaboratore.
+   */
+  stationName?: string | null
+  showStation?: boolean
   price: number | null
   /** Manca postazione, collaboratore o servizio: il blocco si segnala a vista. */
   daPianificare?: boolean
@@ -43,6 +50,8 @@ export function AppointmentBlock({
   breedName,
   serviceName,
   staffName,
+  stationName,
+  showStation,
   price,
   daPianificare,
   startTime,
@@ -146,8 +155,13 @@ export function AppointmentBlock({
             <p className={cn("text-xs truncate", serviceName ? "text-muted-foreground" : "text-amber-700 italic")}>
               {formatServiceName(serviceName)}
             </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {daPianificare ? DA_PIANIFICARE_LABEL : staffName}
+            <p className={cn(
+              "text-xs truncate",
+              showStation && !stationName ? "text-amber-700 italic" : "text-muted-foreground"
+            )}>
+              {showStation
+                ? (stationName ?? 'Postazione da assegnare')
+                : (daPianificare ? DA_PIANIFICARE_LABEL : staffName)}
             </p>
           </button>
         </DropdownMenuTrigger>
@@ -198,8 +212,13 @@ export function AppointmentBlock({
             </p>
             <span className="text-xs font-medium text-foreground">{formatPriceOrDash(price)}</span>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {daPianificare ? DA_PIANIFICARE_LABEL : staffName}
+          <p className={cn(
+            "text-xs mt-0.5",
+            showStation && !stationName ? "text-amber-700 italic" : "text-muted-foreground"
+          )}>
+            {showStation
+              ? (stationName ?? 'Postazione da assegnare')
+              : (daPianificare ? DA_PIANIFICARE_LABEL : staffName)}
           </p>
         </button>
       </DropdownMenuTrigger>

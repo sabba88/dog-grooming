@@ -26,12 +26,15 @@ export async function getAppointmentById(id: string, tenantId: string) {
       serviceName: services.name,
       serviceId: appointments.serviceId,
       userName: users.name,
+      // Postazione assente finche' non la si assegna in pianificazione.
+      stationName: stations.name,
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))
     .innerJoin(dogs, eq(appointments.dogId, dogs.id))
     .leftJoin(services, eq(appointments.serviceId, services.id))
     .leftJoin(users, eq(appointments.userId, users.id))
+    .leftJoin(stations, eq(appointments.stationId, stations.id))
     .where(
       and(
         eq(appointments.id, id),
