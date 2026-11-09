@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth/auth'
 import { getDogById, getDogNotes } from '@/lib/queries/dogs'
 import { getBreedsForSelect } from '@/lib/queries/breeds'
-import { getServiceNotesByDog } from '@/lib/queries/appointments'
+import { getLastVisitForDog, getServiceNotesByDog } from '@/lib/queries/appointments'
 import { DogDetail } from '@/components/dog/DogDetail'
 
 interface DogDetailPageProps {
@@ -22,10 +22,11 @@ export default async function DogDetailPage({ params }: DogDetailPageProps) {
     redirect('/clients')
   }
 
-  const [notes, breeds, serviceNotes] = await Promise.all([
+  const [notes, breeds, serviceNotes, lastVisit] = await Promise.all([
     getDogNotes(id, session.user.tenantId),
     getBreedsForSelect(session.user.tenantId),
     getServiceNotesByDog(id, null, session.user.tenantId),
+    getLastVisitForDog(id, session.user.tenantId),
   ])
 
   return (
@@ -34,6 +35,7 @@ export default async function DogDetailPage({ params }: DogDetailPageProps) {
       notes={notes}
       breeds={breeds}
       serviceNotes={serviceNotes}
+      lastVisit={lastVisit}
       userRole={session.user.role as 'admin' | 'collaborator'}
     />
   )

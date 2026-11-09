@@ -22,7 +22,8 @@ import { toast } from 'sonner'
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
-import { formatServiceName } from '@/lib/utils/formatting'
+import { formatPriceOrDash, formatServiceName } from '@/lib/utils/formatting'
+import type { LastDogVisit } from '@/lib/queries/appointments'
 
 interface Dog {
   id: string
@@ -62,6 +63,8 @@ interface DogDetailProps {
   notes: Note[]
   breeds: { id: string; name: string; coatType: string | null; sizeType: string | null }[]
   serviceNotes: ServiceNote[]
+  /** Ultima prestazione gia' avvenuta: chi ha fatto il cane, con cosa e a quanto. */
+  lastVisit: LastDogVisit | null
   userRole: 'admin' | 'collaborator'
 }
 
@@ -79,7 +82,7 @@ const sexLabel: Record<string, string> = {
 
 const dateFormatter = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' })
 
-export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDetailProps) {
+export function DogDetail({ dog, notes, breeds, serviceNotes, lastVisit, userRole }: DogDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -205,6 +208,43 @@ export function DogDetail({ dog, notes, breeds, serviceNotes, userRole }: DogDet
             </div>
           )}
         </div>
+      </div>
+
+      {/* Ultima prestazione — chi ha fatto il cane l'ultima volta */}
+      <div className="rounded-lg border border-border bg-card p-6 mb-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">Ultima prestazione</h2>
+        {!lastVisit ? (
+          <p className="text-sm text-muted-foreground">Nessuna prestazione gi&agrave; effettuata</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Fatto da</p>
+              <p className="text-sm font-medium text-foreground">
+                {lastVisit.userName ?? 'Collaboratore non registrato'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Quando</p>
+              <p className="text-sm text-foreground">
+                {format(new Date(lastVisit.startTime), 'd MMMM yyyy', { locale: it })}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Servizio</p>
+              <p className="text-sm text-foreground">{formatServiceName(lastVisit.serviceName)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Prezzo</p>
+              <p className="text-sm text-foreground">{formatPriceOrDash(lastVisit.price)}</p>
+            </div>
+            {lastVisit.stationName && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Postazione</p>
+                <p className="text-sm text-foreground">{lastVisit.stationName}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Note Cane */}

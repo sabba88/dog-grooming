@@ -272,6 +272,55 @@ export async function getServiceNotesByDog(
     .orderBy(desc(appointments.startTime))
 }
 
+export interface LastDogVisit {
+  id: string
+  startTime: Date
+  price: number | null
+  serviceName: string | null
+  userName: string | null
+  stationName: string | null
+}
+
+/**
+ * Ultima prestazione gia' avvenuta su questo cane: chi l'ha seguito, cosa gli e'
+ * stato fatto e quanto e' stato pagato. Serve per riproporre la stessa persona in
+ * un nuovo appuntamento e per avere un riferimento quando si conferma il prezzo.
+ */
+export async function getLastVisitForDog(
+  dogId: string,
+  tenantId: string,
+  excludeAppointmentId?: string | null
+): Promise<LastDogVisit | null> {
+  const conditions = [
+    eq(appointments.dogId, dogId),
+    eq(appointments.tenantId, tenantId),
+    // Solo cio' che e' gia' successo: un appuntamento futuro non dice chi l'ha fatto.
+    lt(appointments.startTime, new Date()),
+  ]
+  if (excludeAppointmentId) {
+    conditions.push(ne(appointments.id, excludeAppointmentId))
+  }
+
+  const [row] = await db
+    .select({
+      id: appointments.id,
+      startTime: appointments.startTime,
+      price: appointments.price,
+      serviceName: services.name,
+      userName: users.name,
+      stationName: stations.name,
+    })
+    .from(appointments)
+    .leftJoin(services, eq(appointments.serviceId, services.id))
+    .leftJoin(users, eq(appointments.userId, users.id))
+    .leftJoin(stations, eq(appointments.stationId, stations.id))
+    .where(and(...conditions))
+    .orderBy(desc(appointments.startTime))
+    .limit(1)
+
+  return row ?? null
+}
+
 export async function getStationsWithScheduleForDay(
   locationId: string,
   _dayOfWeek: number,

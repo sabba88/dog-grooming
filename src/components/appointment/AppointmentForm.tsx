@@ -3,8 +3,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAction } from 'next-safe-action/hooks'
 import { toast } from 'sonner'
-import { createAppointment, updateAppointment, fetchDogsForClient, fetchAllServices, fetchStationsForLocation, fetchServicesForStation, fetchAppointmentPrice } from '@/lib/actions/appointments'
-import { formatPrice, formatDuration } from '@/lib/utils/formatting'
+import { createAppointment, updateAppointment, fetchDogsForClient, fetchAllServices, fetchStationsForLocation, fetchServicesForStation, fetchAppointmentPrice, fetchLastDogVisit } from '@/lib/actions/appointments'
+import type { LastDogVisit } from '@/lib/queries/appointments'
+import { formatPrice, formatPriceOrDash, formatDuration, formatServiceName } from '@/lib/utils/formatting'
+import { format as formatDate } from 'date-fns'
+import { it as itLocale } from 'date-fns/locale'
 import { COAT_LABELS, SIZE_LABELS, CoatType, SizeType } from '@/lib/types'
 import type { CreateAppointmentInput, UpdateAppointmentInput } from '@/lib/validations/appointments'
 import { ClientDogSearch } from '@/components/appointment/ClientDogSearch'
@@ -113,6 +116,8 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
   const [basePriceForMatrix, setBasePriceForMatrix] = useState<number | null>(null)
   const [priceIsManual, setPriceIsManual] = useState<boolean>(false)
   const [priceHint, setPriceHint] = useState<PriceHintState>(null)
+  // Chi ha fatto il cane l'ultima volta, e a quanto: riferimento per chi prenota.
+  const [lastVisit, setLastVisit] = useState<LastDogVisit | null>(null)
   const [notes, setNotes] = useState<string>('')
   const [businessError, setBusinessError] = useState<{
     code: string
@@ -143,6 +148,10 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
         recalcPriceWithSurcharge(data.basePrice, selectedServiceId, duration, priceIsManual)
       }
     },
+  })
+
+  const { execute: loadLastVisit } = useAction(fetchLastDogVisit, {
+    onSuccess: ({ data }) => setLastVisit(data?.lastVisit ?? null),
   })
 
   const { execute: loadDogs, isPending: isLoadingDogs } = useAction(fetchDogsForClient, {
@@ -263,6 +272,8 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
     setSelectedDogId(dogId)
     setBusinessError(null)
     setPriceIsManual(false)
+    setLastVisit(null)
+    loadLastVisit({ dogId, ...(appointmentId ? { excludeAppointmentId: appointmentId } : {}) })
     if (selectedServiceId) {
       const dog = dogs.find(d => d.id === dogId)
       if (dog) {
@@ -285,6 +296,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
   const handleSearchSelect = ({ client, dog }: { client: SelectedClient; dog: { id: string; name: string } | null }) => {
     setSelectedClient(client)
     setSelectedDogId(null)
+    setLastVisit(null)
     setDogs([])
     setShowQuickDog(false)
     setBusinessError(null)
@@ -620,6 +632,22 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
               </SelectContent>
             </Select>
           )}
+        </div>
+      )}
+
+      {/* Ultima volta: chi ha seguito il cane, con cosa e a quanto. Sta prima della
+          scelta di servizio e prezzo perche' e' li' che serve come riferimento. */}
+      {selectedDogId && lastVisit && (
+        <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs">
+          <p className="font-medium text-foreground">
+            Ultima volta: {lastVisit.userName ?? 'collaboratore non registrato'}
+          </p>
+          <p className="text-muted-foreground">
+            {formatDate(new Date(lastVisit.startTime), 'd MMM yyyy', { locale: itLocale })}
+            {' · '}{formatServiceName(lastVisit.serviceName)}
+            {' · '}{formatPriceOrDash(lastVisit.price)}
+            {lastVisit.stationName ? ` · ${lastVisit.stationName}` : ''}
+          </p>
         </div>
       )}
 

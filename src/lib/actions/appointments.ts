@@ -2,7 +2,7 @@
 
 import { authActionClient } from '@/lib/actions/client'
 import { getAppointmentsQuerySchema, createAppointmentSchema, updateAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema, reassignStaffSchema } from '@/lib/validations/appointments'
-import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getServiceNotesByDog, getUnplannedAppointments, getWeeklyAppointmentsByPerson, getWeeklyAppointmentsByStation } from '@/lib/queries/appointments'
+import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getLastVisitForDog, getServiceNotesByDog, getUnplannedAppointments, getWeeklyAppointmentsByPerson, getWeeklyAppointmentsByStation } from '@/lib/queries/appointments'
 import { isDaPianificare } from '@/lib/utils/appointment'
 import { getStaffStatusForDate, getActiveUsers, getWeeklyStaffShifts } from '@/lib/queries/staff'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
@@ -569,6 +569,21 @@ export const fetchServiceNotesByDog = authActionClient
       ctx.tenantId
     )
     return { serviceNotes }
+  })
+
+/** Chi ha fatto il cane l'ultima volta, cosa e a quanto. */
+export const fetchLastDogVisit = authActionClient
+  .schema(z.object({
+    dogId: z.string().uuid(),
+    excludeAppointmentId: z.string().uuid().optional(),
+  }))
+  .action(async ({ parsedInput, ctx }) => {
+    const lastVisit = await getLastVisitForDog(
+      parsedInput.dogId,
+      ctx.tenantId,
+      parsedInput.excludeAppointmentId ?? null
+    )
+    return { lastVisit }
   })
 
 export const fetchAppointmentPrice = authActionClient
