@@ -40,6 +40,12 @@ interface AppointmentDetailProps {
   onClose: () => void
   onMove: (appointmentId: string) => void
   onDeleted: () => void
+  /**
+   * Un cambiamento dell'appuntamento e' avvenuto: chi ospita il dettaglio deve
+   * ricaricare i propri dati (la griglia dietro al dialog mostrava i valori vecchi
+   * finche' non si ricaricava la pagina a mano).
+   */
+  onUpdated?: () => void
   autoFocusNotes?: boolean
 }
 
@@ -49,6 +55,7 @@ export function AppointmentDetail({
   onClose,
   onMove,
   onDeleted,
+  onUpdated,
   autoFocusNotes = false,
 }: AppointmentDetailProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -73,6 +80,7 @@ export function AppointmentDetail({
   const { execute: saveNote, isExecuting: isSavingNote } = useAction(saveAppointmentNote, {
     onSuccess: () => {
       toast.success('Nota salvata')
+      onUpdated?.()
     },
     onError: () => {
       toast.error('Errore nel salvataggio')
@@ -108,6 +116,7 @@ export function AppointmentDetail({
       toast.success('Collaboratore aggiornato')
       setEditingStaff(false)
       loadDetail({ id: appointmentId })
+      onUpdated?.()
     },
     onError: () => toast.error('Errore durante il salvataggio'),
   })
@@ -202,6 +211,7 @@ export function AppointmentDetail({
           onSuccess={() => {
             setIsEditingAppointment(false)
             loadDetail({ id: appointmentId })
+            onUpdated?.()
           }}
           onCancel={() => setIsEditingAppointment(false)}
         />

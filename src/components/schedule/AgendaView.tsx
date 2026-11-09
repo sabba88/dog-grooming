@@ -314,6 +314,14 @@ export function AgendaView({ locations }: AgendaViewProps) {
     queryClient.invalidateQueries({ queryKey: ['agenda-unplanned'] })
   }
 
+  // Modifica dal dettaglio (servizio, orario, prezzo, collaboratore, nota): la
+  // griglia dietro al dialog va ricaricata, altrimenti resta ferma ai valori vecchi.
+  const handleAppointmentUpdated = () => {
+    queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
+    queryClient.invalidateQueries({ queryKey: ['agenda-weekly'] })
+    queryClient.invalidateQueries({ queryKey: ['agenda-unplanned'] })
+  }
+
   const handleAppointmentDeleted = () => {
     setSelectedAppointmentId(null)
     queryClient.invalidateQueries({ queryKey: ['appointments', selectedLocationId, dateString] })
@@ -584,6 +592,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
                 onClose={handleDetailClose}
                 onMove={handleMoveStart}
                 onDeleted={handleAppointmentDeleted}
+                onUpdated={handleAppointmentUpdated}
                 autoFocusNotes={autoFocusNotes}
               />
             )}
@@ -602,6 +611,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
                 onClose={handleDetailClose}
                 onMove={handleMoveStart}
                 onDeleted={handleAppointmentDeleted}
+                onUpdated={handleAppointmentUpdated}
                 autoFocusNotes={autoFocusNotes}
               />
             )}
