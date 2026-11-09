@@ -9,6 +9,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
+import { Download } from 'lucide-react'
+import { buildCsv, csvDate, csvFilename, downloadCsv } from '@/lib/utils/csv'
 
 interface Dog {
   id: string
@@ -16,9 +19,14 @@ interface Dog {
   breedName: string | null
   coatType: string | null
   sizeType: string | null
+  breedCoatType: string | null
+  breedSizeType: string | null
   size: string | null
   sex: string | null
+  dateOfBirth: Date | string | null
+  sterilized: boolean
   clientNominativo: string
+  clientPhone: string
   clientId: string
 }
 
@@ -37,10 +45,45 @@ const sexLabel: Record<string, string> = {
 export function DogsPage({ dogs }: DogsPageProps) {
   const router = useRouter()
 
+  // Pelo e taglia esportati sono quelli effettivi: del cane, o della sua razza.
+  function handleExport() {
+    const headers = [
+      'Nome', 'Razza', 'Pelo', 'Taglia', 'Pelo/taglia da razza',
+      'Sesso', 'Data di nascita', 'Sterilizzato', 'Proprietario', 'Telefono proprietario',
+    ]
+    const rows = dogs.map((dog) => {
+      const coat = dog.coatType ?? dog.breedCoatType
+      const size = dog.sizeType ?? dog.breedSizeType
+      const daRazza = (!dog.coatType && dog.breedCoatType) || (!dog.sizeType && dog.breedSizeType)
+      return [
+        dog.name,
+        dog.breedName ?? '',
+        coat ? COAT_LABELS[coat] ?? coat : '',
+        size ? SIZE_LABELS[size] ?? size : '',
+        daRazza ? 'Si' : 'No',
+        dog.sex ? sexLabel[dog.sex] ?? dog.sex : '',
+        csvDate(dog.dateOfBirth),
+        dog.sterilized ? 'Si' : 'No',
+        dog.clientNominativo,
+        dog.clientPhone,
+      ]
+    })
+    downloadCsv(csvFilename('cani'), buildCsv(headers, rows))
+  }
+
   return (
     <>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Cani</h1>
+        <Button
+          variant="outline"
+          onClick={handleExport}
+          disabled={dogs.length === 0}
+          title="Scarica l'elenco in un file apribile con Excel"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Esporta
+        </Button>
       </div>
 
       {dogs.length === 0 ? (

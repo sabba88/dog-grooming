@@ -280,6 +280,54 @@ export async function getServiceNotesByDog(
     .orderBy(desc(appointments.startTime))
 }
 
+/**
+ * Appuntamenti di un periodo, con tutto quello che serve a leggerli fuori dal
+ * gestionale: e' la base dell'export per Excel, non dell'agenda.
+ */
+export async function getAppointmentsForExport(
+  locationId: string,
+  from: string,
+  to: string,
+  tenantId: string
+) {
+  const rangeStart = new Date(from + 'T00:00:00.000Z')
+  const rangeEnd = new Date(to + 'T23:59:59.999Z')
+
+  return db
+    .select({
+      id: appointments.id,
+      startTime: appointments.startTime,
+      endTime: appointments.endTime,
+      price: appointments.price,
+      notes: appointments.notes,
+      closedAt: appointments.closedAt,
+      clientNominativo: clients.nominativo,
+      clientPhone: clients.phone,
+      dogName: dogs.name,
+      breedName: breeds.name,
+      serviceName: services.name,
+      userName: users.name,
+      stationName: stations.name,
+    })
+    .from(appointments)
+    .innerJoin(clients, eq(appointments.clientId, clients.id))
+    .innerJoin(dogs, eq(appointments.dogId, dogs.id))
+    .leftJoin(breeds, eq(dogs.breedId, breeds.id))
+    .leftJoin(services, eq(appointments.serviceId, services.id))
+    .leftJoin(users, eq(appointments.userId, users.id))
+    .leftJoin(stations, eq(appointments.stationId, stations.id))
+    .where(
+      and(
+        eq(appointments.locationId, locationId),
+        gte(appointments.startTime, rangeStart),
+        lt(appointments.startTime, rangeEnd),
+        eq(appointments.tenantId, tenantId),
+        isNull(clients.deletedAt)
+      )
+    )
+    .orderBy(asc(appointments.startTime))
+}
+
 export interface LastDogVisit {
   id: string
   startTime: Date

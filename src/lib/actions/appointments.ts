@@ -2,7 +2,7 @@
 
 import { authActionClient } from '@/lib/actions/client'
 import { getAppointmentsQuerySchema, createAppointmentSchema, updateAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema, reassignStaffSchema, closeAppointmentSchema, reopenAppointmentSchema } from '@/lib/validations/appointments'
-import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getLastVisitForDog, getServiceNotesByDog, getUnplannedAppointments, getWeeklyAppointmentsByPerson, getWeeklyAppointmentsByStation } from '@/lib/queries/appointments'
+import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getAppointmentsForExport, getLastVisitForDog, getServiceNotesByDog, getUnplannedAppointments, getWeeklyAppointmentsByPerson, getWeeklyAppointmentsByStation } from '@/lib/queries/appointments'
 import { isDaPianificare } from '@/lib/utils/appointment'
 import { getStaffStatusForDate, getActiveUsers, getWeeklyStaffShifts } from '@/lib/queries/staff'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
@@ -615,6 +615,23 @@ export const fetchServiceNotesByDog = authActionClient
       ctx.tenantId
     )
     return { serviceNotes }
+  })
+
+/** Appuntamenti di un periodo, per l'export in Excel. */
+export const fetchAppointmentsForExport = authActionClient
+  .schema(z.object({
+    locationId: z.string().uuid(),
+    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }))
+  .action(async ({ parsedInput, ctx }) => {
+    const rows = await getAppointmentsForExport(
+      parsedInput.locationId,
+      parsedInput.from,
+      parsedInput.to,
+      ctx.tenantId
+    )
+    return { rows }
   })
 
 /** Chi ha fatto il cane l'ultima volta, cosa e a quanto. */

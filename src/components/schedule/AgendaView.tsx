@@ -23,7 +23,9 @@ import {
   deleteAppointment,
   fetchWeeklyAgendaData,
   fetchUnplannedAppointments,
+  fetchAppointmentsForExport,
 } from '@/lib/actions/appointments'
+import { buildCsv, csvDate, csvPrice, csvTime, downloadCsv } from '@/lib/utils/csv'
 import { missingPlanningFields } from '@/lib/utils/appointment'
 import { computeAgendaRange, timeToMinutes } from '@/lib/utils/schedule'
 import { useAgendaGroupBy } from '@/hooks/useAgendaGroupBy'
@@ -40,7 +42,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { ClipboardList, LayoutGrid, Settings, Users, X } from 'lucide-react'
+import { ClipboardList, Download, LayoutGrid, Settings, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -169,6 +171,44 @@ export function AgendaView({ locations }: AgendaViewProps) {
     format(addDays(weekStart, i), 'yyyy-MM-dd')
   )
   const currentWeekLabel = `${format(weekStart, 'd MMM', { locale: it })}–${format(addDays(weekStart, 6), 'd MMM yyyy', { locale: it })}`
+
+  // Export del periodo a video: la settimana in vista settimanale, il giorno in
+  // vista giornaliera. Niente scelta di date da fare: si esporta quello che si guarda.
+  const { execute: runExport, isExecuting: isExporting } = useAction(fetchAppointmentsForExport, {
+    onSuccess: ({ data, input }) => {
+      const rows = data?.rows ?? []
+      if (rows.length === 0) {
+        toast.info('Nessun appuntamento nel periodo')
+        return
+      }
+      const headers = [
+        'Data', 'Inizio', 'Fine', 'Durata (min)', 'Cliente', 'Telefono', 'Cane', 'Razza',
+        'Servizio', 'Collaboratore', 'Postazione', 'Prezzo', 'Chiuso', 'Note',
+      ]
+      const csv = buildCsv(headers, rows.map((r) => {
+        const start = new Date(r.startTime)
+        const end = new Date(r.endTime)
+        return [
+          csvDate(start),
+          csvTime(start),
+          csvTime(end),
+          Math.round((end.getTime() - start.getTime()) / 60000),
+          r.clientNominativo,
+          r.clientPhone,
+          r.dogName,
+          r.breedName ?? '',
+          r.serviceName ?? '',
+          r.userName ?? '',
+          r.stationName ?? '',
+          csvPrice(r.price),
+          r.closedAt ? csvDate(r.closedAt) : '',
+          r.notes ?? '',
+        ]
+      }))
+      downloadCsv(`appuntamenti-${input.from}_${input.to}.csv`, csv)
+    },
+    onError: () => toast.error('Errore durante l’export'),
+  })
 
   const { execute: executeQuickDelete } = useAction(deleteAppointment, {
     onSuccess: () => {
@@ -412,6 +452,28 @@ export function AgendaView({ locations }: AgendaViewProps) {
     </Button>
   )
 
+  const handleExport = () => {
+    if (!selectedLocationId) return
+    const from = viewMode === 'week' ? weekDates[0] : dateString
+    const to = viewMode === 'week' ? weekDates[6] : dateString
+    runExport({ locationId: selectedLocationId, from, to })
+  }
+
+  const exportButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleExport}
+      disabled={isExporting || !selectedLocationId}
+      title={viewMode === 'week'
+        ? 'Scarica gli appuntamenti della settimana in un file apribile con Excel'
+        : 'Scarica gli appuntamenti del giorno in un file apribile con Excel'}
+    >
+      <Download className="size-4" />
+      {!isMobile && <span className="ml-1">Esporta</span>}
+    </Button>
+  )
+
   const toggleGroup = (
     <div className="flex items-center gap-1">
       <Button
@@ -444,7 +506,10 @@ export function AgendaView({ locations }: AgendaViewProps) {
           <DateNavigation selectedDate={selectedDate} onDateChange={setSelectedDate} />
         )}
       </div>
-      {toggleGroup}
+      <div className="flex items-center gap-2">
+        {exportButton}
+        {toggleGroup}
+      </div>
     </div>
   )
 
@@ -520,7 +585,10 @@ export function AgendaView({ locations }: AgendaViewProps) {
             {trayButton}
             {groupByToggle}
           </div>
-          {toggleGroup}
+          <div className="flex items-center gap-2">
+            {exportButton}
+            {toggleGroup}
+          </div>
         </div>
       )}
 

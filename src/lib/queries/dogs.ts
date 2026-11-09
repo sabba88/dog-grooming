@@ -85,9 +85,16 @@ export async function getAllDogs(tenantId: string) {
       breedName: breeds.name,
       coatType: dogs.coatType,
       sizeType: dogs.sizeType,
+      // Pelo e taglia ereditati dalla razza dove il cane non li ha suoi:
+      // sono quelli che determinano il prezzo, e vanno nell'export.
+      breedCoatType: breeds.coatType,
+      breedSizeType: breeds.sizeType,
       size: dogs.size,
       sex: dogs.sex,
+      dateOfBirth: dogs.dateOfBirth,
+      sterilized: dogs.sterilized,
       clientNominativo: clients.nominativo,
+      clientPhone: clients.phone,
       clientId: dogs.clientId,
     })
     .from(dogs)

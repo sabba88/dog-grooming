@@ -16,7 +16,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { ClientForm } from '@/components/client/ClientForm'
 import { MissingValue } from '@/components/client/MissingValue'
-import { AlertTriangle, Plus, Search, X } from 'lucide-react'
+import { AlertTriangle, Download, Plus, Search, X } from 'lucide-react'
+import { buildCsv, csvDate, csvFilename, downloadCsv } from '@/lib/utils/csv'
+import { getCoOwners } from '@/lib/utils/formatting'
 import { COAT_LABELS, SIZE_LABELS } from '@/lib/types'
 import type { ClientDogSummary } from '@/lib/queries/clients'
 import { isMissingValue, matchesWordPrefix } from '@/lib/utils/formatting'
@@ -135,6 +137,10 @@ interface Client {
   id: string
   nominativo: string
   phone: string
+  owner2: string | null
+  phone2: string | null
+  owner3: string | null
+  phone3: string | null
   email: string | null
   createdAt: Date | null
   dogNames: string
@@ -174,6 +180,37 @@ export function ClientList({ clients }: ClientListProps) {
     setFormOpen(true)
   }
 
+  // Si esporta quello che si ha davanti: i filtri valgono anche per il file.
+  function handleExport() {
+    const headers = [
+      'Nominativo', 'Telefono', 'Email',
+      'Proprietario 2', 'Telefono 2', 'Proprietario 3', 'Telefono 3',
+      'Cane', 'Razza', 'Pelo', 'Taglia',
+      'Ultimo appuntamento', 'Prossimo appuntamento', 'Dati mancanti',
+    ]
+    const rows = filteredClients.flatMap((client) => {
+      const coOwners = getCoOwners(client)
+      const o2 = coOwners.find(o => o.slot === 2)
+      const o3 = coOwners.find(o => o.slot === 3)
+      const base = [
+        client.nominativo, client.phone, client.email,
+        o2?.name ?? '', o2?.phone ?? '', o3?.name ?? '', o3?.phone ?? '',
+      ]
+      const tail = [
+        csvDate(client.lastAppointmentAt),
+        csvDate(client.nextAppointmentAt),
+        (missingByClient.get(client.id) ?? []).join(', '),
+      ]
+      // Una riga per cane, cosi' il file si filtra e si ordina anche per cane.
+      if (client.dogs.length === 0) return [[...base, '', '', '', '', ...tail]]
+      return client.dogs.map((dog) => {
+        const [razza, pelo, taglia] = dogDetailParts(dog).map(p => (p.missing ? '' : p.label))
+        return [...base, dog.name, razza, pelo.replace(/^Pelo /, ''), taglia.replace(/^Taglia /, ''), ...tail]
+      })
+    })
+    downloadCsv(csvFilename('clienti'), buildCsv(headers, rows))
+  }
+
   function handleSuccess() {
     router.refresh()
   }
@@ -182,10 +219,21 @@ export function ClientList({ clients }: ClientListProps) {
     <>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-foreground">Clienti</h1>
-        <Button onClick={handleNew}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuovo Cliente
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={filteredClients.length === 0}
+            title="Scarica l'elenco filtrato in un file apribile con Excel"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Esporta
+          </Button>
+          <Button onClick={handleNew}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nuovo Cliente
+          </Button>
+        </div>
       </div>
 
       {/* I filtri restano agganciati in alto: su elenchi lunghi scorrendo
