@@ -156,9 +156,10 @@ export function ScheduleGrid({
         ...(hasUnassigned ? [{ key: UNASSIGNED_KEY, name: UNASSIGNED_LABEL }] : []),
       ]
 
-  // Il pannello laterale dei turni serve solo in vista postazioni:
-  // in vista persone i turni sono gia' le colonne stesse.
-  const showStaffPanel = groupBy === 'station' && activeStaff.length > 0
+  // Il pannello laterale dei turni resta anche in vista persone: le fasce colorate
+  // delle colonne si leggono una per volta, la barra verticale da' invece il colpo
+  // d'occhio su chi c'e' in ogni momento della giornata.
+  const showStaffPanel = activeStaff.length > 0
   const staffPanelWidth = showStaffPanel ? Math.max(64, activeStaff.length * 32) : 0
 
   const STAFF_COLORS = [

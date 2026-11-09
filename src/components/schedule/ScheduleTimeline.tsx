@@ -268,8 +268,8 @@ export function ScheduleTimeline({
         ))}
       </TabsList>
 
-      {/* Legenda turni — ridondante in vista persone, dove i turni sono gia' i tab */}
-      {groupBy === 'station' && activeStaff.length > 0 && (
+      {/* Legenda turni — anche in vista persone: da' il quadro di chi c'e' in giornata */}
+      {activeStaff.length > 0 && (
         <div className="flex flex-wrap gap-x-4 gap-y-1 py-2 px-1">
           {activeStaff.map((person) => {
             const shifts = person.shifts.filter(s => s.status === 'active')
