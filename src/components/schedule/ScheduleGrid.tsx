@@ -606,7 +606,10 @@ export function ScheduleGrid({
               {/* Appointment blocks — affiancati quando si sovrappongono.
                   Il contenitore lascia scoperta la striscia "+" sul bordo destro. */}
               <div
-                className="absolute top-0 bottom-0 left-0"
+                // pointer-events-none: il contenitore copre tutta la colonna, anche dove
+                // non ci sono blocchi, e senza questo intercetterebbe i click sugli slot liberi
+                // lasciando cliccabile solo la striscia scoperta a destra.
+                className="absolute top-0 bottom-0 left-0 pointer-events-none"
                 style={{ right: `${onEmptySlotClick ? PARALLEL_STRIP_PX : 0}px` }}
               >
               {computeOverlapLanes(columnAppointments).map(({ appointment: appt, lane, lanes }) => {
@@ -624,7 +627,7 @@ export function ScheduleGrid({
                 return (
                   <div
                     key={appt.id}
-                    className={onAppointmentDrop ? 'absolute cursor-grab' : 'absolute'}
+                    className={onAppointmentDrop ? 'absolute pointer-events-auto cursor-grab' : 'absolute pointer-events-auto'}
                     style={{ top: `${position.top}px`, height: `${position.height}px`, ...laneStyle }}
                     onPointerDownCapture={(e) => handleBlockPointerDown(e, appt, column.key)}
                   >
