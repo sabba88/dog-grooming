@@ -48,6 +48,7 @@ interface Appointment {
   breedName: string | null
   serviceName: string | null
   serviceId: string | null
+  closedAt: Date | string | null
 }
 
 // Un tab della timeline: una postazione, una persona, oppure "Da assegnare".
@@ -170,6 +171,7 @@ function ColumnTimeline({
                       showStation={groupBy === 'person'}
                       price={appt.price}
                       daPianificare={isDaPianificare(appt)}
+                      closed={!!appt.closedAt}
                       startTime={appt.startTime}
                       endTime={appt.endTime}
                       color={color}

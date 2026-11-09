@@ -54,6 +54,7 @@ interface Appointment {
   breedName: string | null
   serviceName: string | null
   serviceId: string | null
+  closedAt: Date | string | null
 }
 
 // Una colonna della griglia: una postazione, una persona, oppure la colonna "Da assegnare".
@@ -659,6 +660,7 @@ export function ScheduleGrid({
                       showStation={groupBy === 'person'}
                       price={appt.price}
                       daPianificare={isDaPianificare(appt)}
+                      closed={!!appt.closedAt}
                       startTime={appt.startTime}
                       endTime={appt.endTime}
                       color={color}

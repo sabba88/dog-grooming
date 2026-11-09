@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Check } from 'lucide-react'
 
 type ContextAction = 'detail' | 'add-note' | 'move' | 'delete'
 
@@ -32,6 +33,8 @@ interface AppointmentBlockProps {
   price: number | null
   /** Manca postazione, collaboratore o servizio: il blocco si segnala a vista. */
   daPianificare?: boolean
+  /** Prestazione conclusa e prezzo confermato: il blocco porta la spunta. */
+  closed?: boolean
   startTime: Date
   endTime: Date
   color: { bg: string; border: string }
@@ -54,6 +57,7 @@ export function AppointmentBlock({
   showStation,
   price,
   daPianificare,
+  closed,
   startTime,
   endTime,
   color,
@@ -128,7 +132,7 @@ export function AppointmentBlock({
             onTouchStart={handleTouchStart}
             onTouchEnd={cancelLongPress}
             onTouchMove={cancelLongPress}
-            title={ownersTitle}
+            title={closed ? `${ownersTitle} · chiuso` : ownersTitle}
             className={cn(
               "absolute inset-x-0.5 rounded-md px-1.5 py-1 text-left overflow-hidden cursor-pointer transition-shadow hover:shadow-md z-10",
               daPianificare && "border border-dashed border-amber-500",
@@ -146,7 +150,10 @@ export function AppointmentBlock({
                 {dogName}
                 {breedName && <span className="font-normal text-muted-foreground"> ({breedName})</span>}
               </p>
-              <span className="text-xs text-muted-foreground shrink-0">{formatTime(startTime)}</span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {closed && <Check className="mr-0.5 inline size-3 text-emerald-600" />}
+                {formatTime(startTime)}
+              </span>
             </div>
             <p className="text-xs text-muted-foreground truncate">
               {clientName}
@@ -197,6 +204,7 @@ export function AppointmentBlock({
               {breedName && <span className="font-normal text-muted-foreground"> ({breedName})</span>}
             </p>
             <span className="text-xs text-muted-foreground shrink-0">
+              {closed && <Check className="mr-0.5 inline size-3 text-emerald-600" />}
               {formatTime(startTime)} - {formatTime(endTime)}
             </span>
           </div>

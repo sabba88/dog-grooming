@@ -1,6 +1,10 @@
 import { db } from '@/lib/db'
 import { appointments, breeds, clients, dogs, services, stations, users } from '@/lib/db/schema'
 import { eq, and, gte, lt, asc, isNull, isNotNull, ne, desc } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/pg-core'
+
+// Due join sulla stessa tabella utenti: chi esegue l'appuntamento e chi lo ha chiuso.
+const closedBy = alias(users, 'closed_by')
 
 export async function getAppointmentById(id: string, tenantId: string) {
   const [result] = await db
@@ -28,6 +32,8 @@ export async function getAppointmentById(id: string, tenantId: string) {
       userName: users.name,
       // Postazione assente finche' non la si assegna in pianificazione.
       stationName: stations.name,
+      closedAt: appointments.closedAt,
+      closedByName: closedBy.name,
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))
@@ -35,6 +41,7 @@ export async function getAppointmentById(id: string, tenantId: string) {
     .leftJoin(services, eq(appointments.serviceId, services.id))
     .leftJoin(users, eq(appointments.userId, users.id))
     .leftJoin(stations, eq(appointments.stationId, stations.id))
+    .leftJoin(closedBy, eq(appointments.closedByUserId, closedBy.id))
     .where(
       and(
         eq(appointments.id, id),
@@ -116,6 +123,7 @@ export async function getAppointmentsByDateAndLocationGroupedByUser(
       breedName: breeds.name,
       serviceName: services.name,
       serviceId: appointments.serviceId,
+      closedAt: appointments.closedAt,
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))

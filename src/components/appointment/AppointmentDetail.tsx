@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useAction } from 'next-safe-action/hooks'
-import { fetchAppointmentDetail, deleteAppointment, saveAppointmentNote, fetchServiceNotesByDog, fetchActiveUsers, reassignStaff } from '@/lib/actions/appointments'
+import { fetchAppointmentDetail, deleteAppointment, saveAppointmentNote, fetchServiceNotesByDog, fetchActiveUsers, reassignStaff, closeAppointment, reopenAppointment, fetchLastDogVisit } from '@/lib/actions/appointments'
+import type { LastDogVisit } from '@/lib/queries/appointments'
 import { formatPriceOrDash, formatDuration, getCoOwners, isMissingValue } from '@/lib/utils/formatting'
 import { isDaPianificare, missingPlanningFields } from '@/lib/utils/appointment'
 import { MissingValue } from '@/components/client/MissingValue'
@@ -10,6 +11,8 @@ import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   AlertDialog,
@@ -21,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ArrowRightLeft, Trash2, Loader2, ShoppingBag, Pencil } from 'lucide-react'
+import { ArrowRightLeft, Trash2, Loader2, ShoppingBag, Pencil, Check, CalendarPlus, RotateCcw } from 'lucide-react'
 import { OverlapDialog } from './OverlapDialog'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -65,6 +68,10 @@ export function AppointmentDetail({
   const [selectedUserId, setSelectedUserId] = useState<string>('')
   const [activeUsers, setActiveUsers] = useState<{ id: string; name: string }[]>([])
   const [isEditingAppointment, setIsEditingAppointment] = useState(false)
+  // Chiusura: a prestazione finita si conferma il prezzo effettivo.
+  const [isRepeating, setIsRepeating] = useState(false)
+  const [closePriceEur, setClosePriceEur] = useState('')
+  const [lastVisit, setLastVisit] = useState<LastDogVisit | null>(null)
   const notesTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const { execute: loadDetail, result: detailResult, isExecuting: isLoading } = useAction(fetchAppointmentDetail)
@@ -98,6 +105,32 @@ export function AppointmentDetail({
       if (result.data?.users) setActiveUsers(result.data.users)
     },
   })
+  const { execute: loadLastVisit } = useAction(fetchLastDogVisit, {
+    onSuccess: ({ data }) => setLastVisit(data?.lastVisit ?? null),
+  })
+
+  const { execute: executeClose, isExecuting: isClosing } = useAction(closeAppointment, {
+    onSuccess: ({ data }) => {
+      if (data?.error) {
+        toast.error(data.error.message)
+        return
+      }
+      toast.success('Appuntamento chiuso')
+      loadDetail({ id: appointmentId })
+      onUpdated?.()
+    },
+    onError: () => toast.error('Errore durante la chiusura'),
+  })
+
+  const { execute: executeReopen, isExecuting: isReopening } = useAction(reopenAppointment, {
+    onSuccess: () => {
+      toast.success('Appuntamento riaperto')
+      loadDetail({ id: appointmentId })
+      onUpdated?.()
+    },
+    onError: () => toast.error('Errore durante la riapertura'),
+  })
+
   const [pendingReassignUserId, setPendingReassignUserId] = useState<string | null>(null)
   const [overlapOpen, setOverlapOpen] = useState(false)
 
@@ -151,11 +184,14 @@ export function AppointmentDetail({
     setSyncedAppointmentId(appointment.id)
     setNoteText(appointment.notes ?? '')
     setSelectedUserId(appointment.userId ?? '')
+    // Il prezzo da confermare parte da quello previsto: quasi sempre e' quello giusto.
+    setClosePriceEur(appointment.price != null ? String(Math.round(appointment.price / 100)) : '')
   }
 
   useEffect(() => {
     if (!appointment?.dogId) return
     loadServiceNotes({ dogId: appointment.dogId, excludeAppointmentId: appointmentId })
+    loadLastVisit({ dogId: appointment.dogId, excludeAppointmentId: appointmentId })
   }, [appointment?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -185,6 +221,46 @@ export function AppointmentDetail({
 
   const clientName = appointment.clientNominativo
   const coOwners = getCoOwners(appointment)
+
+  if (isRepeating) {
+    // Giorno e ora non si ereditano: si riparte da quattro settimane dopo, il
+    // ritmo abituale di una toelettatura, e si correggono nel form.
+    const suggested = new Date(startTime.getTime() + 28 * 24 * 60 * 60 * 1000)
+    return (
+      <div className="flex flex-col gap-4 p-4">
+        <p className="text-sm text-muted-foreground">
+          Nuovo appuntamento per {appointment.dogName} ({clientName}): i dati sono
+          ripresi da questo, giorno e ora si scelgono qui.
+        </p>
+        <AppointmentForm
+          mode="create"
+          editableSlot
+          prefilledSlot={{
+            date: format(suggested, 'yyyy-MM-dd'),
+            time: formatTime(startTime),
+            locationId,
+          }}
+          availableStaff={activeUsers}
+          initialValues={{
+            clientId: appointment.clientId,
+            clientNominativo: appointment.clientNominativo,
+            dogId: appointment.dogId,
+            serviceId: appointment.serviceId,
+            duration: durationMinutes,
+            price: appointment.price,
+            userId: appointment.userId,
+            stationId: appointment.stationId,
+          }}
+          onSuccess={() => {
+            setIsRepeating(false)
+            onUpdated?.()
+            onClose()
+          }}
+          onCancel={() => setIsRepeating(false)}
+        />
+      </div>
+    )
+  }
 
   if (isEditingAppointment) {
     return (
@@ -220,6 +296,7 @@ export function AppointmentDetail({
   }
 
   const planningGaps = missingPlanningFields(appointment)
+  const isClosed = !!appointment.closedAt
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -327,6 +404,73 @@ export function AppointmentDetail({
         </div>
       </div>
 
+      {/* Chiusura: a prestazione finita si conferma il prezzo effettivo e
+          l'appuntamento e' confermato. Da li' si ripete per la volta successiva. */}
+      {isClosed ? (
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-800">
+            <Check className="size-4" />
+            Chiuso il {format(new Date(appointment.closedAt!), 'd MMM yyyy', { locale: it })}
+            {appointment.closedByName ? ` da ${appointment.closedByName}` : ''}
+          </p>
+          <p className="text-xs text-emerald-700">
+            Prezzo confermato: {formatPriceOrDash(appointment.price)}
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-1 h-7 px-2 text-xs text-emerald-800 hover:text-emerald-900"
+            onClick={() => executeReopen({ id: appointmentId })}
+            disabled={isReopening}
+          >
+            <RotateCcw className="size-3 mr-1" />
+            Riapri
+          </Button>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2">
+          <p className="text-sm font-medium">Chiusura appuntamento</p>
+          <p className="text-xs text-muted-foreground">
+            A prestazione finita, conferma qui il prezzo per chiudere.
+          </p>
+          {lastVisit && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Ultimo appuntamento: {formatPriceOrDash(lastVisit.price)} il{' '}
+              {format(new Date(lastVisit.startTime), 'd MMM yyyy', { locale: it })}
+              {lastVisit.userName ? ` · ${lastVisit.userName}` : ''}
+            </p>
+          )}
+          <div className="mt-2 flex items-end gap-2">
+            <div>
+              <Label htmlFor="ad-close-price" className="mb-1 block text-xs text-muted-foreground">
+                Prezzo (EUR)
+              </Label>
+              <Input
+                id="ad-close-price"
+                type="number"
+                min={0}
+                step={1}
+                inputMode="decimal"
+                value={closePriceEur}
+                onChange={(e) => setClosePriceEur(e.target.value)}
+                className="h-9 w-28"
+              />
+            </div>
+            <Button
+              className="h-9"
+              disabled={isClosing || closePriceEur.trim() === '' || Number.isNaN(Number(closePriceEur))}
+              onClick={() => executeClose({
+                id: appointmentId,
+                price: Math.round(Number(closePriceEur) * 100),
+              })}
+            >
+              {isClosing ? <Loader2 className="size-4 animate-spin mr-2" /> : <Check className="size-4 mr-2" />}
+              Conferma e chiudi
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="border-t pt-3 flex flex-col gap-2">
         <p className="text-sm font-medium">Note Prestazione</p>
         <Textarea
@@ -365,6 +509,14 @@ export function AppointmentDetail({
       </div>
 
       <div className="flex flex-col gap-2 pt-2 border-t">
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setIsRepeating(true)}
+        >
+          <CalendarPlus className="size-4 mr-2" />
+          Nuovo appuntamento da questo
+        </Button>
         <Button
           variant="outline"
           className="w-full"

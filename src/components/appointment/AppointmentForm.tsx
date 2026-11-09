@@ -33,7 +33,7 @@ interface PrefilledSlot {
   locationId: string
 }
 
-interface EditInitialValues {
+interface PrefillValues {
   clientId: string
   clientNominativo: string
   dogId: string
@@ -51,7 +51,12 @@ interface AppointmentFormProps {
   availableStaff?: { id: string; name: string }[]
   mode?: 'create' | 'edit'
   appointmentId?: string
-  initialValues?: EditInitialValues
+  /**
+   * Nuovo appuntamento a partire da uno esistente: i dati arrivano precompilati
+   * ma giorno e ora vanno scelti, quindi l'intestazione diventa modificabile.
+   */
+  editableSlot?: boolean
+  initialValues?: PrefillValues
   onSuccess: () => void
   onCancel: () => void
 }
@@ -88,9 +93,14 @@ function getEffectiveCoatSize(dog: Dog) {
   return { coat, size }
 }
 
-export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create', appointmentId, initialValues, onSuccess, onCancel }: AppointmentFormProps) {
-  // In modifica i valori di partenza arrivano dall'appuntamento esistente.
-  const editValues = mode === 'edit' ? initialValues : undefined
+export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create', appointmentId, initialValues, editableSlot = false, onSuccess, onCancel }: AppointmentFormProps) {
+  // I valori di partenza arrivano da un appuntamento esistente: quello in modifica,
+  // oppure quello da cui si sta creando il nuovo ("riporta dietro i dati").
+  const editValues = initialValues
+  // Giorno e ora: fissi quando si parte da uno slot dell'agenda, scelti a mano
+  // quando si ripete un appuntamento esistente.
+  const [slotDate, setSlotDate] = useState(prefilledSlot.date)
+  const [slotTime, setSlotTime] = useState(prefilledSlot.time)
   const [editInitialized, setEditInitialized] = useState(false)
   const [selectedClient, setSelectedClient] = useState<SelectedClient | null>(
     editValues ? { id: editValues.clientId, nominativo: editValues.clientNominativo } : null
@@ -366,7 +376,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
       submitAppointment({
         userId: selectedUserId,
         locationId: prefilledSlot.locationId,
-        date: prefilledSlot.date,
+        date: slotDate,
         time,
         clientId: selectedClient.id,
         dogId: selectedDogId,
@@ -387,8 +397,8 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
       submitAppointment({
         userId,
         locationId: prefilledSlot.locationId,
-        date: prefilledSlot.date,
-        time: prefilledSlot.time,
+        date: slotDate,
+        time: slotTime,
         clientId: selectedClient.id,
         dogId: selectedDogId,
         serviceId: selectedServiceId,
@@ -423,8 +433,8 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
     }
     submitAppointment({
       locationId: prefilledSlot.locationId,
-      date: prefilledSlot.date,
-      time: prefilledSlot.time,
+      date: slotDate,
+      time: slotTime,
       clientId: selectedClient.id,
       dogId: selectedDogId,
       serviceId: selectedServiceId,
@@ -474,7 +484,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
     weekday: 'short',
     day: 'numeric',
     month: 'short',
-  }).format(new Date(prefilledSlot.date + 'T00:00:00.000Z'))
+  }).format(new Date(slotDate + 'T00:00:00.000Z'))
 
   const isFormComplete = selectedClient && selectedDogId && selectedServiceId && duration >= 15 && parseFloat(priceEur) >= 0
   const isSaving = isSubmitting || isUpdating
@@ -504,15 +514,43 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
         {(prefilledSlot.stationName || prefilledSlot.userName) && (
           <Separator orientation="vertical" className="h-4" />
         )}
-        <div className="flex items-center gap-1.5 text-sm">
-          <Calendar className="text-muted-foreground size-4" />
-          <span className="capitalize">{formattedDate}</span>
-        </div>
-        <Separator orientation="vertical" className="h-4" />
-        <div className="flex items-center gap-1.5 text-sm">
-          <Clock className="text-muted-foreground size-4" />
-          <span>{prefilledSlot.time}</span>
-        </div>
+        {editableSlot ? (
+          <>
+            <div className="flex items-center gap-1.5 text-sm">
+              <Calendar className="text-muted-foreground size-4" />
+              <Input
+                type="date"
+                aria-label="Data"
+                value={slotDate}
+                onChange={(e) => setSlotDate(e.target.value)}
+                className="h-8 w-auto"
+              />
+            </div>
+            <div className="flex items-center gap-1.5 text-sm">
+              <Clock className="text-muted-foreground size-4" />
+              <Input
+                type="time"
+                aria-label="Ora"
+                step={900}
+                value={slotTime}
+                onChange={(e) => setSlotTime(e.target.value)}
+                className="h-8 w-auto"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-1.5 text-sm">
+              <Calendar className="text-muted-foreground size-4" />
+              <span className="capitalize">{formattedDate}</span>
+            </div>
+            <Separator orientation="vertical" className="h-4" />
+            <div className="flex items-center gap-1.5 text-sm">
+              <Clock className="text-muted-foreground size-4" />
+              <span>{slotTime}</span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Collaboratore — mostrato quando non pre-compilato. Opzionale: se non assegnato,

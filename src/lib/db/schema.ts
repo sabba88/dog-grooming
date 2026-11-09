@@ -195,6 +195,11 @@ export const appointments = pgTable('appointments', {
   endTime: timestamp('end_time').notNull(),
   price: integer('price'), // assente finche' non si sceglie il servizio
   notes: text('notes'),
+  // Chiusura: a prestazione finita si conferma il prezzo effettivo e l'appuntamento
+  // viene chiuso. Qui lo stato e' memorizzato (a differenza di "da pianificare", che
+  // e' derivato) perche' registra un fatto avvenuto, non la somma di altri campi.
+  closedAt: timestamp('closed_at'),
+  closedByUserId: uuid('closed_by_user_id'),
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

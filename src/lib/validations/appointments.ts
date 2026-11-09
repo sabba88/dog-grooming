@@ -89,3 +89,14 @@ export const reassignStaffSchema = z.object({
   userId: z.string().uuid(),
   allowOverlap: z.boolean().optional(),
 })
+
+// Chiusura appuntamento: a prestazione finita si conferma il prezzo effettivo.
+// Il prezzo e' obbligatorio proprio perche' la chiusura e' la sua conferma.
+export const closeAppointmentSchema = z.object({
+  id: z.string().uuid(),
+  price: z.number().int().min(0, 'Il prezzo non puo essere negativo'),
+})
+
+export const reopenAppointmentSchema = z.object({
+  id: z.string().uuid(),
+})

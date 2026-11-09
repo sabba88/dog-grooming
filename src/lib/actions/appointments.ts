@@ -1,7 +1,7 @@
 'use server'
 
 import { authActionClient } from '@/lib/actions/client'
-import { getAppointmentsQuerySchema, createAppointmentSchema, updateAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema, reassignStaffSchema } from '@/lib/validations/appointments'
+import { getAppointmentsQuerySchema, createAppointmentSchema, updateAppointmentSchema, deleteAppointmentSchema, moveAppointmentSchema, saveAppointmentNoteSchema, fetchServiceNotesByDogSchema, fetchWeeklyAgendaDataSchema, fetchAppointmentPriceSchema, reassignStaffSchema, closeAppointmentSchema, reopenAppointmentSchema } from '@/lib/validations/appointments'
 import { getAppointmentsByDateAndLocationGroupedByUser, getAppointmentById, getLastVisitForDog, getServiceNotesByDog, getUnplannedAppointments, getWeeklyAppointmentsByPerson, getWeeklyAppointmentsByStation } from '@/lib/queries/appointments'
 import { isDaPianificare } from '@/lib/utils/appointment'
 import { getStaffStatusForDate, getActiveUsers, getWeeklyStaffShifts } from '@/lib/queries/staff'
@@ -556,6 +556,52 @@ export const saveAppointmentNote = authActionClient
     await db
       .update(appointments)
       .set({ notes: parsedInput.notes || null, updatedAt: new Date() })
+      .where(and(eq(appointments.id, parsedInput.id), eq(appointments.tenantId, ctx.tenantId)))
+    return { success: true }
+  })
+
+/**
+ * Chiusura dell'appuntamento: a prestazione finita si conferma il prezzo
+ * effettivamente incassato e l'appuntamento risulta chiuso.
+ *
+ * Senza servizio non c'e' una prestazione da confermare: va prima pianificato.
+ */
+export const closeAppointment = authActionClient
+  .schema(closeAppointmentSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    const [existing] = await db
+      .select({ id: appointments.id, serviceId: appointments.serviceId, closedAt: appointments.closedAt })
+      .from(appointments)
+      .where(and(eq(appointments.id, parsedInput.id), eq(appointments.tenantId, ctx.tenantId)))
+      .limit(1)
+    if (!existing) throw new Error('Appuntamento non trovato')
+    if (!existing.serviceId) {
+      return { error: { code: 'MISSING_SERVICE', message: 'Scegli prima il servizio: senza, non c’è una prestazione da chiudere' } }
+    }
+    if (existing.closedAt) {
+      return { error: { code: 'ALREADY_CLOSED', message: 'Appuntamento già chiuso' } }
+    }
+
+    await db
+      .update(appointments)
+      .set({
+        price: parsedInput.price,
+        closedAt: new Date(),
+        closedByUserId: ctx.userId,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(appointments.id, parsedInput.id), eq(appointments.tenantId, ctx.tenantId)))
+
+    return { success: true }
+  })
+
+/** Riapre un appuntamento chiuso per errore: il prezzo confermato resta. */
+export const reopenAppointment = authActionClient
+  .schema(reopenAppointmentSchema)
+  .action(async ({ parsedInput, ctx }) => {
+    await db
+      .update(appointments)
+      .set({ closedAt: null, closedByUserId: null, updatedAt: new Date() })
       .where(and(eq(appointments.id, parsedInput.id), eq(appointments.tenantId, ctx.tenantId)))
     return { success: true }
   })
