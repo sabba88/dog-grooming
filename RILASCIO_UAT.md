@@ -8,6 +8,28 @@ Quando il rilascio è andato a buon fine questo file si può cancellare.
 
 ---
 
+## 0. Stato — aggiornato il 10/11/2026
+
+Eseguiti i passi da 1 a 5. Sul database UAT:
+
+- **0007 applicata** in un'unica transazione: 6240 appuntamenti con sede, zero
+  orfani. 73 dalla postazione (punto 2) e 6167 dalla sede di ripiego
+  `Castelplanio` (punto 3b), esattamente i numeri della prova a secco.
+- **0008 applicata** (`closed_at`, `closed_by_user_id`).
+- **`user_id` reso facoltativo.** Non lo fa nessuna migration: su UAT era rimasto
+  NOT NULL mentre in `schema.ts` è opzionale (appuntamento "da assegnare").
+  Allineato a mano insieme alla 0008. **Su prod va rifatto lo stesso controllo.**
+
+Lo schema di `appointments` su UAT ora combacia con `schema.ts`.
+
+Git: `dev` pushato, `uat` allineato in fast-forward e pushato. `npm run build`
+passa in locale.
+
+Resta da fare: controllare che il deploy Vercel sia andato (passo 6) e le sei
+verifiche a video del punto 5.
+
+---
+
 ## 1. Da dove si parte
 
 Il branch `dev` ha **19 commit che su `uat` non ci sono** (13 richieste del cliente
@@ -134,14 +156,13 @@ di creare un merge commit a sorpresa.
 
 ### Passo 6 — Deploy
 
-**Da chiarire: non è documentato da nessuna parte come venga pubblicata l'app su
-UAT.** Nel repository non ci sono workflow GitHub né `vercel.json`, e `.env.uat`
-contiene solo `DATABASE_URL` e `AUTH_SECRET`, nessun indirizzo dell'applicazione.
+UAT è un **progetto Vercel agganciato al branch `uat`**: il deploy parte da solo
+al push del passo 5, non c'è niente da lanciare a mano. L'aggancio è configurato su
+Vercel, non nel repository — per questo qui non si trovano né workflow GitHub né
+`vercel.json` né `.vercel/`.
 
-- Se è un progetto Vercel agganciato al branch `uat`, il deploy parte da solo al
-  push del passo 5 e non c'è altro da fare.
-- Se invece UAT gira in locale contro quel database, il passo 6 non esiste: basta
-  il merge.
+Da controllare sulla dashboard Vercel che il deploy del commit `b6a85df` sia
+andato a buon fine prima di passare al punto 5.
 
 ---
 
