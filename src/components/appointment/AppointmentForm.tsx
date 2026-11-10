@@ -491,7 +491,10 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
 
   return (
     <div className="space-y-4">
-      {mode === 'edit' && (
+      {/* Il form aperto dentro il dettaglio (modifica, oppure nuovo appuntamento a
+          partire da questo) non ha un dialog proprio da chiudere: serve un modo per
+          tornare indietro senza perdere il dettaglio. */}
+      {(mode === 'edit' || editableSlot) && (
         <div className="flex justify-end">
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
             Annulla

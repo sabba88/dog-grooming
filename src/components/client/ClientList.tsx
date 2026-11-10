@@ -338,7 +338,11 @@ export function ClientList({ clients }: ClientListProps) {
                   return (
                     <TableRow
                       key={client.id}
-                      className={cn('cursor-pointer', missing.length > 0 && 'bg-destructive/5')}
+                      // Niente tinta sull'intera riga: nei dati reali quasi tutti i
+                      // clienti hanno qualcosa di incompleto e l'elenco diventava
+                      // tutto rosso, senza piu' nessun contrasto. Il segnale lo danno
+                      // l'avviso accanto al nome e i campi mancanti in rosso.
+                      className="cursor-pointer"
                       onClick={() => router.push(`/clients/${client.id}`)}
                     >
                       <TableCell>
@@ -411,10 +415,7 @@ export function ClientList({ clients }: ClientListProps) {
                 <button
                   key={client.id}
                   type="button"
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-left w-full hover:bg-muted/50',
-                    missing.length > 0 && 'border-destructive/40 bg-destructive/5'
-                  )}
+                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-left w-full hover:bg-muted/50"
                   onClick={() => router.push(`/clients/${client.id}`)}
                 >
                   <Avatar className="h-10 w-10">
