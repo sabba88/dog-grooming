@@ -249,8 +249,8 @@ solo per il dettaglio appuntamento.
 
 Provato a 1440x900 sul dettaglio vero di UAT: prima il riquadro andava da -18 a
 919 px e non scorreva, dopo sta fra 16 e 884 px, la X si vede e "Cancella" si
-raggiunge scorrendo. La correzione **non è ancora pubblicata su UAT**: va pushata
-su `dev` e portata su `uat`.
+raggiunge scorrendo. **Pubblicato su UAT e ricontrollato sull'ambiente vero**:
+`max-height: 868px`, `overflow-y: auto`, X, "Sposta" e "Cancella" raggiungibili.
 
 ### Appuntamento di prova da cancellare
 
