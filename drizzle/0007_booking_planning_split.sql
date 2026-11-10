@@ -10,8 +10,12 @@
 --   3b) il tenant ne ha piu' di una → serve una scelta esplicita, per nome.
 -- DA RIVEDERE A OGNI AMBIENTE: il nome al punto 3b.
 --   dev  → non serve: tenant con una sola sede ("Sede Castelplanio"), coperto da 3a
---   uat  → da decidere
---   prod → da decidere
+--   uat  → "Castelplanio" (deciso il 10/11/2026). Le sedi sono due, Castelplanio e
+--          AgriMoie, e 6167 appuntamenti su 6240 non hanno postazione. Castelplanio
+--          e' la sede di fatto: suoi tutti i 73 appuntamenti con postazione, 210
+--          turni contro 12, 9 fasce di apertura contro 2, 3 postazioni contro 2.
+--   prod → da decidere. Il nome qui sotto e' quello di uat: va riletto prima di
+--          lanciare la migration in produzione.
 -- Se dopo 3a e 3b resta anche un solo appuntamento senza sede, la migration si
 -- ferma (punto 4) invece di assegnarlo alla sede sbagliata.
 
@@ -42,7 +46,7 @@ UPDATE "appointments" a
    SET "location_id" = (
          SELECT l."id" FROM "locations" l
           WHERE l."tenant_id" = a."tenant_id"
-            AND l."name" = 'Sede Castelplanio'
+            AND l."name" = 'Castelplanio'
           LIMIT 1)
  WHERE a."location_id" IS NULL;
 --> statement-breakpoint
