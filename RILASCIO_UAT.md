@@ -228,7 +228,7 @@ admin, sede Castelplanio.
 Il prezzo arriva dalla matrice pelo/taglia: Bagno 20,00 € di base, 28,00 € per
 "Pelo Lungo · Taglia Media", con la maggiorazione scritta sotto al campo.
 
-### Un problema aperto: il dettaglio appuntamento non ci sta in altezza
+### Il dettaglio appuntamento non ci stava in altezza — corretto
 
 Il riquadro del dettaglio è alto **1118 px** e non è scorrevole: `DialogContent`
 in `src/components/ui/dialog.tsx` è centrato con `translate-y-[-50%]` e non ha né
@@ -240,8 +240,17 @@ irraggiungibili la **X per chiudere**, **"Vendi Prodotti"**, **"Sposta"** e
 riquadro si chiude solo con Esc. A 1200 px di altezza ci sta tutto.
 
 Non c'entrano le migration: è il dettaglio che si è allungato con il riquadro di
-chiusura e lo storico note. Va sistemato prima di darlo al cliente, perché i
-portatili stanno quasi tutti sotto i 1000 px utili.
+chiusura e lo storico note.
+
+**Corretto** aggiungendo `max-h-[calc(100dvh-2rem)]`, `overflow-y-auto` e
+`overscroll-contain` a `DialogContent`: il riquadro si ferma all'altezza della
+finestra e scorre al suo interno. Vale per tutti i dialog dell'applicazione, non
+solo per il dettaglio appuntamento.
+
+Provato a 1440x900 sul dettaglio vero di UAT: prima il riquadro andava da -18 a
+919 px e non scorreva, dopo sta fra 16 e 884 px, la X si vede e "Cancella" si
+raggiunge scorrendo. La correzione **non è ancora pubblicata su UAT**: va pushata
+su `dev` e portata su `uat`.
 
 ### Appuntamento di prova da cancellare
 
