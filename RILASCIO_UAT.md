@@ -25,8 +25,11 @@ Lo schema di `appointments` su UAT ora combacia con `schema.ts`.
 Git: `dev` pushato, `uat` allineato in fast-forward e pushato. `npm run build`
 passa in locale.
 
-Resta da fare: controllare che il deploy Vercel sia andato (passo 6) e le sei
-verifiche a video del punto 5.
+Deploy Vercel andato e **sei verifiche del punto 5 fatte a video su UAT: passano
+tutte**. Dettaglio in fondo, al punto 7.
+
+Resta da fare: cancellare l'appuntamento di prova e decidere cosa fare del
+problema di altezza del dettaglio appuntamento (punto 7).
 
 ---
 
@@ -205,3 +208,46 @@ Da controllare a video:
 11. Chi ha fatto il cane l'ultima volta
 12. Chiusura appuntamento con conferma del prezzo
 13. L'agenda si aggiorna dopo una modifica dal dettaglio
+
+---
+
+## 7. Esito delle verifiche — 10/11/2026
+
+Fatte sull'ambiente UAT vero (`dog-grooming-git-uat-…vercel.app`), con l'utenza
+admin, sede Castelplanio.
+
+| # | verifica | esito |
+|---|---|---|
+| 1 | colonna "Da assegnare" in agenda | **ok** — il 7 ott 2026 mostra 3 appuntamenti "Da pianificare", esattamente i 3 senza postazione di quel giorno |
+| 2 | click al centro di una cella vuota | **ok** — si apre "Nuovo Appuntamento" con postazione, data e ora già compilate |
+| 3 | vista persone | **ok** — colonne Federica / Lisa / Nicola con l'orario del turno, la postazione su ogni blocco e il pannello verticale delle presenze a sinistra |
+| 4 | riquadro "Chiusura appuntamento" | **ok** — prezzo proposto, "Ultimo appuntamento: 9,00 € il 6 ott 2026 · Nicola" e il pulsante "Nuovo appuntamento da questo" |
+| 5 | elenco clienti | **ok** — filtri agganciati in alto mentre si scorre, badge "Dati mancanti (257)", pelo/taglia mancanti in rosso, pulsante "Esporta" |
+| 6 | ricerca `ola` | **ok** — esce solo il cane OLA; LOLA, NUVOLA e COCACOLA non compaiono |
+
+Il prezzo arriva dalla matrice pelo/taglia: Bagno 20,00 € di base, 28,00 € per
+"Pelo Lungo · Taglia Media", con la maggiorazione scritta sotto al campo.
+
+### Un problema aperto: il dettaglio appuntamento non ci sta in altezza
+
+Il riquadro del dettaglio è alto **1118 px** e non è scorrevole: `DialogContent`
+in `src/components/ui/dialog.tsx` è centrato con `translate-y-[-50%]` e non ha né
+`max-h` né `overflow-y-auto`.
+
+Su una finestra alta 900 px viene tagliato sopra e sotto, e restano
+irraggiungibili la **X per chiudere**, **"Vendi Prodotti"**, **"Sposta"** e
+**"Cancella"**: l'appuntamento non si riesce a cancellare dal dettaglio, e il
+riquadro si chiude solo con Esc. A 1200 px di altezza ci sta tutto.
+
+Non c'entrano le migration: è il dettaglio che si è allungato con il riquadro di
+chiusura e lo storico note. Va sistemato prima di darlo al cliente, perché i
+portatili stanno quasi tutti sotto i 1000 px utili.
+
+### Appuntamento di prova da cancellare
+
+Creato per la verifica 2:
+
+- **10 febbraio 2027, 13:00-14:00**, Castelplanio, Vasca Grande
+- cane **OLA** (Barboncino), cliente **Maurizio Cantarini**, servizio Bagno, 28,00 €
+- nota: `TEST RILASCIO UAT 10/11/2026 - da cancellare`
+- id `e1cfd592-1bad-4e89-9b3b-8b4f009db083`
