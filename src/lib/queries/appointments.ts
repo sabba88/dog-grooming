@@ -34,6 +34,8 @@ export async function getAppointmentById(id: string, tenantId: string) {
       stationName: stations.name,
       closedAt: appointments.closedAt,
       closedByName: closedBy.name,
+      source: appointments.source,
+      phoneChangedAt: appointments.phoneChangedAt,
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))
@@ -231,6 +233,8 @@ export async function getUnplannedAppointments(
       clientNominativo: clients.nominativo,
       dogName: dogs.name,
       serviceName: services.name,
+      source: appointments.source,
+      phoneChangedAt: appointments.phoneChangedAt,
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))

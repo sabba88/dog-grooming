@@ -26,7 +26,8 @@ import {
   fetchAppointmentsForExport,
 } from '@/lib/actions/appointments'
 import { buildCsv, csvDate, csvPrice, csvTime, downloadCsv } from '@/lib/utils/csv'
-import { missingPlanningFields } from '@/lib/utils/appointment'
+import { missingPlanningFields, phoneLabel } from '@/lib/utils/appointment'
+import { PhoneBadge } from '@/components/appointment/PhoneBadge'
 import { computeAgendaRange, timeToMinutes } from '@/lib/utils/schedule'
 import { useAgendaGroupBy } from '@/hooks/useAgendaGroupBy'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -719,6 +720,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
                     <p className="mt-1 text-xs text-amber-700">
                       Manca: {missingPlanningFields(appt).join(', ')}
                     </p>
+                    {phoneLabel(appt) && <PhoneBadge label={phoneLabel(appt)!} className="mt-1.5" />}
                     <div className="mt-2 flex gap-2">
                       <Button
                         variant="outline"

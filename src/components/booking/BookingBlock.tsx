@@ -3,6 +3,7 @@
 import { cn } from '@/lib/utils'
 import { formatCoOwnerNames, formatCoOwnerFull, type CoOwner } from '@/lib/utils/formatting'
 import { DA_PIANIFICARE_LABEL } from '@/lib/utils/appointment'
+import { PhoneBadge } from '@/components/appointment/PhoneBadge'
 
 interface BookingBlockProps {
   id: string
@@ -15,6 +16,8 @@ interface BookingBlockProps {
   endTime: Date
   /** Nessuno ci ha ancora messo mano in pianificazione. */
   daPianificare: boolean
+  /** Preso o spostato dall'assistente vocale: icona del telefono accanto al cane. */
+  phoneLabel?: string | null
   style?: React.CSSProperties
   onClick?: (id: string) => void
 }
@@ -39,6 +42,7 @@ export function BookingBlock({
   startTime,
   endTime,
   daPianificare,
+  phoneLabel,
   style,
   onClick,
 }: BookingBlockProps) {
@@ -59,7 +63,8 @@ export function BookingBlock({
       style={{ ...style, minHeight: '44px' }}
     >
       <div className="flex items-center justify-between gap-1">
-        <p className="truncate text-xs font-medium text-foreground">
+        <p className="flex min-w-0 items-center gap-1 truncate text-xs font-medium text-foreground">
+          {phoneLabel && <PhoneBadge label={phoneLabel} compact />}
           {dogName}
           {breedName && <span className="font-normal text-muted-foreground"> ({breedName})</span>}
         </p>

@@ -38,6 +38,9 @@ export async function getBookingsByDateAndLocation(
       dogName: dogs.name,
       breedName: breeds.name,
       serviceName: services.name,
+      // Assistente vocale: preso o spostato al telefono.
+      source: appointments.source,
+      phoneChangedAt: appointments.phoneChangedAt,
     })
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))

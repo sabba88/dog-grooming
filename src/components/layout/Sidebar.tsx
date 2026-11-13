@@ -12,6 +12,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
@@ -23,9 +24,11 @@ import type { UserRole } from '@/lib/auth/permissions'
 interface AppSidebarProps {
   userRole: UserRole
   userName: string
+  /** Numeri accanto alle voci di menu, per href (es. messaggi da leggere). Zero non si mostra. */
+  badges?: Record<string, number>
 }
 
-export function AppSidebar({ userRole, userName }: AppSidebarProps) {
+export function AppSidebar({ userRole, userName, badges = {} }: AppSidebarProps) {
   const pathname = usePathname()
   const { state } = useSidebar()
   const isCollapsed = state === 'collapsed'
@@ -75,6 +78,9 @@ export function AppSidebar({ userRole, userName }: AppSidebarProps) {
                         <span>{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {(badges[item.href] ?? 0) > 0 && (
+                      <SidebarMenuBadge className="bg-sky-600 text-white">{badges[item.href]}</SidebarMenuBadge>
+                    )}
                   </SidebarMenuItem>
                 )
               })}

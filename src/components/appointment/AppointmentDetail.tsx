@@ -5,7 +5,8 @@ import { useAction } from 'next-safe-action/hooks'
 import { fetchAppointmentDetail, deleteAppointment, saveAppointmentNote, fetchServiceNotesByDog, fetchActiveUsers, reassignStaff, closeAppointment, reopenAppointment, fetchLastDogVisit } from '@/lib/actions/appointments'
 import type { LastDogVisit } from '@/lib/queries/appointments'
 import { formatPriceOrDash, formatDuration, getCoOwners, isMissingValue } from '@/lib/utils/formatting'
-import { isDaPianificare, missingPlanningFields } from '@/lib/utils/appointment'
+import { isDaPianificare, missingPlanningFields, phoneLabel } from '@/lib/utils/appointment'
+import { PhoneBadge } from '@/components/appointment/PhoneBadge'
 import { MissingValue } from '@/components/client/MissingValue'
 import { format } from 'date-fns'
 import { it } from 'date-fns/locale'
@@ -298,8 +299,21 @@ export function AppointmentDetail({
   const planningGaps = missingPlanningFields(appointment)
   const isClosed = !!appointment.closedAt
 
+  const telefono = phoneLabel(appointment)
+
   return (
     <div className="flex flex-col gap-4 p-4">
+      {telefono && (
+        <div className="flex flex-col gap-1">
+          <PhoneBadge label={telefono} className="self-start" />
+          {appointment.phoneChangedAt && (
+            <p className="text-xs text-muted-foreground">
+              L&apos;assistente vocale ha cambiato l&apos;orario su richiesta del cliente: postazione e
+              collaboratore sono stati tolti.
+            </p>
+          )}
+        </div>
+      )}
       {isDaPianificare(appointment) && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
           <p className="text-sm font-medium text-amber-800">Da pianificare</p>

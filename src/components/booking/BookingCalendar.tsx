@@ -10,6 +10,7 @@ import { useLocationSelector } from '@/hooks/useLocationSelector'
 import { DateNavigation } from '@/components/schedule/DateNavigation'
 import { DateStrip } from '@/components/schedule/DateStrip'
 import { BookingBlock } from './BookingBlock'
+import { PhoneBadge } from '@/components/appointment/PhoneBadge'
 import { BookingForm, type BookingInitialValues } from './BookingForm'
 import { BookingWeekGrid } from './BookingWeekGrid'
 import { getBookingDayData, getBookingWeekData, deleteBooking, moveBooking } from '@/lib/actions/bookings'
@@ -23,7 +24,7 @@ import {
   MINUTES_PER_SLOT,
   SLOT_HEIGHT_PX,
 } from '@/lib/utils/schedule'
-import { isDaPianificare } from '@/lib/utils/appointment'
+import { isDaPianificare, phoneLabel } from '@/lib/utils/appointment'
 import { getCoOwners } from '@/lib/utils/formatting'
 import type { StaffStatus, ShiftInfo } from '@/lib/queries/staff'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -394,8 +395,25 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
     </div>
   )
 
+  // Prenotazione presa o spostata dall'assistente vocale: lo si dice in cima al form,
+  // con le note raccolte al telefono (pulci, eta', razza detta), che altrimenti stanno
+  // sotto "Dettagli" chiuso.
+  const telefonoDi = (initial?: BookingInitialValues) => {
+    const b = initial ? bookings.find((x) => x.id === initial.id) : undefined
+    const label = b ? phoneLabel(b) : null
+    return label ? { label, notes: b?.notes ?? null } : null
+  }
+
   const formBody = (time: string, initial?: BookingInitialValues) => (
     <div className="flex flex-col gap-3">
+      {telefonoDi(initial) && (
+        <div className="flex flex-col gap-1 rounded-md border border-sky-200 bg-sky-50/50 p-2">
+          <PhoneBadge label={telefonoDi(initial)!.label} className="self-start" />
+          {telefonoDi(initial)!.notes && (
+            <p className="text-xs text-muted-foreground">{telefonoDi(initial)!.notes}</p>
+          )}
+        </div>
+      )}
       <BookingForm
         locationId={selectedLocationId!}
         date={dateString}
@@ -619,6 +637,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
                     startTime={booking.startTime}
                     endTime={booking.endTime}
                     daPianificare={isDaPianificare(booking)}
+                    phoneLabel={phoneLabel(booking)}
                     style={{ top: 0, bottom: 0 }}
                     onClick={handleBlockClick}
                   />

@@ -25,3 +25,19 @@ export function missingPlanningFields(a: PlanningFields): string[] {
 }
 
 export const DA_PIANIFICARE_LABEL = 'Da pianificare'
+
+// Assistente vocale (POC 12/11/2026): appuntamenti presi o spostati al telefono.
+export interface PhoneFields {
+  source: string
+  phoneChangedAt: Date | string | null
+}
+
+/**
+ * Etichetta da mostrare su un appuntamento passato dall'assistente vocale, o null.
+ * "Spostato dal telefono" vince: dice che la pianificazione e' saltata e va rifatta.
+ */
+export function phoneLabel(a: PhoneFields): string | null {
+  if (a.phoneChangedAt) return 'Spostato dal telefono'
+  if (a.source === 'telefono') return 'Preso al telefono'
+  return null
+}

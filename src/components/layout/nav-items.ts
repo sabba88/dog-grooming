@@ -9,6 +9,7 @@ import {
   Settings,
   Dog,
   ShoppingBag,
+  MessageSquare,
 } from 'lucide-react'
 import type { UserRole } from '@/lib/auth/permissions'
 import type { LucideIcon } from 'lucide-react'
@@ -25,6 +26,8 @@ export const mainNavItems: NavItem[] = [
   { label: 'Prenotazioni', href: '/bookings', icon: CalendarPlus, roles: ['admin', 'collaborator'] },
   { label: 'Pianificazione', href: '/agenda', icon: Calendar, roles: ['admin', 'collaborator'] },
   { label: 'Clienti', href: '/clients', icon: Users, roles: ['admin', 'collaborator'] },
+  // Messaggi lasciati all'assistente vocale: accanto c'e' il numero di quelli da leggere.
+  { label: 'Messaggi', href: '/messages', icon: MessageSquare, roles: ['admin', 'collaborator'] },
   { label: 'Cani', href: '/dogs', icon: PawPrint, roles: ['admin', 'collaborator'] },
   { label: 'Servizi', href: '/services', icon: Scissors, roles: ['admin', 'collaborator'] },
   { label: 'Personale', href: '/staff', icon: UserCog, roles: ['admin'] },
@@ -52,6 +55,7 @@ export const pageTitles: Record<string, string> = {
   '/bookings': 'Prenotazioni',
   '/agenda': 'Pianificazione',
   '/clients': 'Clienti',
+  '/messages': 'Messaggi dal telefono',
   '/dogs': 'Cani',
   '/services': 'Servizi',
   '/breeds': 'Razze',
