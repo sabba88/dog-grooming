@@ -10,8 +10,11 @@ export default auth((req) => {
 
   const isLoginPage = req.nextUrl.pathname === '/login'
   const isAuthApi = req.nextUrl.pathname.startsWith('/api/auth')
+  // Assistente vocale: le chiama Fish durante la telefonata, senza sessione.
+  // Si autenticano da sole (token o firma del webhook): vedi src/lib/voce/http.ts.
+  const isVoiceApi = req.nextUrl.pathname.startsWith('/api/voce/')
 
-  if (isAuthApi) {
+  if (isAuthApi || isVoiceApi) {
     return NextResponse.next()
   }
 

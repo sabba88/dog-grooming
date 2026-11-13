@@ -65,6 +65,9 @@ export const clients = pgTable('clients', {
   email: text('email'),
   consentGivenAt: timestamp('consent_given_at').notNull(),
   consentVersion: text('consent_version').notNull().default('1.0'),
+  // Clienti creati dall'assistente vocale: la chiamata in cui hanno detto si'
+  // al salvataggio dei dati (consentVersion 'telefono-1.0').
+  consentSessionId: text('consent_session_id'),
   deletedAt: timestamp('deleted_at'),
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -200,9 +203,27 @@ export const appointments = pgTable('appointments', {
   // e' derivato) perche' registra un fatto avvenuto, non la somma di altri campi.
   closedAt: timestamp('closed_at'),
   closedByUserId: uuid('closed_by_user_id'),
+  // Da dove arriva: 'banco' (gestionale) o 'telefono' (assistente vocale).
+  source: text('source').notNull().default('banco'),
+  // Spostato dall'assistente vocale: postazione e collaboratore tolti, da ripianificare.
+  phoneChangedAt: timestamp('phone_changed_at'),
   tenantId: uuid('tenant_id').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+// Messaggi lasciati al telefono all'assistente vocale, da leggere in negozio.
+export const phoneMessages = pgTable('phone_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  locationId: uuid('location_id').notNull(),
+  clientId: uuid('client_id'),
+  name: text('name'),
+  phone: text('phone'),
+  message: text('message').notNull(),
+  sessionId: text('session_id'),
+  readAt: timestamp('read_at'),
+  tenantId: uuid('tenant_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
 export const products = pgTable('products', {
