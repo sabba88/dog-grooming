@@ -6,7 +6,7 @@
 // L'appuntamento nasce come una prenotazione del banco: postazione, collaboratore e prezzo
 // vuoti, quindi finisce in "Da pianificare"; in più ha source = 'telefono'.
 
-import type { Contesto } from '../contesto'
+import { telefonoDaSalvare, type Contesto } from '../contesto'
 import { appuntamentiFuturi, prenotaSeCePosto, razze, type CaneTrovato, type ClienteTrovato } from '../dati'
 import { appuntamentoStessoGiorno } from '../disponibilita'
 import { leggiGiorno, leggiOra, leggiSi, testo } from '../formati'
@@ -14,7 +14,6 @@ import { quando } from '../frasi'
 import { datiNonValidi, type Risposta } from '../http'
 import { cercaPerNome, paroleChiave } from '../nomi'
 import { elenco, maiuscola } from '../parole'
-import { telefonoNazionale } from '../telefono'
 import { chiChiama, controllaDataEOrario, riconosciServizio } from './comune'
 
 /** Taglia detta a voce -> size_type del gestionale. Solo per i meticci (nodo "cosa chiede"). */
@@ -43,8 +42,8 @@ export async function prenota(corpo: Record<string, unknown>, ctx: Contesto): Pr
   const { servizio } = r
 
   // ── Chi è il cliente ──
-  const telefonoDetto = telefonoNazionale(testo(corpo.telefono_detto))
-  const telefono = ctx.telefonoChiamante || telefonoDetto
+  // Il numero di prova non si salva mai: dal costruttore di Fish il numero si chiede a voce.
+  const telefono = telefonoDaSalvare(ctx, testo(corpo.telefono_detto))
   if (!telefono) return manca('telefono', 'Il suo numero non mi arriva: mi può dire un numero di telefono?')
 
   const { clienti, cani } = await chiChiama(ctx, telefono)

@@ -2,18 +2,18 @@
 // non fa da solo: disdette, appuntamenti per oggi, cani difficili, richieste particolari.
 // Corpo: nome, messaggio, telefono_detto (solo se il numero è nascosto).
 
-import type { Contesto } from '../contesto'
+import { telefonoDaSalvare, type Contesto } from '../contesto'
 import { salvaMessaggio } from '../dati'
 import { testo } from '../formati'
 import { datiNonValidi, type Risposta } from '../http'
-import { telefonoNazionale } from '../telefono'
 import { chiChiama } from './comune'
 
 export async function lasciaMessaggio(corpo: Record<string, unknown>, ctx: Contesto): Promise<Risposta> {
   const messaggio = testo(corpo.messaggio)
   if (!messaggio) return datiNonValidi('Cosa vuole che riferisca al negozio?')
 
-  const telefono = ctx.telefonoChiamante || telefonoNazionale(testo(corpo.telefono_detto))
+  // Il numero di prova non si salva mai (vedi telefonoDaSalvare).
+  const telefono = telefonoDaSalvare(ctx, testo(corpo.telefono_detto))
   if (!telefono) {
     return { esito: 'manca_dato', manca: 'telefono', da_dire: 'Il suo numero non mi arriva: a che numero la possono richiamare?' }
   }

@@ -199,6 +199,20 @@ verifica('salvato', r.esito === 'salvato', JSON.stringify(r))
 const [msg] = await sql`SELECT * FROM phone_messages WHERE session_id = 'verifica-1'`
 verifica('messaggio con cliente, nome e telefono', msg?.client_id === cliente.id && msg?.name === 'Prova Verifica' && msg?.phone === '3990000001', JSON.stringify(msg))
 
+// Dal costruttore di Fish il numero arriva vuoto e si usa quello di prova: serve a riconoscere,
+// ma non va mai salvato (prova del 13/11/2026). Il numero si chiede a voce.
+console.log('\n9. Numero vuoto: il numero di prova non si salva')
+const senzaNumero = { telefono: '', sessione: 'verifica-9' }
+const nuovoSenzaNumero = { ...base, ora: '16:00', cane: 'Toby', razza: 'labrador', nome_cliente: 'Prova Numero', consenso_dati: 'sì', conferma_cliente: true }
+r = await strumento('prenota', nuovoSenzaNumero, senzaNumero)
+verifica('prenota senza numero detto: manca telefono', r.esito === 'manca_dato' && r.manca === 'telefono', JSON.stringify(r))
+r = await strumento('lascia-messaggio', { nome: 'Prova Numero', messaggio: 'Prova.', telefono_detto: '' }, senzaNumero)
+verifica('lascia-messaggio senza numero detto: manca telefono', r.esito === 'manca_dato' && r.manca === 'telefono', JSON.stringify(r))
+r = await strumento('prenota', { ...nuovoSenzaNumero, telefono_detto: TEL_ALTRO }, senzaNumero)
+verifica('con il numero detto: prenotato', r.esito === 'prenotato', JSON.stringify(r))
+verifica('il cliente nuovo ha il numero detto, non quello di prova', (await sql`SELECT count(*)::int AS n FROM clients WHERE phone = '3990000002'`)[0].n === 1)
+verifica('sul numero di prova resta un solo cliente', (await sql`SELECT count(*)::int AS n FROM clients WHERE phone = '3990000001'`)[0].n === 1)
+
 await pulisci()
 const resti = (await sql`SELECT count(*)::int AS n FROM clients WHERE phone IN ('3990000001', '3990000002')`)[0].n
 console.log(`\nPulizia: ${resti === 0 ? 'fatta' : 'RESTANO DATI DI PROVA'}`)

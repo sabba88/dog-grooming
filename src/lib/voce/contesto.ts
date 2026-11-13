@@ -24,6 +24,15 @@ export interface Contesto {
 export class ConfigurazioneMancante extends Error {}
 
 /**
+ * Il numero da salvare su un cliente nuovo o su un messaggio: quello vero di chi chiama,
+ * altrimenti quello detto a voce. Mai il numero di prova: serve solo a riconoscere,
+ * non deve finire nel database (prova del 13/11/2026: cliente salvato con il numero finto).
+ */
+export function telefonoDaSalvare(ctx: Contesto, detto: unknown): string {
+  return (ctx.telefonoDiProva ? '' : ctx.telefonoChiamante) || telefonoNazionale(detto)
+}
+
+/**
  * Il numero di prova vale solo fuori dalla produzione: serve per provare l'assistente dal
  * costruttore di Fish, dove il numero di chi chiama arriva vuoto (POC, nodo 9).
  */
