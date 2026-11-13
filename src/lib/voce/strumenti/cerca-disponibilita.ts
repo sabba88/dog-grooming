@@ -5,10 +5,10 @@
 import type { Contesto } from '../contesto'
 import { prezzoAPartireDa } from '../dati'
 import { leggiGiorno, leggiOra, testo } from '../formati'
-import { quando } from '../frasi'
+import { frasePrezzo, quando } from '../frasi'
 import { datiNonValidi, type Risposta } from '../http'
 import { cercaPerNome } from '../nomi'
-import { maiuscola, prezzoInParole } from '../parole'
+import { maiuscola } from '../parole'
 import { chiChiama, controllaDataEOrario, riconosciServizio } from './comune'
 
 export async function cercaDisponibilita(corpo: Record<string, unknown>, ctx: Contesto): Promise<Risposta> {
@@ -26,7 +26,7 @@ export async function cercaDisponibilita(corpo: Record<string, unknown>, ctx: Co
   const { cani } = nomeCane ? await chiChiama(ctx) : { cani: [] }
   const cane = nomeCane ? cercaPerNome(cani, nomeCane, (c) => c.nome).trovata : null
   const prezzo = await prezzoAPartireDa(ctx.tenantId, servizio, cane)
-  const prezzoDetto = `Di solito ${servizio.name.toLowerCase()} parte da ${prezzoInParole(prezzo)}: il prezzo preciso lo vede il toelettatore quando vede il cane.`
+  const prezzoDetto = frasePrezzo(servizio.name, prezzo)
 
   const controllo = await controllaDataEOrario(ctx, giorno, ora, servizio.duration)
   if (!controllo.ok) return { ...controllo.risposta, servizio: servizio.name, prezzo_detto: prezzoDetto }

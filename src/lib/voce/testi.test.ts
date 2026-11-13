@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { telefonoNazionale, stessoTelefono } from './telefono'
 import { cercaPerNome } from './nomi'
 import { alleOre, dataInParole, prezzoInParole } from './parole'
-import { orariInParole, proposta } from './frasi'
+import { frasePrezzo, orariInParole, proposta } from './frasi'
 
 describe('telefono', () => {
   it('riduce i numeri italiani alla forma del gestionale', () => {
@@ -62,6 +62,14 @@ describe('parole', () => {
     const g = { oggi: '2026-11-12', domani: '2026-11-13' }
     expect(proposta([{ giorno: '2026-11-13', ora: '09:00' }, { giorno: '2026-11-13', ora: '10:00' }, { giorno: '2026-11-19', ora: '09:00' }], g))
       .toBe('Posso proporle domani alle nove, alle dieci o giovedì diciannove novembre alle nove.')
+  })
+})
+
+describe('frasePrezzo', () => {
+  it('dice il prezzo solo se è credibile', () => {
+    expect(frasePrezzo('Bagno', 2000)).toBe('Di solito bagno parte da venti euro: il prezzo preciso lo vede il toelettatore quando vede il cane.')
+    expect(frasePrezzo('Stripping', 20)).not.toMatch(/euro|centesimi/)
+    expect(frasePrezzo('Stripping', null)).toMatch(/glielo dice il toelettatore/)
   })
 })
 

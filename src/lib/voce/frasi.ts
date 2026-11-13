@@ -2,7 +2,7 @@
 // per l'assistente (lezione della pizzeria: il modello le legge come sono scritte).
 
 import type { Alternativa, EsitoData, EsitoOrario, OrarioSede } from './disponibilita'
-import { alleOre, dalleOre, dataInParole, elenco, GIORNI_SETTIMANA, giornoDetto, maiuscola, numeroInParole } from './parole'
+import { alleOre, dalleOre, dataInParole, elenco, GIORNI_SETTIMANA, giornoDetto, maiuscola, numeroInParole, prezzoInParole } from './parole'
 import { aggiungiGiorni } from './formati'
 import { REGOLE_VOCE } from './regole'
 
@@ -54,6 +54,17 @@ export function orariInParole(orari: OrarioSede[]): string {
   const chiusi = perGiorno.map((f, dow) => (f ? '' : GIORNI_SETTIMANA[dow])).filter(Boolean)
   if (aperti.length === 0) return 'orari non disponibili'
   return [...aperti, ...(chiusi.length > 0 ? [`chiuso ${elenco(chiusi, 'e')}`] : [])].join('; ')
+}
+
+/**
+ * Il prezzo da dire solo se il cliente lo chiede, sempre come "a partire da" (POC, nodo 8).
+ * Un prezzo sotto la soglia è un segnaposto del gestionale: niente cifre.
+ */
+export function frasePrezzo(servizio: string, centesimi: number | null): string {
+  if (centesimi === null || centesimi < REGOLE_VOCE.prezzoMinimoCredibileCent) {
+    return `Il prezzo di ${servizio.toLowerCase()} glielo dice il toelettatore: dipende dalla taglia e dal pelo del cane.`
+  }
+  return `Di solito ${servizio.toLowerCase()} parte da ${prezzoInParole(centesimi)}: il prezzo preciso lo vede il toelettatore quando vede il cane.`
 }
 
 /** La frase per un giorno che l'assistente non può prenotare. */

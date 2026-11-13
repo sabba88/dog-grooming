@@ -13,6 +13,11 @@ export const REGOLE_VOCE = {
   alternativeMassime: 3,
   /** Quanti giorni dopo quello chiesto guarda per trovare alternative. */
   giorniRicercaAlternative: 7,
+  /**
+   * Sotto questa cifra un prezzo è un segnaposto, non un prezzo vero: su uat molti servizi
+   * valgono 20 centesimi (12/11/2026). L'assistente allora non dice cifre e rimanda al toelettatore.
+   */
+  prezzoMinimoCredibileCent: 500,
   /** Versione del consenso per i clienti nati al telefono (nodo 6). */
   versioneConsenso: 'telefono-1.0',
 } as const

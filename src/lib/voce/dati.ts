@@ -108,16 +108,19 @@ export async function prezzoAPartireDa(
   tenantId: string,
   servizio: { id: string; price: number },
   cane: { coatType: string | null; sizeType: string | null } | null
-): Promise<number> {
+): Promise<number | null> {
   const celle = await db
     .select({ coatType: servicePriceMatrix.coatType, sizeType: servicePriceMatrix.sizeType, price: servicePriceMatrix.price })
     .from(servicePriceMatrix)
     .where(and(eq(servicePriceMatrix.serviceId, servizio.id), eq(servicePriceMatrix.tenantId, tenantId)))
+  const credibile = (p: number) => p >= REGOLE_VOCE.prezzoMinimoCredibileCent
   if (cane?.coatType && cane.sizeType) {
     const cella = celle.find((c) => c.coatType === cane.coatType && c.sizeType === cane.sizeType)
-    if (cella) return cella.price
+    if (cella && credibile(cella.price)) return cella.price
   }
-  return celle.length > 0 ? Math.min(...celle.map((c) => c.price)) : servizio.price
+  const prezzi = [...celle.map((c) => c.price), servizio.price].filter(credibile)
+  // Senza un prezzo credibile (matrice vuota e prezzo segnaposto) non si dice nessuna cifra.
+  return prezzi.length > 0 ? Math.min(...prezzi) : null
 }
 
 // ─── Sede e giornate ──────────────────────────────────────────────────────────
