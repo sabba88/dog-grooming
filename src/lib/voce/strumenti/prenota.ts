@@ -7,7 +7,8 @@
 // vuoti, quindi finisce in "Da pianificare"; in più ha source = 'telefono'.
 
 import type { Contesto } from '../contesto'
-import { prenotaSeCePosto, razze, type CaneTrovato, type ClienteTrovato } from '../dati'
+import { appuntamentiFuturi, prenotaSeCePosto, razze, type CaneTrovato, type ClienteTrovato } from '../dati'
+import { appuntamentoStessoGiorno } from '../disponibilita'
 import { leggiGiorno, leggiOra, leggiSi, testo } from '../formati'
 import { quando } from '../frasi'
 import { datiNonValidi, type Risposta } from '../http'
@@ -110,6 +111,22 @@ export async function prenota(corpo: Record<string, unknown>, ctx: Contesto): Pr
   if (eta) note.push(`Età detta: ${eta}.`)
   const altre = testo(corpo.note)
   if (altre) note.push(altre)
+
+  // ── Già prenotato quel giorno? ── (solo per un cane che c'era già: uno nuovo non ha appuntamenti)
+  if (cliente && !nuovoCane) {
+    const esistenti = await appuntamentiFuturi(ctx.tenantId, ctx.locationId, [cliente.id], ctx.adesso)
+    const doppio = appuntamentoStessoGiorno(esistenti, cane.id, giorno)
+    if (doppio) {
+      const giaFissato = `${cane.nome} ha già un appuntamento ${quando(doppio.giorno, doppio.ora, ctx)}`
+      return {
+        esito: 'gia_prenotato',
+        da_dire: doppio.ora === ora
+          ? `${giaFissato}: è già tutto a posto, non serve prenotarlo di nuovo.`
+          : `${giaFissato}. Vuole spostarlo ${quando(giorno, ora, ctx)} o lo lascia com'è?`,
+        appuntamento: { giorno: doppio.giorno, ora: doppio.ora, servizio: doppio.servizio },
+      }
+    }
+  }
 
   // ── Posto ──
   const controllo = await controllaDataEOrario(ctx, giorno, ora, servizio.duration)

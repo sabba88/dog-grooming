@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cercaAlternative, controllaData, fasceDelGiorno, occupazioneMassima, orariLiberi, verificaOrario, type Giornata } from './disponibilita'
+import { appuntamentoStessoGiorno, cercaAlternative, controllaData, fasceDelGiorno, occupazioneMassima, orariLiberi, verificaOrario, type Giornata } from './disponibilita'
 
 const h = (ora: string) => {
   const [a, b] = ora.split(':').map(Number)
@@ -54,6 +54,20 @@ describe('controllaData', () => {
     expect(controllaData('2026-11-13', '2026-11-12')).toBe('ok')
     expect(controllaData('2027-01-11', '2026-11-12')).toBe('ok')
     expect(controllaData('2027-01-12', '2026-11-12')).toBe('troppo_in_la')
+  })
+})
+
+describe('appuntamentoStessoGiorno', () => {
+  const esistenti = [
+    { dogId: 'frank', giorno: '2026-11-17', ora: '11:00' },
+    { dogId: 'luna', giorno: '2026-11-18', ora: '09:00' },
+  ]
+  it('trova il doppione dello stesso cane lo stesso giorno, anche a un\'altra ora', () => {
+    expect(appuntamentoStessoGiorno(esistenti, 'frank', '2026-11-17')?.ora).toBe('11:00')
+  })
+  it('un altro giorno o un altro cane non sono doppioni', () => {
+    expect(appuntamentoStessoGiorno(esistenti, 'frank', '2026-11-18')).toBeUndefined()
+    expect(appuntamentoStessoGiorno(esistenti, 'luna', '2026-11-17')).toBeUndefined()
   })
 })
 

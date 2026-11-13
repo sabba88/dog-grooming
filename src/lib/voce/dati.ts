@@ -183,6 +183,7 @@ export interface AppuntamentoFuturo {
   giorno: string
   ora: string
   durata: number
+  dogId: string
   cane: string
   servizio: string | null
   pianificato: boolean
@@ -201,6 +202,7 @@ export async function appuntamentiFuturi(
       id: appointments.id,
       startTime: appointments.startTime,
       endTime: appointments.endTime,
+      dogId: appointments.dogId,
       cane: dogs.name,
       servizio: services.name,
       stationId: appointments.stationId,
@@ -226,6 +228,7 @@ export async function appuntamentiFuturi(
       giorno,
       ora,
       durata: Math.round((r.endTime.getTime() - r.startTime.getTime()) / 60_000),
+      dogId: r.dogId,
       cane: r.cane,
       servizio: r.servizio,
       pianificato: r.stationId !== null || r.userId !== null,

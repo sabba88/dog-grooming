@@ -32,6 +32,19 @@ export interface OrarioSede {
 export type EsitoOrario = 'disponibile' | 'pieno' | 'chiuso' | 'fuori_orario'
 export type EsitoData = 'ok' | 'passato' | 'oggi' | 'troppo_in_la'
 
+/**
+ * Il cane ha già un appuntamento quel giorno? Al telefono capita che un cliente non si ricordi
+ * di aver già prenotato: due toelettature lo stesso giorno per lo stesso cane sono quasi sempre
+ * un errore, quindi l'assistente non salva la seconda (prova del 13/11/2026: doppione salvato).
+ */
+export function appuntamentoStessoGiorno<T extends { dogId: string; giorno: string }>(
+  esistenti: T[],
+  dogId: string,
+  giorno: string
+): T | undefined {
+  return esistenti.find((a) => a.dogId === dogId && a.giorno === giorno)
+}
+
 /** Le fasce di apertura di un giorno, dalla tabella degli orari della sede. */
 export function fasceDelGiorno(orari: OrarioSede[], giorno: string): Intervallo[] {
   const dow = giornoSettimana(giorno)

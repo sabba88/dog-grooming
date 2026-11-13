@@ -1,4 +1,4 @@
-// Verifica delle route dell'assistente vocale contro il server locale e il database DEV.
+// Verifica delle route dell'assistente vocale contro un server e il database DEV.
 // Crea dati di prova (cliente con telefono 399 000 0001/0002, sessioni "verifica-*") e alla
 // fine li cancella. Non va mai lanciata su uat o prod.
 //
@@ -6,6 +6,10 @@
 //   node scripts/voce/verifica.mjs [http://localhost:3100]
 // Legge VOCE_TOKEN e VOCE_SEGRETO_INIZIO_CHIAMATA da .env.development.local e il
 // database da .env.dev, senza stamparli.
+//
+// Contro un'anteprima Vercel: indirizzo dell'anteprima come argomento, e i segreti di quel
+// deploy nelle variabili VERIFICA_TOKEN, VERIFICA_SEGRETO ed eventualmente VERIFICA_BYPASS
+// (token "Protection Bypass for Automation"). L'anteprima deve usare il database dev.
 
 import { readFileSync } from 'node:fs'
 import { createHmac } from 'node:crypto'
@@ -15,7 +19,13 @@ const BASE = process.argv[2] ?? 'http://localhost:3100'
 const leggiEnv = (file) => Object.fromEntries(readFileSync(file, 'utf8').split(/\r?\n/)
   .filter((l) => l.includes('=') && !l.startsWith('#'))
   .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^"|"$/g, '')] }))
-const voce = leggiEnv('.env.development.local')
+const locale = process.env.VERIFICA_TOKEN ? {} : leggiEnv('.env.development.local')
+const voce = {
+  VOCE_TOKEN: process.env.VERIFICA_TOKEN ?? locale.VOCE_TOKEN,
+  VOCE_SEGRETO_INIZIO_CHIAMATA: process.env.VERIFICA_SEGRETO ?? locale.VOCE_SEGRETO_INIZIO_CHIAMATA,
+}
+// Protezione delle anteprime Vercel: il token di bypass va in un header.
+const BYPASS = process.env.VERIFICA_BYPASS ? { 'x-vercel-protection-bypass': process.env.VERIFICA_BYPASS } : {}
 const sql = neon(leggiEnv('.env.dev').DATABASE_URL)
 
 const TEL_NUOVO = '+393990000001' // = VOCE_TELEFONO_PROVA
@@ -31,7 +41,7 @@ function verifica(nome, condizione, dettaglio = '') {
 async function strumento(nome, corpo, { token = voce.VOCE_TOKEN, telefono = TEL_NUOVO, sessione = 'verifica-1' } = {}) {
   const r = await fetch(`${BASE}/api/voce/${nome}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    headers: { 'Content-Type': 'application/json', ...BYPASS, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify({ ...corpo, session_id: sessione, telefono_chiamante: telefono }),
   })
   const dati = await r.json().catch(() => null)
@@ -43,7 +53,7 @@ async function inizioChiamata(chiamante, segreto = voce.VOCE_SEGRETO_INIZIO_CHIA
   const t = Math.floor(Date.now() / 1000)
   const v1 = createHmac('sha256', segreto).update(`${t}.${corpo}`).digest('hex')
   const r = await fetch(`${BASE}/api/voce/chiamata-in-arrivo`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Fish-Webhook-Signature': `t=${t},v1=${v1}` }, body: corpo,
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...BYPASS, 'X-Fish-Webhook-Signature': `t=${t},v1=${v1}` }, body: corpo,
   })
   return { stato: r.status, ...(await r.json().catch(() => null)) }
 }
@@ -122,12 +132,19 @@ verifica('appuntamento: 10:00-11:00 "UTC nudo", Bagno, da telefono, da pianifica
 verifica('note: pulci, meticcio, età', /Pulci: no/.test(app?.notes) && /Età detta: 3 anni/.test(app?.notes) && /Meticcio/.test(app?.notes), app?.notes)
 
 console.log('\n4. Cliente noto e posti')
+// Doppioni (13/11/2026): lo stesso cane non si prenota due volte lo stesso giorno.
 r = await strumento('prenota', { ...base, cane: 'luna', conferma_cliente: true })
-verifica('cliente noto, cane noto ("luna"): prenotato senza nome né razza', r.esito === 'prenotato', JSON.stringify(r))
+verifica('cane noto ("luna") già prenotato alla stessa ora: gia_prenotato, "già tutto a posto"', r.esito === 'gia_prenotato' && /già tutto a posto/.test(r.da_dire), JSON.stringify(r))
+r = await strumento('prenota', { ...base, cane: 'Luna', ora: '15:00', conferma_cliente: false })
+verifica('stesso cane, stesso giorno, altra ora: gia_prenotato, propone di spostare', r.esito === 'gia_prenotato' && /spostarlo/.test(r.da_dire), JSON.stringify(r))
 verifica('nessun cane doppio', (await sql`SELECT count(*)::int AS n FROM dogs WHERE client_id = ${cliente.id}::uuid`)[0].n === 1)
-r = await strumento('prenota', { ...base, cane: 'Luna', conferma_cliente: true })
+verifica('nessun appuntamento doppio', (await sql`SELECT count(*)::int AS n FROM appointments WHERE client_id = ${cliente.id}::uuid`)[0].n === 1)
+// Per riempire le postazioni servono cani diversi: Rex e Birba, nuovi, dello stesso cliente.
+r = await strumento('prenota', { ...base, cane: 'Rex', razza: 'labrador', conferma_cliente: true })
+verifica('cliente noto, cane nuovo (Rex) alle 10: prenotato', r.esito === 'prenotato', JSON.stringify(r))
+r = await strumento('prenota', { ...base, cane: 'Birba', razza: 'labrador', conferma_cliente: true })
 verifica('terzo appuntamento alle 10 (3 postazioni): prenotato', r.esito === 'prenotato', JSON.stringify(r))
-r = await strumento('prenota', { ...base, cane: 'Luna', conferma_cliente: true })
+r = await strumento('prenota', { ...base, cane: 'Fido', razza: 'labrador', conferma_cliente: true })
 verifica('quarto alle 10: pieno con alternative', r.esito === 'pieno' && r.alternative.length > 0, JSON.stringify(r))
 r = await strumento('cerca-disponibilita', { giorno: martedi, ora: '10:30', servizio: 'bagno' })
 verifica('10:30 si sovrappone ai tre delle 10: pieno', r.esito === 'pieno', JSON.stringify(r))
@@ -135,17 +152,19 @@ r = await strumento('cerca-disponibilita', { giorno: martedi, ora: '11:00', serv
 verifica('11:00 (i tre finiscono alle 11): disponibile', r.esito === 'disponibile', JSON.stringify(r))
 
 console.log('\n5. Due chiamate insieme sull\'ultimo posto')
-for (let i = 0; i < 2; i++) await strumento('prenota', { ...base, ora: '15:00', conferma_cliente: true })
-const insieme = await Promise.all([1, 2].map(() => strumento('prenota', { ...base, ora: '15:00', conferma_cliente: true })))
+// Mercoledì, perché martedì i cani di prova sono già prenotati. Cani diversi, per non incappare nei doppioni.
+const mercoledi = piu(martedi, 1)
+for (const c of ['Luna', 'Fido']) await strumento('prenota', { ...base, giorno: mercoledi, ora: '15:00', cane: c, razza: 'labrador', conferma_cliente: true })
+const insieme = await Promise.all(['Rex', 'Birba'].map((c) => strumento('prenota', { ...base, giorno: mercoledi, ora: '15:00', cane: c, conferma_cliente: true })))
 const esiti = insieme.map((x) => x.esito).sort()
 verifica('una prenotata e una piena', esiti[0] === 'pieno' && esiti[1] === 'prenotato', JSON.stringify(esiti))
-const alle15 = (await sql`SELECT count(*)::int AS n FROM appointments WHERE start_time = ${`${martedi} 15:00:00`}::timestamp`)[0].n
+const alle15 = (await sql`SELECT count(*)::int AS n FROM appointments WHERE start_time = ${`${mercoledi} 15:00:00`}::timestamp`)[0].n
 verifica('alle 15 ci sono esattamente 3 appuntamenti', alle15 === 3, `trovati ${alle15}`)
 
 console.log('\n6. Inizio chiamata')
 r = await inizioChiamata(TEL_NUOVO)
 const v = r.dynamic_variables ?? {}
-verifica('cliente noto con nome, cani e prossimo appuntamento', v.cliente_noto === 'sì' && v.nome_cliente === 'Prova Verifica' && v.cani === 'Luna' && /alle dieci, per Luna, bagno/.test(v.prossimo_appuntamento), JSON.stringify(v))
+verifica('cliente noto con nome, cani e prossimo appuntamento', v.cliente_noto === 'sì' && v.nome_cliente === 'Prova Verifica' && /Luna/.test(v.cani) && /alle dieci, per (Luna|Rex|Birba), bagno/.test(v.prossimo_appuntamento), JSON.stringify(v))
 verifica('orari della sede a parole', /dal martedì al venerdì dalle nove alle tredici/.test(v.orari_sede), v.orari_sede)
 r = await inizioChiamata('')
 verifica('numero vuoto: usa il numero di prova (solo dev)', r.dynamic_variables?.cliente_noto === 'sì', JSON.stringify(r))
@@ -155,13 +174,13 @@ verifica('numero sconosciuto: cliente_noto no', r.dynamic_variables?.cliente_not
 console.log('\n7. gestisci-appuntamento')
 r = await strumento('gestisci-appuntamento', { azione: 'cerca', cane: '', giorno: '', nuovo_giorno: '', nuova_ora: '' })
 verifica('cerca: trovati', r.esito === 'trovati' && r.appuntamenti.length === 6, JSON.stringify(r))
-r = await strumento('gestisci-appuntamento', { azione: 'sposta', cane: 'Luna', giorno: martedi, nuovo_giorno: piu(martedi, 1), nuova_ora: '09:00' })
-verifica('sposta con più appuntamenti lo stesso giorno: scegli', r.esito === 'scegli', JSON.stringify(r))
+r = await strumento('gestisci-appuntamento', { azione: 'sposta', cane: 'Luna', giorno: '', nuovo_giorno: piu(martedi, 2), nuova_ora: '09:00' })
+verifica('sposta Luna senza dire il giorno (martedì e mercoledì): scegli', r.esito === 'scegli', JSON.stringify(r))
 r = await strumento('gestisci-appuntamento', { azione: 'cerca' }, { telefono: TEL_ALTRO })
 verifica('altro numero: nessuno (non vede gli appuntamenti degli altri)', r.esito === 'nessuno', JSON.stringify(r))
 
 // Un appuntamento solo, già pianificato, per provare lo spostamento.
-const [unico] = await sql`SELECT a.id FROM appointments a WHERE a.client_id = ${cliente.id}::uuid AND a.start_time = ${`${martedi} 10:00:00`}::timestamp LIMIT 1`
+const [unico] = await sql`SELECT a.id FROM appointments a JOIN dogs d ON d.id = a.dog_id WHERE a.client_id = ${cliente.id}::uuid AND d.name = 'Luna' AND a.start_time = ${`${martedi} 10:00:00`}::timestamp LIMIT 1`
 await sql`DELETE FROM appointments WHERE client_id = ${cliente.id}::uuid AND id <> ${unico.id}::uuid`
 const [postazione] = await sql`SELECT id FROM stations WHERE location_id = ${'64c5019a-b96c-4bb6-8b21-9a634f3d89f5'}::uuid LIMIT 1`
 await sql`UPDATE appointments SET station_id = ${postazione.id}::uuid WHERE id = ${unico.id}::uuid`
