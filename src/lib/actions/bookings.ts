@@ -15,7 +15,13 @@ import {
 } from '@/lib/queries/bookings'
 import { addDays, format, parseISO } from 'date-fns'
 import { getLocationBusinessHours } from '@/lib/queries/locations'
-import { getStaffStatusForDate } from '@/lib/queries/staff'
+import {
+  getActiveUsers,
+  getRecurringShiftsForGrid,
+  getStaffStatusForDate,
+  getWeekShiftsForGrid,
+} from '@/lib/queries/staff'
+import { effectiveStaffShifts } from '@/lib/utils/schedule'
 import { db } from '@/lib/db'
 import { appointments } from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
@@ -50,6 +56,9 @@ export const getBookingDayData = authActionClient
  *
  * Torna solo inizio e fine di ogni appuntamento: la griglia settimanale non mostra
  * chi viene, ma quanti posti restano in ogni quarto d'ora.
+ *
+ * `staffShifts` sono i turni pianificati in quella sede: una postazione libera non
+ * basta se nessun collaboratore e' libero per usarla, e la griglia lo segnala in giallo.
  */
 export const getBookingWeekData = authActionClient
   .schema(getBookingWeekQuerySchema)
@@ -57,13 +66,30 @@ export const getBookingWeekData = authActionClient
     const { locationId, weekStart } = parsedInput
     const weekEnd = format(addDays(parseISO(weekStart), 6), 'yyyy-MM-dd')
 
-    const [bookings, stationCount, businessHours] = await Promise.all([
+    const [bookings, stationCount, businessHours, users, assignments, recurring] = await Promise.all([
       getBookingsByWeekAndLocation(locationId, weekStart, weekEnd, ctx.tenantId),
       getStationCount(locationId, ctx.tenantId),
       getLocationBusinessHours(locationId, ctx.tenantId),
+      getActiveUsers(ctx.tenantId),
+      // Turni inseriti a mano e turni ricorrenti: quasi sempre la settimana e' coperta
+      // solo dai ricorrenti, e guardare le sole assegnazioni direbbe "nessuno in turno".
+      getWeekShiftsForGrid(weekStart, weekEnd, ctx.tenantId),
+      getRecurringShiftsForGrid(ctx.tenantId),
     ])
 
-    return { bookings, stationCount, businessHours }
+    const weekDays = Array.from({ length: 7 }, (_, i) =>
+      format(addDays(parseISO(weekStart), i), 'yyyy-MM-dd')
+    )
+
+    const staffShifts = effectiveStaffShifts({
+      locationId,
+      weekDays,
+      userIds: users.map((u) => u.id),
+      assignments,
+      recurring,
+    })
+
+    return { bookings, stationCount, businessHours, staffShifts }
   })
 
 /**

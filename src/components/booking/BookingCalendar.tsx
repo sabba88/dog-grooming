@@ -147,6 +147,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
         })),
         stationCount: result.data.stationCount,
         businessHours: result.data.businessHours,
+        staffShifts: result.data.staffShifts,
       }
     },
     enabled: !!selectedLocationId && isHydrated && viewMode === 'week',
@@ -459,6 +460,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
           bookings={weekData?.bookings ?? []}
           stationCount={weekData?.stationCount ?? 0}
           businessHours={weekData?.businessHours ?? []}
+          staffShifts={weekData?.staffShifts ?? []}
           isLoading={isWeekLoading}
           onSlotClick={(date, time) => {
             // Si prenota direttamente dalla settimana: la scheda si apre sul

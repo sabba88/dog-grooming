@@ -251,3 +251,96 @@ export function computeAgendaRange(
   const maxClose = todaySlots.reduce((max, s) => s.closeTime > max ? s.closeTime : max, '00:00')
   return { globalOpen: subtractOneHour(minOpen), globalClose: addOneHour(maxClose) }
 }
+
+/**
+ * Stato di un quarto d'ora nella griglia settimanale delle prenotazioni.
+ *
+ * - `chiuso`: la sede non e' aperta in quel momento;
+ * - `capacita_ignota`: la sede non ha postazioni configurate, non si puo' dire quando e' piena;
+ * - `pieno`: le prenotazioni in corso hanno saturato le postazioni;
+ * - `senza_collaboratori`: restano postazioni libere, ma i collaboratori in turno sono gia'
+ *   tutti impegnati (3 postazioni, 2 collaboratori, 2 prenotazioni: c'e' spazio, non chi lavora);
+ * - `libero`: c'e' sia una postazione sia un collaboratore.
+ */
+export type WeekSlotState =
+  | 'chiuso'
+  | 'capacita_ignota'
+  | 'pieno'
+  | 'senza_collaboratori'
+  | 'libero'
+
+export function weekSlotState(input: {
+  isOpen: boolean
+  /** Prenotazioni in corso in quel quarto d'ora. */
+  occupied: number
+  /** Postazioni della sede; 0 se non ne sono state configurate. */
+  stationCount: number
+  /**
+   * Collaboratori in turno in quel quarto d'ora, oppure `null` se la sede non usa
+   * la pianificazione dei turni: in quel caso il vincolo non si applica.
+   */
+  staffCount: number | null
+}): WeekSlotState {
+  const { isOpen, occupied, stationCount, staffCount } = input
+  if (!isOpen) return 'chiuso'
+  if (stationCount <= 0) return 'capacita_ignota'
+  if (occupied >= stationCount) return 'pieno'
+  if (staffCount !== null && occupied >= staffCount) return 'senza_collaboratori'
+  return 'libero'
+}
+
+/** Lunedi' = 0, come `location_business_hours` e `user_recurring_schedules`. */
+export function weekdayIndex(date: string): number {
+  const [y, m, d] = date.split('-').map(Number)
+  return (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7
+}
+
+export interface PlannedShift {
+  userId: string
+  date: string
+  startTime: string
+  endTime: string
+}
+
+/**
+ * I turni che una sede ha davvero pianificati in una settimana.
+ *
+ * Stessa regola della pagina "Orario Settimanale": per ogni persona e per ogni giorno,
+ * se esiste un turno inserito a mano quello vale, altrimenti vale il turno ricorrente
+ * (il "fantasma" che la griglia dei turni mostra tratteggiato). Il turno inserito a mano
+ * vince anche quando e' in un'altra sede: quel giorno la persona e' altrove, non qui.
+ */
+export function effectiveStaffShifts(input: {
+  locationId: string
+  /** I sette giorni della settimana, 'yyyy-MM-dd'. */
+  weekDays: string[]
+  /** Solo i collaboratori attivi: quelli disattivati non lavorano piu'. */
+  userIds: string[]
+  assignments: { userId: string; date: string; locationId: string; startTime: string; endTime: string }[]
+  recurring: { userId: string; dayOfWeek: number; locationId: string; startTime: string; endTime: string }[]
+}): PlannedShift[] {
+  const { locationId, weekDays, userIds, assignments, recurring } = input
+  const result: PlannedShift[] = []
+
+  for (const userId of userIds) {
+    for (const date of weekDays) {
+      const suoi = assignments.filter((a) => a.userId === userId && a.date === date)
+      if (suoi.length > 0) {
+        for (const a of suoi) {
+          if (a.locationId === locationId) {
+            result.push({ userId, date, startTime: a.startTime, endTime: a.endTime })
+          }
+        }
+        continue
+      }
+      const dow = weekdayIndex(date)
+      for (const r of recurring) {
+        if (r.userId === userId && r.dayOfWeek === dow && r.locationId === locationId) {
+          result.push({ userId, date, startTime: r.startTime, endTime: r.endTime })
+        }
+      }
+    }
+  }
+
+  return result
+}

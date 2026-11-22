@@ -2,7 +2,7 @@
 
 import { addDays, format, isToday } from 'date-fns'
 import { it } from 'date-fns/locale'
-import { generateTimeSlots, timeToMinutes, utcMinutesOfDay } from '@/lib/utils/schedule'
+import { generateTimeSlots, timeToMinutes, utcMinutesOfDay, weekSlotState } from '@/lib/utils/schedule'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
@@ -19,11 +19,20 @@ interface BusinessHour {
   closeTime: string
 }
 
+/** Un turno pianificato in questa sede: chi, che giorno, da che ora a che ora. */
+interface StaffShift {
+  userId: string
+  date: string
+  startTime: string
+  endTime: string
+}
+
 interface BookingWeekGridProps {
   weekStart: Date
   bookings: WeekBooking[]
   stationCount: number
   businessHours: BusinessHour[]
+  staffShifts: StaffShift[]
   isLoading?: boolean
   onSlotClick: (date: string, time: string) => void
   onDayClick: (date: string) => void
@@ -52,6 +61,7 @@ export function BookingWeekGrid({
   bookings,
   stationCount,
   businessHours,
+  staffShifts,
   isLoading,
   onSlotClick,
   onDayClick,
@@ -79,6 +89,18 @@ export function BookingWeekGrid({
     openIntervalsByDow.set(h.dayOfWeek, list)
   }
 
+  // Turni del giorno, per contare quanti collaboratori sono presenti in un quarto d'ora.
+  const shiftsByDay = new Map<string, { userId: string; start: number; end: number }[]>()
+  for (const s of staffShifts) {
+    const list = shiftsByDay.get(s.date) ?? []
+    list.push({ userId: s.userId, start: timeToMinutes(s.startTime), end: timeToMinutes(s.endTime) })
+    shiftsByDay.set(s.date, list)
+  }
+
+  // Se in tutta la settimana non c'e' nemmeno un turno, la sede non usa la pianificazione
+  // del personale: colorare tutto di giallo direbbe solo che i turni non sono stati inseriti.
+  const staffKnown = staffShifts.length > 0
+
   // Senza postazioni configurate non si puo' dire se un quarto d'ora sia pieno.
   const capacityKnown = stationCount > 0
 
@@ -103,6 +125,12 @@ export function BookingWeekGrid({
           <span className="flex items-center gap-1.5">
             <span className="size-3 rounded-sm bg-emerald-400" /> posti liberi
           </span>
+          {staffKnown && (
+            <span className="flex items-center gap-1.5">
+              <span className="size-3 rounded-sm bg-amber-400" /> posti liberi, collaboratori
+              occupati
+            </span>
+          )}
           <span className="flex items-center gap-1.5">
             <span className="size-3 rounded-sm bg-red-400" /> tutto occupato
           </span>
@@ -177,13 +205,29 @@ export function BookingWeekGrid({
                   (b) => slotMinutes >= b.start && slotMinutes < b.end
                 ).length
                 const free = stationCount - occupied
-                const isFull = capacityKnown && free <= 0
+
+                // Quante persone diverse sono in turno qui in questo quarto d'ora: un
+                // collaboratore con due turni spezzati resta una persona sola.
+                const staffCount = staffKnown
+                  ? new Set(
+                      (shiftsByDay.get(key) ?? [])
+                        .filter((s) => slotMinutes >= s.start && slotMinutes < s.end)
+                        .map((s) => s.userId)
+                    ).size
+                  : null
+
+                const state = weekSlotState({ isOpen, occupied, stationCount, staffCount })
+
+                const collaboratori =
+                  staffCount === null
+                    ? ''
+                    : ` · ${Math.max(staffCount - occupied, 0)} di ${staffCount} ${staffCount === 1 ? 'collaboratore libero' : 'collaboratori liberi'}`
 
                 const titolo = !isOpen
                   ? `${slot} · chiuso${occupied > 0 ? ` · ${occupied} prenotate` : ''}`
                   : capacityKnown
-                    ? `${slot} · ${Math.max(free, 0)} di ${stationCount} libere`
-                    : `${slot} · ${occupied} prenotate`
+                    ? `${slot} · ${Math.max(free, 0)} di ${stationCount} libere${collaboratori}`
+                    : `${slot} · ${occupied} prenotate${collaboratori}`
 
                 return (
                   <button
@@ -194,12 +238,16 @@ export function BookingWeekGrid({
                     className={cn(
                       'border-l transition-opacity hover:opacity-70',
                       isHour ? 'border-t border-t-border' : 'border-t border-t-border/25',
-                      !isOpen && 'bg-muted-foreground/20',
-                      isOpen && !capacityKnown && (occupied > 0 ? 'bg-sky-300' : 'bg-sky-100'),
-                      isOpen && capacityKnown && (isFull ? 'bg-red-400' : 'bg-emerald-400'),
+                      state === 'chiuso' && 'bg-muted-foreground/20',
+                      state === 'capacita_ignota' && (occupied > 0 ? 'bg-sky-300' : 'bg-sky-100'),
+                      state === 'pieno' && 'bg-red-400',
+                      // Giallo: la postazione ci sarebbe, ma i collaboratori in turno
+                      // sono gia' tutti impegnati (3 postazioni, 2 in turno, 2 prenotazioni).
+                      state === 'senza_collaboratori' && 'bg-amber-400',
+                      state === 'libero' && 'bg-emerald-400',
                       // Piu' si riempie, piu' il verde si scurisce: il colpo d'occhio
                       // distingue "quasi pieno" da "vuoto" senza leggere il tooltip.
-                      isOpen && capacityKnown && !isFull && occupied > 0 && 'opacity-60'
+                      state === 'libero' && occupied > 0 && 'opacity-60'
                     )}
                   />
                 )

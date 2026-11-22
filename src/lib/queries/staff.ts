@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
 import { users, userLocationAssignments, locations, userRecurringSchedules } from '@/lib/db/schema'
 import { eq, and, asc, gte, lte } from 'drizzle-orm'
+import { weekdayIndex } from '@/lib/utils/schedule'
 
 export type WeekGridShift = {
   id: string
@@ -172,26 +173,53 @@ export type ShiftInfo = {
   status: 'active' | 'elsewhere'
 }
 
+/**
+ * Chi lavora quel giorno e dove.
+ *
+ * Vale la stessa regola della pagina "Orario Settimanale": per ogni persona, se quel
+ * giorno c'e' un turno inserito a mano vale quello, altrimenti vale il turno ricorrente.
+ * Guardare le sole assegnazioni direbbe "nessuno in turno" a chi pianifica con i turni fissi.
+ */
 export async function getStaffStatusForDate(locationId: string, date: string, tenantId: string) {
-  const activeUsers = await getActiveUsers(tenantId)
+  const dayOfWeek = weekdayIndex(date)
 
-  const dateShifts = await db
-    .select({
-      userId: userLocationAssignments.userId,
-      locationId: userLocationAssignments.locationId,
-      locationName: locations.name,
-      startTime: userLocationAssignments.startTime,
-      endTime: userLocationAssignments.endTime,
-    })
-    .from(userLocationAssignments)
-    .leftJoin(locations, eq(userLocationAssignments.locationId, locations.id))
-    .where(and(
-      eq(userLocationAssignments.tenantId, tenantId),
-      eq(userLocationAssignments.date, date)
-    ))
+  const [activeUsers, dateShifts, recurringShifts] = await Promise.all([
+    getActiveUsers(tenantId),
+    db
+      .select({
+        userId: userLocationAssignments.userId,
+        locationId: userLocationAssignments.locationId,
+        locationName: locations.name,
+        startTime: userLocationAssignments.startTime,
+        endTime: userLocationAssignments.endTime,
+      })
+      .from(userLocationAssignments)
+      .leftJoin(locations, eq(userLocationAssignments.locationId, locations.id))
+      .where(and(
+        eq(userLocationAssignments.tenantId, tenantId),
+        eq(userLocationAssignments.date, date)
+      )),
+    db
+      .select({
+        userId: userRecurringSchedules.userId,
+        locationId: userRecurringSchedules.locationId,
+        locationName: locations.name,
+        startTime: userRecurringSchedules.startTime,
+        endTime: userRecurringSchedules.endTime,
+      })
+      .from(userRecurringSchedules)
+      .leftJoin(locations, eq(userRecurringSchedules.locationId, locations.id))
+      .where(and(
+        eq(userRecurringSchedules.tenantId, tenantId),
+        eq(userRecurringSchedules.dayOfWeek, dayOfWeek)
+      )),
+  ])
 
   return activeUsers.map(user => {
-    const userShifts = dateShifts.filter(s => s.userId === user.id)
+    const assegnati = dateShifts.filter(s => s.userId === user.id)
+    const userShifts = assegnati.length > 0
+      ? assegnati
+      : recurringShifts.filter(s => s.userId === user.id)
     const shifts: ShiftInfo[] = userShifts.map(s => ({
       locationId: s.locationId,
       locationName: s.locationName,
