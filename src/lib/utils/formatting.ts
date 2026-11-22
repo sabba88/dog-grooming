@@ -59,19 +59,30 @@ export function formatCoOwnerFull(coOwners: CoOwner[]): string {
     .join(', ')
 }
 
+/** Le parole di un testo, senza punteggiatura: "Mario Rossi" -> ["mario", "rossi"]. */
+function parole(value: string): string[] {
+  return value
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean)
+}
+
 /**
  * Ricerca per inizio di parola, non per contenuto: cercando "ola" non deve
  * uscire "Lola", ma cercando "rossi" deve uscire "Mario Rossi". Vale per i
  * campi di testo (nomi); i numeri di telefono restano cercabili per frammento.
+ *
+ * Chi cerca scrive nome e cognome insieme, quindi anche la ricerca si legge a
+ * parole: ognuna deve trovare la sua, in qualunque ordine. "samuele sab" trova
+ * "SAMUELE SABBATINI" e anche "SABBATINI SAMUELE"; prima, cercando il testo
+ * intero come una parola sola, non trovava piu' niente (segnalato il 22/11/2026).
  */
 export function matchesWordPrefix(value: string | null | undefined, query: string): boolean {
-  const q = query.trim().toLowerCase()
-  if (q === '') return true
+  const cercate = parole(query)
+  if (cercate.length === 0) return true
   if (!value) return false
-  return value
-    .toLowerCase()
-    .split(/[^\p{L}\p{N}]+/u)
-    .some((word) => word.startsWith(q))
+  const presenti = parole(value)
+  return cercate.every((q) => presenti.some((word) => word.startsWith(q)))
 }
 
 // Nominativo e telefono sono facoltativi in creazione (vedi MissingContactDialog):

@@ -166,6 +166,18 @@ function escapeRegex(value: string): string {
   return value.replace(/[\\^$.|?*+()[\]{}]/g, '\\$&')
 }
 
+/**
+ * Le parole di quello che si e' scritto, ognuna come espressione "inizio di parola"
+ * (\m): "samuele sab" diventa [\msamuele, \msab], da verificare tutte insieme.
+ */
+function parolePerRicerca(value: string): string[] {
+  return value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((parola) => `\\m${escapeRegex(parola)}`)
+}
+
 /** Lunghezza minima di un filtro: con una lettera sola uscirebbe mezzo archivio. */
 export const SEARCH_MIN_CHARS = 2
 
@@ -197,13 +209,14 @@ export async function searchClientsWithDogs(
   const condizioni = [eq(clients.tenantId, tenantId), isNull(clients.deletedAt)]
 
   if (nome.length >= SEARCH_MIN_CHARS) {
-    // I nomi si cercano per inizio di parola (\m): "ola" non deve far uscire "Lola",
-    // ma "rossi" deve far uscire "Mario Rossi". Valgono anche i co-intestatari.
-    const namePattern = `\\m${escapeRegex(nome)}`
+    // Ogni parola scritta deve trovare la sua, in qualunque ordine e tutte nello
+    // stesso intestatario: "samuele sab" trova "SAMUELE SABBATINI" e anche
+    // "SABBATINI SAMUELE". Cercando il testo intero come una parola sola, nome e
+    // cognome insieme non trovavano piu' niente (segnalato il 22/11/2026).
     const perNome = or(
-      sql`${clients.nominativo} ~* ${namePattern}`,
-      sql`${clients.owner2} ~* ${namePattern}`,
-      sql`${clients.owner3} ~* ${namePattern}`
+      ...[clients.nominativo, clients.owner2, clients.owner3].map((campo) =>
+        and(...parolePerRicerca(nome).map((p) => sql`${campo} ~* ${p}`))!
+      )
     )
     if (perNome) condizioni.push(perNome)
   }
@@ -221,7 +234,8 @@ export async function searchClientsWithDogs(
   }
 
   if (cane.length >= SEARCH_MIN_CHARS) {
-    condizioni.push(sql`${dogs.name} ~* ${`\\m${escapeRegex(cane)}`}`)
+    const perCane = and(...parolePerRicerca(cane).map((p) => sql`${dogs.name} ~* ${p}`))
+    if (perCane) condizioni.push(perCane)
   }
 
   // Chi cerca per telefono vuole i numeri vicini fra loro: ordinarli per nominativo
