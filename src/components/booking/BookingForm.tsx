@@ -226,7 +226,10 @@ export function BookingForm({
 
       {/* Cliente e cane */}
       <div>
-        <Label className="mb-1.5 block text-sm font-medium">Cliente</Label>
+        {/* Finche' si cerca i campi sono due, cliente e cane: l'etichetta lo dice. */}
+        <Label className="mb-1.5 block text-sm font-medium">
+          {!selectedClient && !showQuickClient ? 'Cliente e cane' : 'Cliente'}
+        </Label>
         {showQuickClient ? (
           <QuickClientForm
             onCreated={(client) => {

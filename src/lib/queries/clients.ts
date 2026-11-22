@@ -166,18 +166,68 @@ function escapeRegex(value: string): string {
   return value.replace(/[\\^$.|?*+()[\]{}]/g, '\\$&')
 }
 
-// Ricerca unificata per il form appuntamento: nome cliente, telefono o nome cane.
-// Una riga per cane (i clienti senza cani hanno una riga con dogId null), così la
-// selezione precompila cliente + cane in un solo click.
-export async function searchClientsWithDogs(query: string, tenantId: string): Promise<ClientDogSearchResult[]> {
-  // I nomi si cercano per inizio di parola (\m): "ola" non deve far uscire "Lola",
-  // ma "rossi" deve far uscire "Mario Rossi". Il telefono resta per frammento,
-  // perche' di un numero si ricorda spesso solo un pezzo centrale.
-  const namePattern = `\\m${escapeRegex(query.trim())}`
-  const phonePattern = `%${query.trim()}%`
-  // Chi digita un numero sta cercando per telefono: ordinare per nominativo
-  // sparpaglierebbe i numeri simili. Con un testo resta l'ordine alfabetico.
-  const isPhoneQuery = /^[\d\s+./-]+$/.test(query.trim()) && /\d/.test(query)
+/** Lunghezza minima di un filtro: con una lettera sola uscirebbe mezzo archivio. */
+export const SEARCH_MIN_CHARS = 2
+
+/**
+ * Ricerca per il form appuntamento e per quello di prenotazione: tre filtri separati,
+ * nome del cliente, telefono e nome del cane. Si usano da soli o insieme, e insieme
+ * restringono — "Rossi" + "Lola" lascia solo quel cane di quel cliente.
+ *
+ * Una riga per cane (i clienti senza cani hanno una riga con dogId null), così la
+ * selezione precompila cliente + cane in un solo click. Filtrando per cane restano
+ * ovviamente solo le righe che un cane ce l'hanno.
+ */
+export async function searchClientsWithDogs(
+  filtri: { nome?: string; telefono?: string; cane?: string },
+  tenantId: string
+): Promise<ClientDogSearchResult[]> {
+  const nome = (filtri.nome ?? '').trim()
+  const telefono = (filtri.telefono ?? '').trim()
+  const cane = (filtri.cane ?? '').trim()
+  // Nessun filtro dice abbastanza: meglio nessun risultato di tutto l'archivio.
+  if (
+    nome.length < SEARCH_MIN_CHARS &&
+    telefono.length < SEARCH_MIN_CHARS &&
+    cane.length < SEARCH_MIN_CHARS
+  ) {
+    return []
+  }
+
+  const condizioni = [eq(clients.tenantId, tenantId), isNull(clients.deletedAt)]
+
+  if (nome.length >= SEARCH_MIN_CHARS) {
+    // I nomi si cercano per inizio di parola (\m): "ola" non deve far uscire "Lola",
+    // ma "rossi" deve far uscire "Mario Rossi". Valgono anche i co-intestatari.
+    const namePattern = `\\m${escapeRegex(nome)}`
+    const perNome = or(
+      sql`${clients.nominativo} ~* ${namePattern}`,
+      sql`${clients.owner2} ~* ${namePattern}`,
+      sql`${clients.owner3} ~* ${namePattern}`
+    )
+    if (perNome) condizioni.push(perNome)
+  }
+
+  if (telefono.length >= SEARCH_MIN_CHARS) {
+    // Il telefono si cerca per frammento: di un numero si ricorda spesso solo un pezzo
+    // centrale, e il prefisso puo' essere scritto in tanti modi.
+    const phonePattern = `%${telefono}%`
+    const perTelefono = or(
+      ilike(clients.phone, phonePattern),
+      ilike(clients.phone2, phonePattern),
+      ilike(clients.phone3, phonePattern)
+    )
+    if (perTelefono) condizioni.push(perTelefono)
+  }
+
+  if (cane.length >= SEARCH_MIN_CHARS) {
+    condizioni.push(sql`${dogs.name} ~* ${`\\m${escapeRegex(cane)}`}`)
+  }
+
+  // Chi cerca per telefono vuole i numeri vicini fra loro: ordinarli per nominativo
+  // li sparpaglierebbe. Negli altri casi resta l'ordine alfabetico.
+  const isPhoneQuery = telefono.length >= SEARCH_MIN_CHARS && nome.length < SEARCH_MIN_CHARS
+
   return db
     .select({
       clientId: clients.id,
@@ -194,21 +244,7 @@ export async function searchClientsWithDogs(query: string, tenantId: string): Pr
     .from(clients)
     .leftJoin(dogs, and(eq(dogs.clientId, clients.id), isNull(dogs.deletedAt)))
     .leftJoin(breeds, eq(dogs.breedId, breeds.id))
-    .where(
-      and(
-        eq(clients.tenantId, tenantId),
-        isNull(clients.deletedAt),
-        or(
-          sql`${clients.nominativo} ~* ${namePattern}`,
-          ilike(clients.phone, phonePattern),
-          sql`${clients.owner2} ~* ${namePattern}`,
-          ilike(clients.phone2, phonePattern),
-          sql`${clients.owner3} ~* ${namePattern}`,
-          ilike(clients.phone3, phonePattern),
-          sql`${dogs.name} ~* ${namePattern}`
-        )
-      )
-    )
+    .where(and(...condizioni))
     .orderBy(
       ...(isPhoneQuery
         ? [asc(clients.phone), asc(clients.nominativo)]

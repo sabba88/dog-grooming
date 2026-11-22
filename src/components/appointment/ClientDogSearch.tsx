@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
-import { Search, UserPlus, Loader2 } from 'lucide-react'
+import { Dog, Phone, Search, UserPlus, Loader2 } from 'lucide-react'
 import { getCoOwners } from '@/lib/utils/formatting'
 
 interface ClientDogResult {
@@ -26,8 +26,15 @@ interface ClientDogSearchProps {
   autoFocus?: boolean
 }
 
+/** Sotto i due caratteri non si cerca: deve combaciare con l'API. */
+const MIN_CHARS = 2
+
 export function ClientDogSearch({ onSelect, onCreateNew, autoFocus = true }: ClientDogSearchProps) {
-  const [query, setQuery] = useState('')
+  // Tre filtri separati invece di un campo unico: al telefono si ha in mano il nome,
+  // il numero o il nome del cane, spesso piu' d'uno, e insieme restringono.
+  const [nome, setNome] = useState('')
+  const [telefono, setTelefono] = useState('')
+  const [cane, setCane] = useState('')
   const [results, setResults] = useState<ClientDogResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
@@ -41,8 +48,14 @@ export function ClientDogSearch({ onSelect, onCreateNew, autoFocus = true }: Cli
     }
   }, [autoFocus])
 
+  // Basta che uno dei filtri sia abbastanza lungo: gli altri, se ci sono, restringono.
+  const canSearch =
+    nome.trim().length >= MIN_CHARS ||
+    telefono.trim().length >= MIN_CHARS ||
+    cane.trim().length >= MIN_CHARS
+
   useEffect(() => {
-    if (query.length < 2) {
+    if (!canSearch) {
       setResults([])
       setIsOpen(false)
       return
@@ -51,7 +64,11 @@ export function ClientDogSearch({ onSelect, onCreateNew, autoFocus = true }: Cli
     const timer = setTimeout(async () => {
       setIsLoading(true)
       try {
-        const res = await fetch(`/api/clients/search?q=${encodeURIComponent(query)}`)
+        const params = new URLSearchParams()
+        if (nome.trim()) params.set('nome', nome.trim())
+        if (telefono.trim()) params.set('telefono', telefono.trim())
+        if (cane.trim()) params.set('cane', cane.trim())
+        const res = await fetch(`/api/clients/search?${params.toString()}`)
         const json = await res.json()
         if (json.success) {
           setResults(json.data)
@@ -66,7 +83,7 @@ export function ClientDogSearch({ onSelect, onCreateNew, autoFocus = true }: Cli
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [query])
+  }, [nome, telefono, cane, canSearch])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) return
@@ -97,13 +114,20 @@ export function ClientDogSearch({ onSelect, onCreateNew, autoFocus = true }: Cli
     }
   }
 
+  // Tornando su un campo si rivede la tendina gia' popolata, senza ridigitare.
+  const handleFocus = () => {
+    if (results.length > 0 || canSearch) setIsOpen(true)
+  }
+
   const handleSelect = (result: ClientDogResult) => {
     onSelect({
       client: { id: result.clientId, nominativo: result.nominativo },
       dog: result.dogId && result.dogName ? { id: result.dogId, name: result.dogName } : null,
     })
     setIsOpen(false)
-    setQuery('')
+    setNome('')
+    setTelefono('')
+    setCane('')
   }
 
   function getInitials(nominativo: string): string {
@@ -118,22 +142,53 @@ export function ClientDogSearch({ onSelect, onCreateNew, autoFocus = true }: Cli
     // contenuto, un div assoluto resta tagliato al bordo del riquadro.
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverAnchor asChild>
-        <div className="relative" ref={anchorRef}>
-          <Search className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
-          <Input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={() => {
-              if (results.length > 0 || query.length >= 2) setIsOpen(true)
-            }}
-            placeholder="Cerca per cliente, cane o telefono..."
-            className="pl-9 pr-9"
-          />
-          {isLoading && (
-            <Loader2 className="text-muted-foreground absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin" />
-          )}
+        {/* Nome e telefono affiancati, il cane sotto a tutta larghezza: tre campi in
+            fila starebbero troppo stretti nella scheda, che e' larga come un dialog.
+            Su schermo stretto vanno comunque uno sotto l'altro. */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" ref={anchorRef}>
+          <div className="relative">
+            <Search className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
+            <Input
+              ref={inputRef}
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={handleFocus}
+              placeholder="Nome cliente"
+              aria-label="Cerca per nome del cliente"
+              className="pl-9 pr-9"
+            />
+            {isLoading && (
+              <Loader2 className="text-muted-foreground absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin" />
+            )}
+          </div>
+
+          <div className="relative">
+            <Phone className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
+            <Input
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={handleFocus}
+              inputMode="tel"
+              placeholder="Telefono"
+              aria-label="Cerca per numero di telefono"
+              className="pl-9"
+            />
+          </div>
+
+          <div className="relative sm:col-span-2">
+            <Dog className="text-muted-foreground absolute left-3 top-1/2 size-4 -translate-y-1/2" />
+            <Input
+              value={cane}
+              onChange={(e) => setCane(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={handleFocus}
+              placeholder="Nome del cane"
+              aria-label="Cerca per nome del cane"
+              className="pl-9"
+            />
+          </div>
         </div>
       </PopoverAnchor>
 
