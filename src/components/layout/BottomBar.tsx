@@ -20,7 +20,7 @@ export function BottomBar({ userRole }: BottomBarProps) {
   return (
     <nav
       aria-label="Navigazione principale mobile"
-      className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden bg-white border-t border-brand-border"
+      className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-border bg-card shadow-lg md:hidden"
     >
       {visibleItems.map((item) => {
         const active = isActive(item.href)
@@ -29,12 +29,22 @@ export function BottomBar({ userRole }: BottomBarProps) {
             key={item.href}
             href={item.href}
             aria-current={active ? 'page' : undefined}
-            className={`flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[64px] min-w-[44px] ${
-              active ? 'text-brand-primary' : 'text-brand-text-muted'
+            className={`flex min-h-[64px] min-w-[44px] flex-1 flex-col items-center justify-center gap-1 py-2 ${
+              active ? 'text-accent-foreground' : 'text-muted-foreground'
             }`}
           >
-            <item.icon className="h-5 w-5" />
-            <span className="text-[10px] font-medium">{item.label}</span>
+            {/* La voce corrente non si distingue solo per tinta: ha la pastiglia
+                dietro all'icona e l'etichetta in grassetto. */}
+            <span
+              className={`flex h-7 w-12 items-center justify-center rounded-full ${
+                active ? 'bg-accent' : ''
+              }`}
+            >
+              <item.icon className="size-5" />
+            </span>
+            <span className={`text-[11px] ${active ? 'font-semibold' : 'font-medium'}`}>
+              {item.label}
+            </span>
           </Link>
         )
       })}

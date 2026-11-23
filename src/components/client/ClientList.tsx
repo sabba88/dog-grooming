@@ -71,11 +71,11 @@ function MissingDataWarning({ missing }: { missing: string[] }) {
   if (missing.length === 0) return null
   return (
     <span
-      className="inline-flex items-center gap-1 text-destructive"
+      className="inline-flex shrink-0 items-center gap-1 rounded-sm bg-destructive/10 px-1.5 py-0.5 text-destructive"
       title={`Dati mancanti: ${missing.join(', ')}`}
     >
-      <AlertTriangle className="h-3.5 w-3.5" />
-      <span className="text-xs font-medium">{missing.length}</span>
+      <AlertTriangle className="size-3.5" />
+      <span className="text-xs font-medium tabular-nums">{missing.length}</span>
     </span>
   )
 }
@@ -216,68 +216,77 @@ export function ClientList({ clients }: ClientListProps) {
   }
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Clienti</h1>
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-4">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-2xl font-semibold leading-tight text-foreground">Clienti</h1>
+          <p className="text-sm text-muted-foreground">
+            {clients.length === 0
+              ? 'Ancora nessuno in archivio'
+              : hasFilter
+                ? `${filteredClients.length} di ${clients.length} clienti`
+                : `${clients.length} ${clients.length === 1 ? 'cliente' : 'clienti'}`}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
           <Button
             variant="outline"
             onClick={handleExport}
             disabled={filteredClients.length === 0}
             title="Scarica l'elenco filtrato in un file apribile con Excel"
           >
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="size-4 mr-2" />
             Esporta
           </Button>
           <Button onClick={handleNew}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nuovo Cliente
+            <Plus className="size-4 mr-2" />
+            Nuovo cliente
           </Button>
         </div>
-      </div>
+      </header>
 
       {/* I filtri restano agganciati in alto: su elenchi lunghi scorrendo
           sparivano e per cambiare ricerca bisognava risalire in cima. */}
-      <div className="sticky top-0 z-20 -mx-4 mb-4 flex flex-col gap-2 border-b border-border bg-background px-4 py-3 sm:flex-row">
+      <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Nome cliente..."
             value={filterNome}
             onChange={e => setFilterNome(e.target.value)}
-            className="pl-9 pr-8"
+            className="bg-card pl-9 pr-8"
           />
           {filterNome && (
             <button type="button" onClick={() => setFilterNome('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Rimuovi filtro nome">
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </button>
           )}
         </div>
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Telefono..."
             value={filterTelefono}
             onChange={e => setFilterTelefono(e.target.value)}
-            className="pl-9 pr-8"
+            className="bg-card pl-9 pr-8"
           />
           {filterTelefono && (
             <button type="button" onClick={() => setFilterTelefono('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Rimuovi filtro telefono">
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </button>
           )}
         </div>
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Nome del cane..."
             value={filterCane}
             onChange={e => setFilterCane(e.target.value)}
-            className="pl-9 pr-8"
+            className="bg-card pl-9 pr-8"
           />
           {filterCane && (
             <button type="button" onClick={() => setFilterCane('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Rimuovi filtro cane">
-              <X className="h-4 w-4" />
+              <X className="size-4" />
             </button>
           )}
         </div>
@@ -289,35 +298,40 @@ export function ClientList({ clients }: ClientListProps) {
             title="Mostra solo i clienti a cui manca qualche dato"
             className="shrink-0"
           >
-            <AlertTriangle className="h-4 w-4 mr-2" />
+            <AlertTriangle className="size-4 mr-2" />
             Dati mancanti ({clientiConDatiMancanti})
           </Button>
         )}
       </div>
 
       {clients.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">Nessun cliente registrato</p>
-          <Button onClick={handleNew}>
-            <Plus className="h-4 w-4 mr-2" />
+        <div className="rounded-lg border border-dashed border-border bg-card/50 px-6 py-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            Nessun cliente registrato: il primo si crea da qui
+          </p>
+          <Button onClick={handleNew} className="mt-4">
+            <Plus className="size-4 mr-2" />
             Aggiungi il primo cliente
           </Button>
         </div>
       ) : filteredClients.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-2">Nessun cliente trovato con i filtri applicati</p>
-          <button
-            type="button"
-            className="text-sm text-primary hover:underline"
+        <div className="rounded-lg border border-dashed border-border bg-card/50 px-6 py-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            Nessun cliente corrisponde ai filtri impostati
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-4"
             onClick={() => { setFilterNome(''); setFilterTelefono(''); setFilterCane(''); setSoloDatiMancanti(false) }}
           >
             Rimuovi tutti i filtri
-          </button>
+          </Button>
         </div>
       ) : (
         <>
-          {/* Desktop: Table */}
-          <div className="hidden md:block rounded-lg border border-border">
+          {/* Desktop: tabella */}
+          <div className="hidden overflow-hidden rounded-lg border border-border bg-card shadow-sm md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -346,8 +360,8 @@ export function ClientList({ clients }: ClientListProps) {
                       onClick={() => router.push(`/clients/${client.id}`)}
                     >
                       <TableCell>
-                        <Avatar className="h-9 w-9">
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                        <Avatar className="size-9">
+                          <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
                             {getInitials(client.nominativo)}
                           </AvatarFallback>
                         </Avatar>
@@ -358,7 +372,7 @@ export function ClientList({ clients }: ClientListProps) {
                           <MissingDataWarning missing={missing} />
                         </span>
                       </TableCell>
-                      <TableCell className={cn(isMissingValue(client.phone) && 'bg-destructive/10')}>
+                      <TableCell className={cn('tabular-nums', isMissingValue(client.phone) && 'bg-destructive/10')}>
                         {isMissingValue(client.phone) ? <MissingValue /> : client.phone}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
@@ -381,7 +395,7 @@ export function ClientList({ clients }: ClientListProps) {
                       <TableCell>
                         {lastAppt ? (
                           <div className="flex flex-col">
-                            <span className="text-sm">{lastAppt.label}</span>
+                            <span className="text-sm tabular-nums">{lastAppt.label}</span>
                             <span className="text-xs text-muted-foreground">{lastAppt.days}</span>
                           </div>
                         ) : (
@@ -391,8 +405,8 @@ export function ClientList({ clients }: ClientListProps) {
                       <TableCell>
                         {nextAppt ? (
                           <div className="flex flex-col">
-                            <span className="text-sm">{nextAppt.label}</span>
-                            <span className="text-xs text-brand-primary font-medium">{nextAppt.days}</span>
+                            <span className="text-sm tabular-nums">{nextAppt.label}</span>
+                            <span className="text-xs font-medium text-primary">{nextAppt.days}</span>
                           </div>
                         ) : (
                           <span className="text-muted-foreground">—</span>
@@ -405,7 +419,7 @@ export function ClientList({ clients }: ClientListProps) {
             </Table>
           </div>
 
-          {/* Mobile: Cards */}
+          {/* Mobile: schede */}
           <div className="flex flex-col gap-3 md:hidden">
             {filteredClients.map((client) => {
               const lastAppt = formatLastAppointment(client.lastAppointmentAt)
@@ -415,34 +429,34 @@ export function ClientList({ clients }: ClientListProps) {
                 <button
                   key={client.id}
                   type="button"
-                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 text-left w-full hover:bg-muted/50"
+                  className="flex w-full items-center gap-3 rounded-lg border border-border bg-card p-4 text-left shadow-sm transition-colors hover:bg-muted/50"
                   onClick={() => router.push(`/clients/${client.id}`)}
                 >
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                  <Avatar className="size-10">
+                    <AvatarFallback className="bg-primary/10 font-medium text-primary">
                       {getInitials(client.nominativo)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <span className="flex items-center gap-2 min-w-0">
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <span className="flex min-w-0 items-center gap-2">
                       {isMissingValue(client.nominativo) ? (
                         <MissingValue className="self-start" />
                       ) : (
-                        <span className="font-medium text-foreground truncate">{client.nominativo}</span>
+                        <span className="truncate font-medium text-foreground">{client.nominativo}</span>
                       )}
                       <MissingDataWarning missing={missing} />
                     </span>
                     {isMissingValue(client.phone) ? (
                       <MissingValue className="mt-0.5 self-start" />
                     ) : (
-                      <span className="text-sm text-muted-foreground">{client.phone}</span>
+                      <span className="text-sm text-muted-foreground tabular-nums">{client.phone}</span>
                     )}
                     {client.dogs.length > 0 && (
-                      <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                      <div className="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5">
                         {client.dogs.map(dog => {
                           const details = formatDogDetails(dog)
                           return (
-                            <span key={dog.id} className="text-xs text-muted-foreground truncate">
+                            <span key={dog.id} className="truncate text-xs text-muted-foreground">
                               {dog.name}{details ? ` (${details})` : ''}
                             </span>
                           )
@@ -450,12 +464,12 @@ export function ClientList({ clients }: ClientListProps) {
                       </div>
                     )}
                     {(lastAppt || nextAppt) && (
-                      <div className="flex gap-3 mt-1">
+                      <div className="mt-1 flex gap-3">
                         {lastAppt && (
-                          <span className="text-xs text-muted-foreground">{lastAppt.label} ({lastAppt.days})</span>
+                          <span className="text-xs text-muted-foreground tabular-nums">{lastAppt.label} ({lastAppt.days})</span>
                         )}
                         {nextAppt && (
-                          <span className="text-xs text-brand-primary font-medium">{nextAppt.label} ({nextAppt.days})</span>
+                          <span className="text-xs font-medium text-primary tabular-nums">{nextAppt.label} ({nextAppt.days})</span>
                         )}
                       </div>
                     )}
@@ -472,6 +486,6 @@ export function ClientList({ clients }: ClientListProps) {
         onOpenChange={setFormOpen}
         onSuccess={handleSuccess}
       />
-    </>
+    </div>
   )
 }

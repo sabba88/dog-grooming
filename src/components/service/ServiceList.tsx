@@ -79,22 +79,33 @@ export function ServiceList({ services, role }: ServiceListProps) {
   }
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Servizi</h1>
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-2xl font-semibold text-foreground">Servizi</h1>
+          {services.length > 0 && (
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {services.length === 1 ? '1 servizio' : `${services.length} servizi`}
+            </span>
+          )}
+        </div>
         {isAdmin && (
           <Button onClick={handleNew}>
             <Plus className="h-4 w-4 mr-2" />
-            Nuovo Servizio
+            Nuovo servizio
           </Button>
         )}
-      </div>
+      </header>
 
       {services.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">Nessun servizio configurato</p>
+        <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card px-6 py-14 text-center">
+          <p className="text-sm font-medium text-foreground">Nessun servizio configurato</p>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Il listino e&apos; ancora vuoto: aggiungi un servizio per poterlo scegliere
+            quando prendi un appuntamento.
+          </p>
           {isAdmin && (
-            <Button onClick={handleNew}>
+            <Button onClick={handleNew} className="mt-3">
               <Plus className="h-4 w-4 mr-2" />
               Aggiungi il primo servizio
             </Button>
@@ -103,32 +114,36 @@ export function ServiceList({ services, role }: ServiceListProps) {
       ) : (
         <>
           {/* Desktop: Table */}
-          <div className="hidden md:block rounded-lg border border-border">
+          <div className="hidden md:block overflow-hidden rounded-lg border border-border bg-card">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Tariffa base</TableHead>
-                  <TableHead>Durata</TableHead>
-                  {isAdmin && <TableHead className="text-right">Azioni</TableHead>}
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="px-4 text-xs font-medium text-muted-foreground">Nome</TableHead>
+                  <TableHead className="px-4 text-xs font-medium text-muted-foreground">Tariffa base</TableHead>
+                  <TableHead className="px-4 text-xs font-medium text-muted-foreground">Durata</TableHead>
+                  {isAdmin && (
+                    <TableHead className="px-4 text-right text-xs font-medium text-muted-foreground">
+                      Azioni
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {services.map((service) => (
                   <TableRow key={service.id}>
-                    <TableCell className="font-medium">{service.name}</TableCell>
-                    <TableCell>{formatPrice(service.price)}</TableCell>
-                    <TableCell>
-                      <span>{formatDuration(service.duration)}</span>
+                    <TableCell className="px-4 py-3 font-medium text-foreground">{service.name}</TableCell>
+                    <TableCell className="px-4 py-3 tabular-nums">{formatPrice(service.price)}</TableCell>
+                    <TableCell className="px-4 py-3">
+                      <span className="tabular-nums">{formatDuration(service.duration)}</span>
                       {service.durationSurchargePer30min > 0 && (
-                        <span className="block text-xs text-muted-foreground">
+                        <span className="block text-xs text-muted-foreground tabular-nums">
                           +{formatPrice(service.durationSurchargePer30min)}/30min
                         </span>
                       )}
                     </TableCell>
                     {isAdmin && (
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <TableCell className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -141,7 +156,7 @@ export function ServiceList({ services, role }: ServiceListProps) {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-destructive hover:text-destructive"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                             onClick={() => setDeleteTarget(service)}
                             disabled={isDeleting}
                             aria-label={`Elimina ${service.name}`}
@@ -163,20 +178,26 @@ export function ServiceList({ services, role }: ServiceListProps) {
             {services.map((service) => (
               <div
                 key={service.id}
-                className="rounded-lg border border-border bg-card p-4"
+                className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4"
               >
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex items-baseline justify-between gap-3">
                   <p className="font-medium text-foreground">{service.name}</p>
-                  <p className="font-semibold text-foreground">{formatPrice(service.price)}</p>
-                </div>
-                <p className="text-sm text-muted-foreground">{formatDuration(service.duration)}</p>
-                {service.durationSurchargePer30min > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    +{formatPrice(service.durationSurchargePer30min)}/30min
+                  <p className="shrink-0 font-semibold text-foreground tabular-nums">
+                    {formatPrice(service.price)}
                   </p>
-                )}
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-sm text-muted-foreground tabular-nums">
+                    {formatDuration(service.duration)}
+                  </p>
+                  {service.durationSurchargePer30min > 0 && (
+                    <p className="text-xs text-muted-foreground tabular-nums">
+                      +{formatPrice(service.durationSurchargePer30min)}/30min
+                    </p>
+                  )}
+                </div>
                 {isAdmin && (
-                  <div className="flex gap-2 mt-3">
+                  <div className="mt-1 flex gap-2 border-t border-border pt-3">
                     <Button
                       variant="outline"
                       size="sm"
@@ -187,9 +208,9 @@ export function ServiceList({ services, role }: ServiceListProps) {
                       Modifica
                     </Button>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                       onClick={() => setDeleteTarget(service)}
                       disabled={isDeleting}
                     >
@@ -242,6 +263,6 @@ export function ServiceList({ services, role }: ServiceListProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }

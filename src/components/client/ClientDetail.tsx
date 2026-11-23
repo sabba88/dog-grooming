@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -90,6 +89,16 @@ interface ClientDetailProps {
   userRole: 'admin' | 'collaborator'
 }
 
+/** Coppia etichetta/valore della scheda anagrafica. */
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="text-sm text-foreground">{children}</div>
+    </div>
+  )
+}
+
 export function ClientDetail({ client, notes, dogs, breeds, appointments, userRole }: ClientDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
@@ -110,104 +119,88 @@ export function ClientDetail({ client, notes, dogs, breeds, appointments, userRo
   }
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-6">
-        <Button variant="ghost" size="sm" onClick={() => router.push('/clients')}>
-          <ArrowLeft className="h-4 w-4 mr-1" />
+      <nav className="flex items-center gap-1.5 text-sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="px-2 text-muted-foreground hover:text-foreground"
+          onClick={() => router.push('/clients')}
+        >
+          <ArrowLeft className="size-4 mr-1" />
           Clienti
         </Button>
         <span className="text-muted-foreground">/</span>
-        <span className="text-sm font-medium text-foreground">{client.nominativo}</span>
-      </div>
+        <span className="truncate font-medium text-foreground">{client.nominativo}</span>
+      </nav>
 
-      {/* Dati Anagrafici */}
-      <div className="rounded-lg border border-border bg-card p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Dati Anagrafici</h2>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setFormOpen(true)}>
-              <Pencil className="h-4 w-4 mr-1" />
-              Modifica
-            </Button>
-            {userRole === 'admin' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Elimina
-              </Button>
-            )}
-          </div>
+      {/* Intestazione: chi e' il cliente e cosa si puo' fare su di lui */}
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h1 className="text-xl font-medium leading-tight text-foreground">
+            {isMissingValue(client.nominativo) ? <MissingValue /> : client.nominativo}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {isMissingValue(client.phone) ? 'Telefono mancante' : client.phone}
+            {dogs.length > 0
+              ? ` · ${dogs.length} ${dogs.length === 1 ? 'cane' : 'cani'}`
+              : ''}
+          </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Nominativo</p>
-            {isMissingValue(client.nominativo) ? (
-              <MissingValue />
-            ) : (
-              <p className="text-sm text-foreground">{client.nominativo}</p>
-            )}
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Telefono</p>
-            {isMissingValue(client.phone) ? (
-              <MissingValue />
-            ) : (
-              <p className="text-sm text-foreground">{client.phone}</p>
-            )}
-          </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setFormOpen(true)}>
+            <Pencil className="size-4 mr-1" />
+            Modifica
+          </Button>
+          {userRole === 'admin' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="size-4 mr-1" />
+              Elimina
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {/* Dati anagrafici */}
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <h2 className="text-sm font-medium text-foreground">Dati anagrafici</h2>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Nominativo">
+            {isMissingValue(client.nominativo) ? <MissingValue /> : client.nominativo}
+          </Field>
+          <Field label="Telefono">
+            {isMissingValue(client.phone) ? <MissingValue /> : client.phone}
+          </Field>
           {(client.owner2 || client.phone2) && (
             <>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Proprietario 2</p>
-                <p className="text-sm text-foreground">{client.owner2 || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Telefono 2</p>
-                <p className="text-sm text-foreground">{client.phone2 || '—'}</p>
-              </div>
+              <Field label="Proprietario 2">{client.owner2 || '—'}</Field>
+              <Field label="Telefono 2">{client.phone2 || '—'}</Field>
             </>
           )}
           {(client.owner3 || client.phone3) && (
             <>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Proprietario 3</p>
-                <p className="text-sm text-foreground">{client.owner3 || '—'}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Telefono 3</p>
-                <p className="text-sm text-foreground">{client.phone3 || '—'}</p>
-              </div>
+              <Field label="Proprietario 3">{client.owner3 || '—'}</Field>
+              <Field label="Telefono 3">{client.phone3 || '—'}</Field>
             </>
           )}
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Email</p>
-            <p className="text-sm text-foreground">{client.email || '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Data registrazione</p>
-            <p className="text-sm text-foreground">
-              {client.createdAt ? dateFormatter.format(new Date(client.createdAt)) : '—'}
-            </p>
-          </div>
+          <Field label="Email">{client.email || '—'}</Field>
+          <Field label="Data registrazione">
+            {client.createdAt ? dateFormatter.format(new Date(client.createdAt)) : '—'}
+          </Field>
         </div>
-      </div>
+      </section>
 
-      {/* Cani Associati */}
+      {/* Cani associati */}
       <DogList clientId={client.id} dogs={dogs} breeds={breeds} userRole={userRole} />
 
-      <Separator className="my-6" />
-
       {/* Note */}
-      <div className="mb-6">
-        <ClientNotes clientId={client.id} notes={notes} />
-      </div>
-
-      <Separator className="my-6" />
+      <ClientNotes clientId={client.id} notes={notes} />
 
       {/* Appuntamenti */}
       {(() => {
@@ -221,71 +214,73 @@ export function ClientDetail({ client, notes, dogs, breeds, appointments, userRo
         return (
           <div className="flex flex-col gap-6">
             {/* Prossimi appuntamenti */}
-            <div className="rounded-lg border border-border bg-card p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Calendar className="h-4 w-4 text-brand-primary" />
-                <h2 className="text-lg font-semibold text-foreground">Prossimi Appuntamenti</h2>
-              </div>
+            <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+              <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Calendar className="size-4 text-primary" />
+                Prossimi appuntamenti
+              </h2>
               {future.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nessun appuntamento futuro</p>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Nessun appuntamento in programma
+                </p>
               ) : (
-                <div className="flex flex-col divide-y divide-border">
+                <ul className="mt-2 flex flex-col divide-y divide-border">
                   {future.map(a => (
-                    <div key={a.id} className="py-3 first:pt-0 last:pb-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            {a.dogName} — {formatServiceName(a.serviceName)}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {dateTimeFormatter.format(new Date(a.startTime))}
-                          </p>
-                        </div>
-                        <span className="text-sm font-medium text-brand-primary shrink-0">
-                          {formatPriceOrDash(a.price)}
-                        </span>
+                    <li key={a.id} className="flex items-start justify-between gap-4 py-3 last:pb-0">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          {a.dogName} — {formatServiceName(a.serviceName)}
+                        </p>
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
+                          <Clock className="size-3.5" />
+                          {dateTimeFormatter.format(new Date(a.startTime))}
+                        </p>
                       </div>
-                    </div>
+                      <span className="shrink-0 text-sm font-medium text-primary tabular-nums">
+                        {formatPriceOrDash(a.price)}
+                      </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
-            </div>
+            </section>
 
             {/* Storico appuntamenti */}
-            <div className="rounded-lg border border-border bg-card p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <h2 className="text-lg font-semibold text-foreground">Storico Appuntamenti</h2>
-              </div>
+            <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+              <h2 className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Clock className="size-4 text-muted-foreground" />
+                Storico appuntamenti
+              </h2>
               {past.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nessun appuntamento registrato</p>
+                <p className="mt-4 text-sm text-muted-foreground">
+                  Nessun appuntamento gia&apos; passato
+                </p>
               ) : (
-                <div className="flex flex-col divide-y divide-border">
+                <ul className="mt-2 flex flex-col divide-y divide-border">
                   {past.map(a => (
-                    <div key={a.id} className="py-3 first:pt-0 last:pb-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            {a.dogName} — {formatServiceName(a.serviceName)}
+                    <li key={a.id} className="flex items-start justify-between gap-4 py-3 last:pb-0">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          {a.dogName} — {formatServiceName(a.serviceName)}
+                        </p>
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
+                          <Clock className="size-3.5" />
+                          {dateTimeFormatter.format(new Date(a.startTime))}
+                        </p>
+                        {a.notes && (
+                          <p className="mt-1.5 rounded-md bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
+                            {a.notes}
                           </p>
-                          <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {dateTimeFormatter.format(new Date(a.startTime))}
-                          </p>
-                          {a.notes && (
-                            <p className="text-xs text-muted-foreground mt-1 italic">{a.notes}</p>
-                          )}
-                        </div>
-                        <span className="text-sm text-muted-foreground shrink-0">
-                          {formatPriceOrDash(a.price)}
-                        </span>
+                        )}
                       </div>
-                    </div>
+                      <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
+                        {formatPriceOrDash(a.price)}
+                      </span>
+                    </li>
                   ))}
-                </div>
+                </ul>
               )}
-            </div>
+            </section>
           </div>
         )
       })()}
@@ -317,6 +312,6 @@ export function ClientDetail({ client, notes, dogs, breeds, appointments, userRo
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }

@@ -55,7 +55,12 @@ export default async function LocationDetailPage({ params }: LocationDetailPageP
         stationEnabledServices={stationEnabledServices}
       />
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold">Orari di Apertura</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Orari di Apertura</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Le fasce in cui {location.name} e&apos; aperta, giorno per giorno
+          </p>
+        </div>
         <BusinessHoursEditor
           locationId={locationId}
           initialHours={businessHours}

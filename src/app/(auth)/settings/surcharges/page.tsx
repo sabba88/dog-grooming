@@ -17,10 +17,10 @@ export default async function SurchargesPage() {
   const surcharges = await getPricingSurcharges(session.user.tenantId)
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-2xl font-semibold text-foreground">Tabelle Maggiorazione</h2>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Configura le percentuali di maggiorazione per tipo di pelo e taglia.
         </p>
       </div>

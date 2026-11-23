@@ -140,44 +140,51 @@ interface SurchargeTableProps {
 
 function SurchargeTable({ title, rows, register, errors, columnLabel }: SurchargeTableProps) {
   return (
-    <div>
-      <h3 className="text-sm font-medium text-foreground mb-3">{title}</h3>
-      <div className="rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">{columnLabel}</th>
-              <th className="text-left px-4 py-2 font-medium text-muted-foreground">Maggiorazione</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const error = errors[row.field]
-              return (
-                <tr key={row.field} className="border-t border-border">
-                  <td className="px-4 py-2 text-foreground">{row.label}</td>
-                  <td className="px-4 py-2">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={500}
-                        {...register(row.field, { valueAsNumber: true })}
-                        className="h-8 w-20"
-                        aria-invalid={!!error}
-                      />
-                      <span className="text-muted-foreground text-sm">%</span>
-                    </div>
-                    {error && (
-                      <p className="text-xs text-destructive mt-1">{error.message}</p>
-                    )}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      <div className="border-b border-border px-4 py-3">
+        <h3 className="text-sm font-medium text-foreground">{title}</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          0% vuol dire nessuna maggiorazione sul prezzo di listino
+        </p>
       </div>
+      <table className="w-full text-sm">
+        <thead className="bg-muted/50">
+          <tr>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
+              {columnLabel}
+            </th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
+              Maggiorazione
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const error = errors[row.field]
+            return (
+              <tr key={row.field} className="border-t border-border">
+                <td className="px-4 py-2.5 text-foreground">{row.label}</td>
+                <td className="px-4 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={500}
+                      {...register(row.field, { valueAsNumber: true })}
+                      className="h-9 w-20 tabular-nums"
+                      aria-invalid={!!error}
+                    />
+                    <span className="text-sm text-muted-foreground">%</span>
+                  </div>
+                  {error && (
+                    <p className="mt-1 text-xs text-destructive">{error.message}</p>
+                  )}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }

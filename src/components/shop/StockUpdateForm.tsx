@@ -71,9 +71,9 @@ export function StockUpdateForm({ open, onOpenChange, onSuccess, product }: Stoc
   }
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="stock-value">Nuova quantità in magazzino</Label>
+        <Label htmlFor="stock-value">Nuova quantita&apos; in magazzino</Label>
         <Input
           id="stock-value"
           type="number"
@@ -83,11 +83,17 @@ export function StockUpdateForm({ open, onOpenChange, onSuccess, product }: Stoc
           onChange={(e) => setStock(e.target.value)}
           aria-invalid={!!error}
           autoFocus
+          className="tabular-nums"
         />
+        {product && (
+          <p className="text-xs text-muted-foreground tabular-nums">
+            Adesso a magazzino: {product.stock} pz
+          </p>
+        )}
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
       <Button type="submit" disabled={isPending}>
-        {isPending ? 'Salvataggio...' : 'Aggiorna Scorte'}
+        {isPending ? 'Salvataggio...' : 'Aggiorna scorte'}
       </Button>
     </form>
   )
@@ -97,9 +103,9 @@ export function StockUpdateForm({ open, onOpenChange, onSuccess, product }: Stoc
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="max-h-[60vh] overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Scorte — {product?.name}</SheetTitle>
+            <SheetTitle className="text-lg font-medium">Scorte · {product?.name}</SheetTitle>
           </SheetHeader>
-          <div className="mt-4">{formContent}</div>
+          <div className="mt-5">{formContent}</div>
         </SheetContent>
       </Sheet>
     )
@@ -109,7 +115,7 @@ export function StockUpdateForm({ open, onOpenChange, onSuccess, product }: Stoc
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Scorte — {product?.name}</DialogTitle>
+          <DialogTitle className="text-lg font-medium">Scorte · {product?.name}</DialogTitle>
         </DialogHeader>
         {formContent}
       </DialogContent>

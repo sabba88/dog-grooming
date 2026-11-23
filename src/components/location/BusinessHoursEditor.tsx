@@ -128,17 +128,24 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
         const isDirty = dirtyDays.has(dayOfWeek)
 
         return (
-          <div key={dayOfWeek} className="rounded-lg border border-border p-3 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium w-24">{label}</span>
+          <div
+            key={dayOfWeek}
+            className="rounded-lg border border-border bg-card p-4 shadow-sm"
+          >
+            <div className="flex flex-wrap items-start gap-4">
+              <div className="flex w-28 shrink-0 flex-col gap-0.5 pt-1.5">
+                <span className="text-sm font-medium text-foreground">{label}</span>
+                {slots.length === 0 && (
+                  <span className="text-xs text-muted-foreground">Chiuso</span>
+                )}
+              </div>
 
               {slots.length === 0 ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Chiuso</span>
+                <div className="ml-auto flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 text-xs"
+                    className="h-8 text-xs"
                     onClick={() => handleOpenDay(dayOfWeek)}
                   >
                     Apri giorno
@@ -146,7 +153,7 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
                   {isDirty && (
                     <Button
                       size="sm"
-                      className="h-7 text-xs"
+                      className="h-8 text-xs"
                       onClick={() => handleSaveDay(dayOfWeek)}
                       disabled={isSaving}
                     >
@@ -156,30 +163,32 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col gap-2 flex-1 ml-4">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
                   {slots.map((slot, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <Input
                         type="time"
                         value={slot.openTime}
                         onChange={e => handleSlotChange(dayOfWeek, i, 'openTime', e.target.value)}
-                        className="w-28 h-8 text-sm"
+                        className="h-9 w-28 text-sm tabular-nums"
+                        aria-label={`${label}: apertura fascia ${i + 1}`}
                       />
-                      <span className="text-xs text-muted-foreground">–</span>
+                      <span className="text-sm text-muted-foreground">&ndash;</span>
                       <Input
                         type="time"
                         value={slot.closeTime}
                         onChange={e => handleSlotChange(dayOfWeek, i, 'closeTime', e.target.value)}
-                        className="w-28 h-8 text-sm"
+                        className="h-9 w-28 text-sm tabular-nums"
+                        aria-label={`${label}: chiusura fascia ${i + 1}`}
                       />
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        className="size-8 text-muted-foreground hover:text-destructive"
                         onClick={() => handleRemoveSlot(dayOfWeek, i)}
                         aria-label="Rimuovi fascia"
                       >
-                        <X className="size-3.5" />
+                        <X className="size-4" />
                       </Button>
                     </div>
                   ))}
@@ -189,22 +198,27 @@ export function BusinessHoursEditor({ locationId, initialHours }: BusinessHoursE
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 gap-1 text-xs"
+                        className="h-8 gap-1 px-2 text-xs text-muted-foreground"
                         onClick={() => handleAddSlot(dayOfWeek)}
                       >
                         <Plus className="size-3.5" />
                         Aggiungi pausa
                       </Button>
                     )}
-                    <Button
-                      size="sm"
-                      className="h-7 text-xs ml-auto"
-                      onClick={() => handleSaveDay(dayOfWeek)}
-                      disabled={isSaving}
-                    >
-                      {isSaving && <Loader2 className="size-3.5 animate-spin mr-1" />}
-                      Salva
-                    </Button>
+                    <div className="ml-auto flex items-center gap-2">
+                      {isDirty && (
+                        <span className="text-xs text-muted-foreground">Modifiche da salvare</span>
+                      )}
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => handleSaveDay(dayOfWeek)}
+                        disabled={isSaving}
+                      >
+                        {isSaving && <Loader2 className="size-3.5 animate-spin mr-1" />}
+                        Salva
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}

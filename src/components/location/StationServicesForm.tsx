@@ -76,28 +76,44 @@ export function StationServicesForm({
   const formContent = (
     <div className="flex flex-col gap-4">
       {allServices.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nessun servizio disponibile nel listino.</p>
-      ) : (
-        <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto">
-          {allServices.map((service) => (
-            <label
-              key={service.id}
-              className="flex items-start gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50"
-            >
-              <Checkbox
-                checked={selectedIds.includes(service.id)}
-                onCheckedChange={(checked) => handleToggle(service.id, checked === true)}
-                aria-label={`Abilita ${service.name}`}
-              />
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="text-sm font-medium text-foreground">{service.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {formatDuration(service.duration)} · {formatPrice(service.price)}
-                </span>
-              </div>
-            </label>
-          ))}
+        <div className="rounded-lg border border-dashed border-border bg-card/60 px-4 py-10 text-center">
+          <p className="text-sm font-medium text-foreground">Nessun servizio nel listino</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Aggiungi prima un servizio al listino, poi torna qui ad abilitarlo
+          </p>
         </div>
+      ) : (
+        <>
+          <p className="text-xs text-muted-foreground tabular-nums">
+            {selectedIds.length} di {allServices.length} servizi abilitati su questa postazione
+          </p>
+          <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
+            {allServices.map((service) => {
+              const checked = selectedIds.includes(service.id)
+              return (
+                <label
+                  key={service.id}
+                  className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                    checked ? 'border-primary/40 bg-accent' : 'border-border hover:bg-muted/50'
+                  }`}
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(c) => handleToggle(service.id, c === true)}
+                    aria-label={`Abilita ${service.name}`}
+                    className="mt-0.5"
+                  />
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-sm font-medium text-foreground">{service.name}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {formatDuration(service.duration)} · {formatPrice(service.price)}
+                    </span>
+                  </div>
+                </label>
+              )
+            })}
+          </div>
+        </>
       )}
 
       <Button onClick={handleSubmit} disabled={isPending} className="mt-2">

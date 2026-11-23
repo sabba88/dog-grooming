@@ -104,10 +104,10 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
     }
   }
 
-  const title = isEditing ? 'Modifica Prodotto' : 'Nuovo Prodotto'
+  const title = isEditing ? 'Modifica prodotto' : 'Nuovo prodotto'
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <Label htmlFor="product-name">Nome</Label>
         <Input
@@ -131,6 +131,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
           value={priceEur}
           onChange={(e) => setPriceEur(e.target.value)}
           aria-invalid={!!errors.price}
+          className="tabular-nums"
         />
         {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
       </div>
@@ -147,13 +148,18 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
             value={stock}
             onChange={(e) => setStock(e.target.value)}
             aria-invalid={!!errors.stock}
+            className="tabular-nums"
           />
+          <p className="text-xs text-muted-foreground">
+            Quante unita&apos; ci sono adesso in magazzino. Si aggiornano poi dalla
+            lista prodotti.
+          </p>
           {errors.stock && <p className="text-sm text-destructive">{errors.stock}</p>}
         </div>
       )}
 
-      <Button type="submit" disabled={isPending} className="mt-2">
-        {isPending ? 'Salvataggio...' : isEditing ? 'Salva Modifiche' : 'Crea Prodotto'}
+      <Button type="submit" disabled={isPending} className="mt-1">
+        {isPending ? 'Salvataggio...' : isEditing ? 'Salva modifiche' : 'Crea prodotto'}
       </Button>
     </form>
   )
@@ -163,9 +169,9 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>{title}</SheetTitle>
+            <SheetTitle className="text-lg font-medium">{title}</SheetTitle>
           </SheetHeader>
-          <div className="mt-4">{formContent}</div>
+          <div className="mt-5">{formContent}</div>
         </SheetContent>
       </Sheet>
     )
@@ -175,7 +181,7 @@ export function ProductForm({ open, onOpenChange, onSuccess, product }: ProductF
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="text-lg font-medium">{title}</DialogTitle>
         </DialogHeader>
         {formContent}
       </DialogContent>

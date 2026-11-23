@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -82,6 +81,16 @@ const sexLabel: Record<string, string> = {
 
 const dateFormatter = new Intl.DateTimeFormat('it-IT', { dateStyle: 'long' })
 
+/** Coppia etichetta/valore della scheda del cane. */
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <div className="text-sm text-foreground">{children}</div>
+    </div>
+  )
+}
+
 export function DogDetail({ dog, notes, breeds, serviceNotes, lastVisit, userRole }: DogDetailProps) {
   const router = useRouter()
   const [formOpen, setFormOpen] = useState(false)
@@ -107,174 +116,164 @@ export function DogDetail({ dog, notes, breeds, serviceNotes, lastVisit, userRol
   const sizeFromBreed = !dog.sizeType && !!dog.breedSizeType
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 mb-6">
-        <Button variant="ghost" size="sm" onClick={() => router.push('/clients')}>
-          <ArrowLeft className="h-4 w-4 mr-1" />
+      <nav className="flex items-center gap-1.5 text-sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="px-2 text-muted-foreground hover:text-foreground"
+          onClick={() => router.push('/clients')}
+        >
+          <ArrowLeft className="size-4 mr-1" />
           Clienti
         </Button>
         <span className="text-muted-foreground">/</span>
         <Button
           variant="ghost"
           size="sm"
-          className="text-muted-foreground hover:text-foreground"
+          className="px-2 text-muted-foreground hover:text-foreground"
           onClick={() => router.push(`/clients/${dog.clientId}`)}
         >
           {dog.clientNominativo}
         </Button>
         <span className="text-muted-foreground">/</span>
-        <span className="text-sm font-medium text-foreground">{dog.name}</span>
-      </div>
+        <span className="truncate font-medium text-foreground">{dog.name}</span>
+      </nav>
 
-      {/* Dati Cane */}
-      <div className="rounded-lg border border-border bg-card p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Dati Cane</h2>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setFormOpen(true)}>
-              <Pencil className="h-4 w-4 mr-1" />
-              Modifica
-            </Button>
-            {userRole === 'admin' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Elimina
-              </Button>
-            )}
-          </div>
+      {/* Intestazione: il cane, la sua razza, e le azioni su di lui */}
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h1 className="text-xl font-medium leading-tight text-foreground">{dog.name}</h1>
+          <p className="text-sm text-muted-foreground">
+            {dog.breedName ?? 'Razza non indicata'} · {dog.clientNominativo}
+          </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Nome</p>
-            <p className="text-sm text-foreground">{dog.name}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Razza</p>
-            <p className="text-sm text-foreground">{dog.breedName || '—'}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Data di Nascita</p>
-            <p className="text-sm text-foreground">
-              {dog.dateOfBirth ? dateFormatter.format(dog.dateOfBirth) : '—'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Sesso</p>
-            <p className="text-sm text-foreground">
-              {dog.sex ? sexLabel[dog.sex] || dog.sex : '—'}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Sterilizzato</p>
-            <p className="text-sm text-foreground">
-              {dog.sterilized ? 'Si' : 'No'}
-            </p>
-          </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setFormOpen(true)}>
+            <Pencil className="size-4 mr-1" />
+            Modifica
+          </Button>
+          {userRole === 'admin' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="size-4 mr-1" />
+              Elimina
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {/* Dati del cane */}
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <h2 className="text-sm font-medium text-foreground">Dati del cane</h2>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Nome">{dog.name}</Field>
+          <Field label="Razza">{dog.breedName || '—'}</Field>
+          <Field label="Data di nascita">
+            {dog.dateOfBirth ? dateFormatter.format(dog.dateOfBirth) : '—'}
+          </Field>
+          <Field label="Sesso">{dog.sex ? sexLabel[dog.sex] || dog.sex : '—'}</Field>
+          <Field label="Sterilizzato">{dog.sterilized ? 'Si' : 'No'}</Field>
 
           {/* Profilo prezzo — pelo e taglia effettivi */}
           {(effectiveCoatType || effectiveSizeType) && (
             <div className="sm:col-span-2">
-              <p className="text-xs text-muted-foreground mb-1">Profilo Prezzo</p>
-              <p className="text-sm font-medium text-primary">
+              <p className="text-xs text-muted-foreground">Profilo prezzo</p>
+              <p className="mt-1 text-sm font-medium text-primary">
                 {effectiveCoatType && (
                   <>
                     Pelo {COAT_TYPE_LABELS[effectiveCoatType]}
-                    {coatFromBreed && <span className="text-xs text-muted-foreground ml-1">(da razza)</span>}
+                    {coatFromBreed && (
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">(da razza)</span>
+                    )}
                   </>
                 )}
                 {effectiveCoatType && effectiveSizeType && ' · '}
                 {effectiveSizeType && (
                   <>
                     Taglia {SIZE_TYPE_LABELS[effectiveSizeType]}
-                    {sizeFromBreed && <span className="text-xs text-muted-foreground ml-1">(da razza)</span>}
+                    {sizeFromBreed && (
+                      <span className="ml-1 text-xs font-normal text-muted-foreground">(da razza)</span>
+                    )}
                   </>
                 )}
               </p>
             </div>
           )}
 
-          {/* Avviso soft — nessun pelo/taglia configurato */}
+          {/* Avviso: senza pelo e taglia il prezzo non si calcola dalla matrice */}
           {!effectiveCoatType && !effectiveSizeType && (
-            <div className="sm:col-span-2">
-              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
-                Pelo/taglia non configurati — il prezzo degli appuntamenti userà il prezzo base del servizio
+            <div className="sm:col-span-2 rounded-md border border-slot-understaffed bg-slot-understaffed/40 px-3 py-2">
+              <p className="text-sm font-medium text-brand-warning">
+                Pelo e taglia non configurati
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Gli appuntamenti useranno il prezzo base del servizio
               </p>
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Ultima prestazione — chi ha fatto il cane l'ultima volta */}
-      <div className="rounded-lg border border-border bg-card p-6 mb-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">Ultima prestazione</h2>
+      {/* Ultima prestazione: chi ha fatto il cane l'ultima volta */}
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <h2 className="text-sm font-medium text-foreground">Ultima prestazione</h2>
         {!lastVisit ? (
-          <p className="text-sm text-muted-foreground">Nessuna prestazione gi&agrave; effettuata</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Questo cane non e&apos; ancora passato in toelettatura
+          </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Fatto da</p>
-              <p className="text-sm font-medium text-foreground">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label="Fatto da">
+              <span className="font-medium">
                 {lastVisit.userName ?? 'Collaboratore non registrato'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Quando</p>
-              <p className="text-sm text-foreground">
-                {format(new Date(lastVisit.startTime), 'd MMMM yyyy', { locale: it })}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Servizio</p>
-              <p className="text-sm text-foreground">{formatServiceName(lastVisit.serviceName)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Prezzo</p>
-              <p className="text-sm text-foreground">{formatPriceOrDash(lastVisit.price)}</p>
-            </div>
+              </span>
+            </Field>
+            <Field label="Quando">
+              {format(new Date(lastVisit.startTime), 'd MMMM yyyy', { locale: it })}
+            </Field>
+            <Field label="Servizio">{formatServiceName(lastVisit.serviceName)}</Field>
+            <Field label="Prezzo">
+              <span className="tabular-nums">{formatPriceOrDash(lastVisit.price)}</span>
+            </Field>
             {lastVisit.stationName && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Postazione</p>
-                <p className="text-sm text-foreground">{lastVisit.stationName}</p>
-              </div>
+              <Field label="Postazione">{lastVisit.stationName}</Field>
             )}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Note Cane */}
-      <div className="mb-6">
-        <DogNotes dogId={dog.id} notes={notes} />
-      </div>
+      {/* Note sul cane */}
+      <DogNotes dogId={dog.id} notes={notes} />
 
-      <Separator className="my-6" />
-
-      {/* Storico Note Prestazione */}
-      <div className="rounded-lg border border-border bg-card p-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">Storico Note Prestazione</h2>
+      {/* Storico note prestazione */}
+      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+        <h2 className="text-sm font-medium text-foreground">Note delle prestazioni</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Quello che e&apos; stato scritto volta per volta a fine lavoro
+        </p>
         {serviceNotes.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nessuna nota prestazione registrata</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Nessuna nota di prestazione registrata
+          </p>
         ) : (
-          <div className="flex flex-col">
-            {serviceNotes.map((note, index) => (
-              <div key={note.id}>
-                {index > 0 && <Separator className="my-3" />}
-                <div className="flex flex-col gap-1">
-                  <p className="text-xs text-muted-foreground">
-                    {format(new Date(note.startTime), 'd MMM yyyy', { locale: it })} · {formatServiceName(note.serviceName)}
-                  </p>
-                  <p className="text-sm text-foreground">{note.notes}</p>
-                </div>
-              </div>
+          <ul className="mt-4 flex flex-col gap-2">
+            {serviceNotes.map((note) => (
+              <li key={note.id} className="rounded-md border border-border bg-muted/40 p-3">
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(note.startTime), 'd MMM yyyy', { locale: it })} · {formatServiceName(note.serviceName)}
+                </p>
+                <p className="mt-1 text-sm text-foreground">{note.notes}</p>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
-      </div>
+      </section>
 
       <DogForm
         open={formOpen}
@@ -306,6 +305,6 @@ export function DogDetail({ dog, notes, breeds, serviceNotes, lastVisit, userRol
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }

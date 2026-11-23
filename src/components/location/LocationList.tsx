@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import { LocationForm } from '@/components/location/LocationForm'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Settings2 } from 'lucide-react'
+import { Plus, Pencil, Settings2, MapPin } from 'lucide-react'
 
 interface Location {
   id: string
@@ -45,40 +45,51 @@ export function LocationList({ locations }: LocationListProps) {
   }
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Gestione Sedi</h1>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Gestione Sedi</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Le sedi del salone, con le loro postazioni e i loro orari
+          </p>
+        </div>
         <Button onClick={handleNew}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Nuova Sede
         </Button>
       </div>
 
       {locations.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">Nessuna sede configurata</p>
+        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-border bg-card/60 px-6 py-14 text-center">
+          <MapPin className="size-8 text-muted-foreground" />
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-foreground">Nessuna sede configurata</p>
+            <p className="text-sm text-muted-foreground">
+              Crea la prima sede per poterci aggiungere postazioni e orari di apertura
+            </p>
+          </div>
           <Button onClick={handleNew}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Aggiungi la prima sede
           </Button>
         </div>
       ) : (
         <>
           {/* Desktop: Table */}
-          <div className="hidden md:block rounded-lg border border-border">
+          <div className="hidden md:block overflow-hidden rounded-lg border border-border bg-card shadow-sm">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Indirizzo</TableHead>
-                  <TableHead className="text-right">Azioni</TableHead>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="text-xs font-medium text-muted-foreground">Nome</TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">Indirizzo</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-muted-foreground">Azioni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {locations.map((location) => (
                   <TableRow key={location.id}>
-                    <TableCell className="font-medium">{location.name}</TableCell>
-                    <TableCell>{location.address}</TableCell>
+                    <TableCell className="font-medium text-foreground">{location.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{location.address}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button
@@ -87,7 +98,7 @@ export function LocationList({ locations }: LocationListProps) {
                           onClick={() => handleEdit(location)}
                           aria-label={`Modifica ${location.name}`}
                         >
-                          <Pencil className="h-4 w-4 mr-1" />
+                          <Pencil className="size-4 mr-1" />
                           Modifica
                         </Button>
                         <Button
@@ -96,7 +107,7 @@ export function LocationList({ locations }: LocationListProps) {
                           onClick={() => router.push(`/settings/locations/${location.id}`)}
                           aria-label={`Gestisci postazioni di ${location.name}`}
                         >
-                          <Settings2 className="h-4 w-4 mr-1" />
+                          <Settings2 className="size-4 mr-1" />
                           Postazioni
                         </Button>
                       </div>
@@ -112,20 +123,20 @@ export function LocationList({ locations }: LocationListProps) {
             {locations.map((location) => (
               <div
                 key={location.id}
-                className="rounded-lg border border-border bg-card p-4"
+                className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-sm"
               >
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex flex-col gap-0.5">
                   <p className="font-medium text-foreground">{location.name}</p>
+                  <p className="text-sm text-muted-foreground">{location.address}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">{location.address}</p>
-                <div className="flex gap-2 mt-3">
+                <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(location)}
                     className="flex-1"
                   >
-                    <Pencil className="h-4 w-4 mr-1" />
+                    <Pencil className="size-4 mr-1" />
                     Modifica
                   </Button>
                   <Button
@@ -134,7 +145,7 @@ export function LocationList({ locations }: LocationListProps) {
                     onClick={() => router.push(`/settings/locations/${location.id}`)}
                     className="flex-1"
                   >
-                    <Settings2 className="h-4 w-4 mr-1" />
+                    <Settings2 className="size-4 mr-1" />
                     Postazioni
                   </Button>
                 </div>
@@ -150,6 +161,6 @@ export function LocationList({ locations }: LocationListProps) {
         onSuccess={handleSuccess}
         location={editingLocation}
       />
-    </>
+    </div>
   )
 }

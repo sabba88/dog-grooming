@@ -47,39 +47,46 @@ export function ClientNotes({ clientId, notes }: ClientNotesProps) {
   }
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold text-foreground mb-4">Note</h2>
+    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
+      <h2 className="text-sm font-medium text-foreground">Note sul cliente</h2>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        Quello che conviene sapere prima di richiamarlo
+      </p>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 mb-6">
+      <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-2">
         <Textarea
           placeholder="Aggiungi una nota..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
           rows={3}
         />
-        <div className="flex justify-end">
-          <Button type="submit" disabled={isPending || content.trim().length === 0} size="sm">
-            {isPending ? 'Salvataggio...' : 'Aggiungi Nota'}
-          </Button>
-        </div>
+        <Button
+          type="submit"
+          disabled={isPending || content.trim().length === 0}
+          size="sm"
+          className="self-end"
+        >
+          {isPending ? 'Salvataggio...' : 'Aggiungi nota'}
+        </Button>
       </form>
 
       {notes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nessuna nota</p>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Nessuna nota per ora
+        </p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <ul className="mt-4 flex flex-col gap-2">
           {notes.map((note) => (
-            <div key={note.id} className="rounded-lg border border-border bg-card p-4">
-              <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <span>{note.authorName}</span>
-                <span>·</span>
-                <span>{note.createdAt ? dateFormatter.format(new Date(note.createdAt)) : ''}</span>
-              </div>
-            </div>
+            <li key={note.id} className="rounded-md border border-border bg-muted/40 p-3">
+              <p className="whitespace-pre-wrap text-sm text-foreground">{note.content}</p>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {note.authorName}
+                {note.createdAt ? ` · ${dateFormatter.format(new Date(note.createdAt))}` : ''}
+              </p>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </section>
   )
 }

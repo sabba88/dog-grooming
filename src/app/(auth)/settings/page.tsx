@@ -1,7 +1,28 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { checkPermission } from '@/lib/auth/permissions'
-import { Users, MapPin, Percent } from 'lucide-react'
+import { Users, MapPin, Percent, ChevronRight } from 'lucide-react'
+
+const SECTIONS = [
+  {
+    href: '/settings/users',
+    icon: Users,
+    title: 'Gestione Utenze',
+    description: 'Crea, modifica e disattiva utenti',
+  },
+  {
+    href: '/settings/locations',
+    icon: MapPin,
+    title: 'Gestione Sedi',
+    description: 'Configura le sedi del salone',
+  },
+  {
+    href: '/settings/surcharges',
+    icon: Percent,
+    title: 'Tabelle Maggiorazione',
+    description: 'Configura % maggiorazione per pelo e taglia',
+  },
+]
 
 export default async function SettingsPage() {
   if (!(await checkPermission('manageUsers'))) {
@@ -9,44 +30,30 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-2xl font-semibold text-foreground">Impostazioni</h2>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Gestisci le impostazioni del sistema.
         </p>
       </div>
-      <nav className="grid gap-3 sm:grid-cols-2">
-        <Link
-          href="/settings/users"
-          className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
-        >
-          <Users className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="font-medium text-foreground">Gestione Utenze</p>
-            <p className="text-sm text-muted-foreground">Crea, modifica e disattiva utenti</p>
-          </div>
-        </Link>
-        <Link
-          href="/settings/locations"
-          className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
-        >
-          <MapPin className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="font-medium text-foreground">Gestione Sedi</p>
-            <p className="text-sm text-muted-foreground">Configura le sedi del salone</p>
-          </div>
-        </Link>
-        <Link
-          href="/settings/surcharges"
-          className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent"
-        >
-          <Percent className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="font-medium text-foreground">Tabelle Maggiorazione</p>
-            <p className="text-sm text-muted-foreground">Configura % maggiorazione per pelo e taglia</p>
-          </div>
-        </Link>
+      <nav className="grid gap-4 sm:grid-cols-2">
+        {SECTIONS.map(({ href, icon: Icon, title, description }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group flex items-center gap-4 rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/40 hover:bg-accent"
+          >
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors group-hover:bg-card">
+              <Icon className="size-5" />
+            </span>
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <p className="text-sm font-medium text-foreground">{title}</p>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
+            <ChevronRight className="size-4 shrink-0 ml-auto text-muted-foreground" />
+          </Link>
+        ))}
       </nav>
     </div>
   )

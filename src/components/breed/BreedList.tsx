@@ -71,27 +71,36 @@ export function BreedList({ breeds }: BreedListProps) {
   }
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Razze</h1>
-        <Button onClick={handleNew}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuova Razza
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-2xl font-semibold leading-tight text-foreground">Razze</h1>
+          <p className="text-sm text-muted-foreground">
+            {breeds.length === 0
+              ? 'Pelo e taglia della razza diventano il profilo prezzo dei cani'
+              : `${breeds.length} ${breeds.length === 1 ? 'razza configurata' : 'razze configurate'}`}
+          </p>
+        </div>
+        <Button onClick={handleNew} className="shrink-0">
+          <Plus className="size-4 mr-2" />
+          Nuova razza
         </Button>
-      </div>
+      </header>
 
       {breeds.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">Nessuna razza configurata</p>
-          <Button onClick={handleNew}>
-            <Plus className="h-4 w-4 mr-2" />
+        <div className="rounded-lg border border-dashed border-border bg-card/50 px-6 py-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            Nessuna razza configurata: senza razze, pelo e taglia vanno indicati cane per cane
+          </p>
+          <Button onClick={handleNew} className="mt-4">
+            <Plus className="size-4 mr-2" />
             Aggiungi la prima razza
           </Button>
         </div>
       ) : (
         <>
-          {/* Desktop: Table */}
-          <div className="hidden md:block rounded-lg border border-border">
+          {/* Desktop: tabella */}
+          <div className="hidden overflow-hidden rounded-lg border border-border bg-card shadow-sm md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -112,25 +121,25 @@ export function BreedList({ breeds }: BreedListProps) {
                       {breed.sizeType === 'toy' ? 'Toy' : breed.sizeType === 'small' ? 'Piccola' : breed.sizeType === 'medium' ? 'Media' : breed.sizeType === 'large' ? 'Grande' : breed.sizeType === 'giant' ? 'Gigante' : '—'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(breed)}
                           aria-label={`Modifica ${breed.name}`}
                         >
-                          <Pencil className="h-4 w-4 mr-1" />
+                          <Pencil className="size-4 mr-1" />
                           Modifica
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => setDeleteTarget(breed)}
                           disabled={isDeleting}
                           aria-label={`Elimina ${breed.name}`}
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
+                          <Trash2 className="size-4 mr-1" />
                           Elimina
                         </Button>
                       </div>
@@ -141,38 +150,40 @@ export function BreedList({ breeds }: BreedListProps) {
             </Table>
           </div>
 
-          {/* Mobile: Cards */}
+          {/* Mobile: schede */}
           <div className="flex flex-col gap-3 md:hidden">
             {breeds.map((breed) => (
-              <div key={breed.id} className="rounded-lg border border-border bg-card p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <p className="font-medium text-foreground">{breed.name}</p>
-                </div>
-                {(breed.coatType || breed.sizeType) && (
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {breed.coatType && `Pelo ${breed.coatType === 'short' ? 'Corto' : breed.coatType === 'medium' ? 'Medio' : 'Lungo'}`}
-                    {breed.coatType && breed.sizeType && ' · '}
-                    {breed.sizeType && `Taglia ${breed.sizeType === 'toy' ? 'Toy' : breed.sizeType === 'small' ? 'Piccola' : breed.sizeType === 'medium' ? 'Media' : breed.sizeType === 'large' ? 'Grande' : 'Gigante'}`}
-                  </p>
-                )}
-                <div className="flex gap-2 mt-3">
+              <div key={breed.id} className="rounded-lg border border-border bg-card p-4 shadow-sm">
+                <p className="font-medium text-foreground">{breed.name}</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  {breed.coatType || breed.sizeType ? (
+                    <>
+                      {breed.coatType && `Pelo ${breed.coatType === 'short' ? 'Corto' : breed.coatType === 'medium' ? 'Medio' : 'Lungo'}`}
+                      {breed.coatType && breed.sizeType && ' · '}
+                      {breed.sizeType && `Taglia ${breed.sizeType === 'toy' ? 'Toy' : breed.sizeType === 'small' ? 'Piccola' : breed.sizeType === 'medium' ? 'Media' : breed.sizeType === 'large' ? 'Grande' : 'Gigante'}`}
+                    </>
+                  ) : (
+                    'Pelo e taglia non indicati'
+                  )}
+                </p>
+                <div className="mt-3 flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleEdit(breed)}
                     className="flex-1"
                   >
-                    <Pencil className="h-4 w-4 mr-1" />
+                    <Pencil className="size-4 mr-1" />
                     Modifica
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => setDeleteTarget(breed)}
                     disabled={isDeleting}
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
+                    <Trash2 className="size-4 mr-1" />
                     Elimina
                   </Button>
                 </div>
@@ -218,6 +229,6 @@ export function BreedList({ breeds }: BreedListProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }

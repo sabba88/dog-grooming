@@ -109,7 +109,7 @@ export function LocationForm({ open, onOpenChange, onSuccess, location }: Locati
           aria-invalid={!!form.formState.errors.name}
         />
         {form.formState.errors.name && (
-          <p className="text-sm text-destructive">
+          <p className="text-xs text-destructive">
             {form.formState.errors.name.message}
           </p>
         )}
@@ -124,7 +124,7 @@ export function LocationForm({ open, onOpenChange, onSuccess, location }: Locati
           aria-invalid={!!form.formState.errors.address}
         />
         {form.formState.errors.address && (
-          <p className="text-sm text-destructive">
+          <p className="text-xs text-destructive">
             {form.formState.errors.address.message}
           </p>
         )}

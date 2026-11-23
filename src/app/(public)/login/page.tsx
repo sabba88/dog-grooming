@@ -9,7 +9,7 @@ import { loginSchema, type LoginFormData } from '@/lib/validations/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -50,62 +50,65 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#F8FAFB' }}>
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-semibold">Accedi</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Il tuo username"
-                {...register('username')}
-                className="min-h-[44px]"
-              />
-              {errors.username && (
-                <p className="text-sm" style={{ color: '#EF4444' }}>
-                  {errors.username.message}
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="flex w-full max-w-sm flex-col gap-5">
+        <div className="flex items-center justify-center rounded-xl border border-border bg-card p-4 shadow-xs">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-baum-house.webp"
+            alt="Baum House"
+            className="h-14 w-auto object-contain"
+          />
+        </div>
+
+        <Card className="shadow-md">
+          <CardHeader className="gap-1 text-center">
+            <CardTitle className="text-xl font-medium">Accedi</CardTitle>
+            <CardDescription>Gestionale della toelettatura</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Il tuo username"
+                  {...register('username')}
+                  className="min-h-[44px]"
+                />
+                {errors.username && (
+                  <p className="text-sm text-destructive">{errors.username.message}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="La tua password"
+                  {...register('password')}
+                  className="min-h-[44px]"
+                />
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password.message}</p>
+                )}
+              </div>
+
+              {error && (
+                <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-sm font-medium text-destructive">
+                  {error}
                 </p>
               )}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="La tua password"
-                {...register('password')}
-                className="min-h-[44px]"
-              />
-              {errors.password && (
-                <p className="text-sm" style={{ color: '#EF4444' }}>
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            {error && (
-              <p className="text-sm text-center" style={{ color: '#EF4444' }}>
-                {error}
-              </p>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full min-h-[44px] text-white"
-              style={{ backgroundColor: '#4BBFC8' }}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Accesso in corso...' : 'Accedi'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <Button type="submit" className="min-h-[44px] w-full" disabled={isLoading}>
+                {isLoading ? 'Accesso in corso...' : 'Accedi'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

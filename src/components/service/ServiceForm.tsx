@@ -189,7 +189,7 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
   }
 
   const formContent = (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
       {/* Nome */}
       <div className="flex flex-col gap-2">
         <Label htmlFor="name">Nome</Label>
@@ -220,67 +220,83 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
             if (cents > 0) calcMatrixFromBase(cents)
           }}
           aria-invalid={!!form.formState.errors.price}
+          className="tabular-nums"
         />
         <p className="text-xs text-muted-foreground">
-          Modifica la tariffa base per ricalcolare automaticamente i prezzi pela/taglia.
+          Modifica la tariffa base per ricalcolare automaticamente i prezzi pelo/taglia.
         </p>
         {form.formState.errors.price && (
           <p className="text-sm text-destructive">{form.formState.errors.price.message}</p>
         )}
       </div>
 
-      {/* Durata */}
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="duration">Durata (minuti)</Label>
-        <Input
-          id="duration"
-          type="number"
-          min="1"
-          step="1"
-          placeholder="Es. 30"
-          {...form.register('duration', { valueAsNumber: true })}
-          aria-invalid={!!form.formState.errors.duration}
-        />
-        {form.formState.errors.duration && (
-          <p className="text-sm text-destructive">{form.formState.errors.duration.message}</p>
-        )}
-      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {/* Durata */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="duration">Durata (minuti)</Label>
+          <Input
+            id="duration"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="Es. 30"
+            {...form.register('duration', { valueAsNumber: true })}
+            aria-invalid={!!form.formState.errors.duration}
+            className="tabular-nums"
+          />
+          {form.formState.errors.duration && (
+            <p className="text-sm text-destructive">{form.formState.errors.duration.message}</p>
+          )}
+        </div>
 
-      {/* Maggiorazione 30min */}
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="durationSurchargePer30min">Maggiorazione 30min (EUR)</Label>
-        <Input
-          id="durationSurchargePer30min"
-          type="number"
-          step="1"
-          min="0"
-          placeholder="0"
-          {...form.register('durationSurchargePer30min', { valueAsNumber: true })}
-          aria-invalid={!!form.formState.errors.durationSurchargePer30min}
-        />
-        <p className="text-xs text-muted-foreground">
-          Importo aggiunto per ogni 30 minuti oltre la durata base. 0 = nessuna maggiorazione.
-        </p>
-        {form.formState.errors.durationSurchargePer30min && (
-          <p className="text-sm text-destructive">{form.formState.errors.durationSurchargePer30min.message}</p>
-        )}
+        {/* Maggiorazione 30min */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="durationSurchargePer30min">Maggiorazione 30min (EUR)</Label>
+          <Input
+            id="durationSurchargePer30min"
+            type="number"
+            step="1"
+            min="0"
+            placeholder="0"
+            {...form.register('durationSurchargePer30min', { valueAsNumber: true })}
+            aria-invalid={!!form.formState.errors.durationSurchargePer30min}
+            className="tabular-nums"
+          />
+          <p className="text-xs text-muted-foreground">
+            Importo aggiunto per ogni 30 minuti oltre la durata base. 0 = nessuna
+            maggiorazione.
+          </p>
+          {form.formState.errors.durationSurchargePer30min && (
+            <p className="text-sm text-destructive">{form.formState.errors.durationSurchargePer30min.message}</p>
+          )}
+        </div>
       </div>
 
       {/* Matrice prezzi 3×5 */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <Label>Prezzi per Pelo/Taglia (EUR)</Label>
+      <div className="flex flex-col gap-2 border-t border-border pt-5">
+        <div className="flex flex-col gap-1">
+          <Label>Prezzi per pelo e taglia (EUR)</Label>
           <p className="text-xs text-muted-foreground">
-            Calcolati automaticamente dalla tariffa base e dalle <a href="/settings/surcharges" target="_blank" className="text-primary underline">tabelle maggiorazione</a>
+            Calcolati dalla tariffa base e dalle{' '}
+            <a
+              href="/settings/surcharges"
+              target="_blank"
+              className="text-primary underline underline-offset-2"
+            >
+              tabelle maggiorazione
+            </a>
+            . Le celle a 0 usano la tariffa base.
           </p>
         </div>
-        <div className="overflow-x-auto rounded-lg border border-border">
+        <div className="mt-1 overflow-x-auto rounded-lg border border-border bg-card">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="bg-muted/50">
-                <th className="p-2 text-left font-medium text-muted-foreground w-20"></th>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="w-24 p-2 text-left text-xs font-medium text-muted-foreground">
+                  Pelo
+                </th>
                 {SIZE_TYPES.map(size => (
-                  <th key={size} className="p-2 text-center font-medium text-muted-foreground min-w-[80px]">
+                  <th key={size} className="min-w-[80px] p-2 text-center text-xs font-medium text-muted-foreground">
                     {SIZE_LABELS[size as SizeType]}
                   </th>
                 ))}
@@ -289,20 +305,21 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
             <tbody>
               {COAT_TYPES.map((coat, coatIdx) => (
                 <tr key={coat} className={coatIdx > 0 ? 'border-t border-border' : ''}>
-                  <td className="p-2 font-medium text-muted-foreground bg-muted/30">
+                  <td className="bg-muted/30 p-2 text-sm font-medium text-muted-foreground">
                     {COAT_LABELS[coat as CoatType]}
                   </td>
                   {SIZE_TYPES.map(size => {
                     const cellKey = `${coat}_${size}`
                     const cents = matrixCells[cellKey] ?? 0
                     return (
-                      <td key={size} className="p-1">
+                      <td key={size} className="p-1.5">
                         <Input
                           type="number"
                           step="1"
                           min="0"
                           placeholder="0"
-                          className="h-8 text-center px-1"
+                          aria-label={`${COAT_LABELS[coat as CoatType]} · ${SIZE_LABELS[size as SizeType]}`}
+                          className="h-8 px-1 text-center tabular-nums"
                           value={cents > 0 ? (cents / 100).toFixed(0) : ''}
                           onChange={e => setCellPrice(coat, size, e.target.value)}
                         />
@@ -314,33 +331,30 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Celle a 0 usano la tariffa base. Modifica i singoli valori per personalizzare.
-        </p>
       </div>
 
       {isEditing && <input type="hidden" {...form.register('id')} />}
 
-      <Button type="submit" disabled={isPending} className="mt-2">
+      <Button type="submit" disabled={isPending} className="mt-1">
         {isPending
           ? 'Salvataggio...'
           : isEditing
-            ? 'Salva Modifiche'
-            : 'Crea Servizio'}
+            ? 'Salva modifiche'
+            : 'Crea servizio'}
       </Button>
     </form>
   )
 
-  const title = isEditing ? 'Modifica Servizio' : 'Nuovo Servizio'
+  const title = isEditing ? 'Modifica servizio' : 'Nuovo servizio'
 
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>{title}</SheetTitle>
+            <SheetTitle className="text-lg font-medium">{title}</SheetTitle>
           </SheetHeader>
-          <div className="mt-4">{formContent}</div>
+          <div className="mt-5">{formContent}</div>
         </SheetContent>
       </Sheet>
     )
@@ -350,7 +364,7 @@ export function ServiceForm({ open, onOpenChange, onSuccess, service }: ServiceF
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="text-lg font-medium">{title}</DialogTitle>
         </DialogHeader>
         {formContent}
       </DialogContent>

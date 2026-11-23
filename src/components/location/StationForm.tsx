@@ -118,7 +118,7 @@ export function StationForm({ open, onOpenChange, onSuccess, locationId, station
           aria-invalid={!!form.formState.errors.name}
         />
         {form.formState.errors.name && (
-          <p className="text-sm text-destructive">
+          <p className="text-xs text-destructive">
             {form.formState.errors.name.message}
           </p>
         )}
@@ -133,11 +133,16 @@ export function StationForm({ open, onOpenChange, onSuccess, locationId, station
           control={form.control}
           name="allowedSizes"
           render={({ field }) => (
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {SIZE_TYPES.map((size) => {
                 const checked = (field.value as SizeType[] | undefined)?.includes(size) ?? true
                 return (
-                  <label key={size} className="flex items-center gap-1.5 cursor-pointer select-none">
+                  <label
+                    key={size}
+                    className={`flex cursor-pointer select-none items-center gap-2 rounded-md border px-2.5 py-1.5 transition-colors ${
+                      checked ? 'border-primary/40 bg-accent' : 'border-border hover:bg-muted/50'
+                    }`}
+                  >
                     <Checkbox
                       checked={checked}
                       onCheckedChange={(c) => {
@@ -157,7 +162,7 @@ export function StationForm({ open, onOpenChange, onSuccess, locationId, station
           )}
         />
         {form.formState.errors.allowedSizes && (
-          <p className="text-sm text-destructive">
+          <p className="text-xs text-destructive">
             {form.formState.errors.allowedSizes.message}
           </p>
         )}

@@ -20,7 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Plus, Pencil, ListChecks } from 'lucide-react'
+import { Plus, Pencil, ListChecks, LayoutGrid } from 'lucide-react'
 
 interface Station {
   id: string
@@ -83,53 +83,64 @@ export function StationList({
   }
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">
-          Postazioni di {locationName}
-        </h1>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">
+            Postazioni di {locationName}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Una postazione diventa prenotabile quando ha almeno un servizio
+          </p>
+        </div>
         <Button onClick={handleNew}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Nuova Postazione
         </Button>
       </div>
 
       {stations.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">Nessuna postazione configurata</p>
+        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-border bg-card/60 px-6 py-14 text-center">
+          <LayoutGrid className="size-8 text-muted-foreground" />
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-foreground">Nessuna postazione configurata</p>
+            <p className="text-sm text-muted-foreground">
+              Senza postazioni questa sede non accetta appuntamenti
+            </p>
+          </div>
           <Button onClick={handleNew}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Aggiungi la prima postazione
           </Button>
         </div>
       ) : (
         <>
           {/* Desktop: Table */}
-          <div className="hidden md:block rounded-lg border border-border">
+          <div className="hidden md:block overflow-hidden rounded-lg border border-border bg-card shadow-sm">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Servizi</TableHead>
-                  <TableHead>Stato</TableHead>
-                  <TableHead className="text-right">Azioni</TableHead>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="text-xs font-medium text-muted-foreground">Nome</TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">Servizi</TableHead>
+                  <TableHead className="text-xs font-medium text-muted-foreground">Stato</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-muted-foreground">Azioni</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {stations.map((station) => (
                   <TableRow key={station.id}>
-                    <TableCell className="font-medium">{station.name}</TableCell>
+                    <TableCell className="font-medium text-foreground">{station.name}</TableCell>
                     <TableCell>
-                      <Badge variant="secondary">
+                      <Badge variant="secondary" className="tabular-nums">
                         {station.servicesCount} servizi
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {isIncomplete(station) && (
+                      {isIncomplete(station) ? (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Badge className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-50">
+                              <Badge className="border-slot-understaffed bg-slot-understaffed/40 text-foreground hover:bg-slot-understaffed/40">
                                 Incompleta
                               </Badge>
                             </TooltipTrigger>
@@ -138,6 +149,8 @@ export function StationList({
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Prenotabile</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -148,7 +161,7 @@ export function StationList({
                           onClick={() => handleEdit(station)}
                           aria-label={`Modifica ${station.name}`}
                         >
-                          <Pencil className="h-4 w-4 mr-1" />
+                          <Pencil className="size-4 mr-1" />
                           Modifica
                         </Button>
                         <Button
@@ -157,7 +170,7 @@ export function StationList({
                           onClick={() => handleServices(station)}
                           aria-label={`Servizi ${station.name}`}
                         >
-                          <ListChecks className="h-4 w-4 mr-1" />
+                          <ListChecks className="size-4 mr-1" />
                           Servizi
                         </Button>
                       </div>
@@ -173,24 +186,22 @@ export function StationList({
             {stations.map((station) => (
               <div
                 key={station.id}
-                className="rounded-lg border border-border bg-card p-4"
+                className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-sm"
               >
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex items-start justify-between gap-3">
                   <p className="font-medium text-foreground">{station.name}</p>
-                  {isIncomplete(station) && (
-                    <div className="flex flex-col items-end gap-0.5">
-                      <Badge className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-50 text-xs">
-                        Incompleta
-                      </Badge>
-                      <span className="text-[10px] text-amber-600">Aggiungi servizi</span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2 mb-3">
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="tabular-nums">
                     {station.servicesCount} servizi
                   </Badge>
                 </div>
+                {isIncomplete(station) && (
+                  <div className="rounded-md border border-slot-understaffed bg-slot-understaffed/40 px-3 py-2">
+                    <p className="text-xs font-medium text-foreground">Incompleta</p>
+                    <p className="text-xs text-muted-foreground">
+                      Aggiungi servizi per renderla prenotabile
+                    </p>
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -198,7 +209,7 @@ export function StationList({
                     onClick={() => handleEdit(station)}
                     className="flex-1"
                   >
-                    <Pencil className="h-4 w-4 mr-1" />
+                    <Pencil className="size-4 mr-1" />
                     Modifica
                   </Button>
                   <Button
@@ -207,7 +218,7 @@ export function StationList({
                     onClick={() => handleServices(station)}
                     className="flex-1"
                   >
-                    <ListChecks className="h-4 w-4 mr-1" />
+                    <ListChecks className="size-4 mr-1" />
                     Servizi
                   </Button>
                 </div>
@@ -237,6 +248,6 @@ export function StationList({
           enabledServiceIds={stationEnabledServices[servicesStation.id] ?? []}
         />
       )}
-    </>
+    </div>
   )
 }

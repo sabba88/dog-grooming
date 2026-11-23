@@ -9,7 +9,7 @@ export function MissingValue({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        'inline-block rounded bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive',
+        'inline-block rounded-sm bg-destructive/10 px-1.5 py-0.5 text-xs font-medium text-destructive',
         className
       )}
     >

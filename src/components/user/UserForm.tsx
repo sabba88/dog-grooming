@@ -35,6 +35,7 @@ import {
 import { toast } from 'sonner'
 import { useAction } from 'next-safe-action/hooks'
 import { useState, useEffect } from 'react'
+import { X } from 'lucide-react'
 
 const PRESET_COLORS = [
   '#3B82F6', '#22C55E', '#A855F7', '#F97316',
@@ -135,7 +136,7 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
           aria-invalid={!!form.formState.errors.name}
         />
         {form.formState.errors.name && (
-          <p className="text-sm text-destructive">
+          <p className="text-xs text-destructive">
             {form.formState.errors.name.message}
           </p>
         )}
@@ -151,12 +152,12 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
           aria-invalid={!!form.formState.errors.username || !!serverError}
         />
         {form.formState.errors.username && (
-          <p className="text-sm text-destructive">
+          <p className="text-xs text-destructive">
             {form.formState.errors.username.message}
           </p>
         )}
         {serverError && (
-          <p className="text-sm text-destructive">{serverError}</p>
+          <p className="text-xs text-destructive">{serverError}</p>
         )}
       </div>
 
@@ -172,7 +173,7 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
           aria-invalid={!!form.formState.errors.password}
         />
         {form.formState.errors.password && (
-          <p className="text-sm text-destructive">
+          <p className="text-xs text-destructive">
             {form.formState.errors.password.message}
           </p>
         )}
@@ -195,7 +196,7 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
           </SelectContent>
         </Select>
         {form.formState.errors.role && (
-          <p className="text-sm text-destructive">
+          <p className="text-xs text-destructive">
             {form.formState.errors.role.message}
           </p>
         )}
@@ -203,28 +204,40 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
 
       <div className="flex flex-col gap-2">
         <Label>Colore</Label>
+        <p className="text-xs text-muted-foreground">
+          Distingue il collaboratore in agenda e nella griglia dei turni
+        </p>
         <div className="flex flex-wrap gap-2 items-center">
           <button
             type="button"
             onClick={() => form.setValue('color', null)}
-            className={`size-7 rounded-full border-2 flex items-center justify-center text-xs ${
-              !form.watch('color') ? 'border-foreground' : 'border-border'
-            } bg-muted text-muted-foreground`}
+            aria-pressed={!form.watch('color')}
+            className={`flex size-7 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground transition-shadow ${
+              !form.watch('color')
+                ? 'ring-2 ring-ring ring-offset-2 ring-offset-background'
+                : 'hover:ring-1 hover:ring-border'
+            }`}
             title="Nessun colore"
           >
-            ✕
+            <X className="size-3.5" />
+            <span className="sr-only">Nessun colore</span>
           </button>
           {PRESET_COLORS.map((c) => (
             <button
               key={c}
               type="button"
               onClick={() => form.setValue('color', c)}
-              className={`size-7 rounded-full border-2 transition-transform hover:scale-110 ${
-                form.watch('color') === c ? 'border-foreground scale-110' : 'border-transparent'
+              aria-pressed={form.watch('color') === c}
+              className={`size-7 rounded-full ring-1 ring-border transition-shadow ${
+                form.watch('color') === c
+                  ? 'ring-2 ring-ring ring-offset-2 ring-offset-background'
+                  : ''
               }`}
               style={{ backgroundColor: c }}
               title={c}
-            />
+            >
+              <span className="sr-only">Colore {c}</span>
+            </button>
           ))}
         </div>
       </div>

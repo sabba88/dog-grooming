@@ -45,9 +45,9 @@ export function AppSidebar({ userRole, userName, badges = {} }: AppSidebarProps)
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="p-3">
+      <SidebarHeader className="px-3 py-3.5">
         {!isCollapsed && (
-          <span className="text-xs font-medium text-brand-text-muted uppercase tracking-wide px-1">
+          <span className="px-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Gestionale
           </span>
         )}
@@ -69,8 +69,8 @@ export function AppSidebar({ userRole, userName, badges = {} }: AppSidebarProps)
                       tooltip={item.label}
                       className={
                         active
-                          ? 'border-l-[3px] rounded-l-none bg-brand-primary-light text-brand-primary border-l-brand-primary'
-                          : 'text-brand-text-secondary'
+                          ? 'rounded-l-none border-l-[3px] border-l-primary bg-accent font-medium text-accent-foreground'
+                          : 'text-muted-foreground'
                       }
                     >
                       <Link href={item.href}>
@@ -79,7 +79,10 @@ export function AppSidebar({ userRole, userName, badges = {} }: AppSidebarProps)
                       </Link>
                     </SidebarMenuButton>
                     {(badges[item.href] ?? 0) > 0 && (
-                      <SidebarMenuBadge className="bg-sky-600 text-white">{badges[item.href]}</SidebarMenuBadge>
+                      <SidebarMenuBadge className="bg-primary text-primary-foreground">
+                        {badges[item.href]}
+                        <span className="sr-only"> da leggere</span>
+                      </SidebarMenuBadge>
                     )}
                   </SidebarMenuItem>
                 )
@@ -90,7 +93,11 @@ export function AppSidebar({ userRole, userName, badges = {} }: AppSidebarProps)
       </SidebarContent>
 
       <SidebarFooter>
-        <div className={`bg-black rounded-lg mx-2 mb-1 flex items-center justify-center ${isCollapsed ? 'p-1.5' : 'p-3'}`}>
+        <div
+          className={`mx-2 mb-1 flex items-center justify-center rounded-lg border border-sidebar-border bg-card ${
+            isCollapsed ? 'p-1.5' : 'p-3'
+          }`}
+        >
           <img
             src="/logo-baum-house.webp"
             alt="Baum House"
@@ -112,8 +119,8 @@ export function AppSidebar({ userRole, userName, badges = {} }: AppSidebarProps)
                       tooltip={item.label}
                       className={
                         active
-                          ? 'border-l-[3px] rounded-l-none bg-brand-primary-light text-brand-primary border-l-brand-primary'
-                          : 'text-brand-text-secondary'
+                          ? 'rounded-l-none border-l-[3px] border-l-primary bg-accent font-medium text-accent-foreground'
+                          : 'text-muted-foreground'
                       }
                     >
                       <Link href={item.href}>
@@ -132,11 +139,11 @@ export function AppSidebar({ userRole, userName, badges = {} }: AppSidebarProps)
 
         <div className="p-2">
           {!isCollapsed && (
-            <div className="mb-2 px-2">
-              <p className="text-sm font-medium truncate text-brand-text-primary">
+            <div className="mb-2 flex flex-col gap-0.5 px-2">
+              <p className="truncate text-sm font-medium text-sidebar-foreground">
                 {userName}
               </p>
-              <p className="text-xs capitalize text-brand-text-secondary">
+              <p className="text-xs text-muted-foreground">
                 {userRole === 'admin' ? 'Amministratore' : 'Collaboratore'}
               </p>
             </div>
@@ -146,7 +153,7 @@ export function AppSidebar({ userRole, userName, badges = {} }: AppSidebarProps)
               <SidebarMenuButton
                 tooltip="Esci"
                 onClick={() => signOut({ callbackUrl: '/login' })}
-                className="text-brand-text-secondary"
+                className="text-muted-foreground"
               >
                 <LogOut className="shrink-0" />
                 <span>Esci</span>

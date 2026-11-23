@@ -39,16 +39,16 @@ export function Header({ userName, locations }: HeaderProps) {
   }
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-brand-border px-4">
-      <SidebarTrigger className="-ml-1" />
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-card px-4">
+      <SidebarTrigger className="-ml-1 text-muted-foreground" />
       <Separator orientation="vertical" className="mr-2 h-4" />
-      <h1 className="text-lg font-semibold text-brand-text-primary">
+      <h1 className="truncate text-lg font-medium leading-tight text-foreground">
         {getPageTitle()}
       </h1>
       <div className="ml-auto flex items-center gap-3">
         {isHydrated && locations.length > 0 && (
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground hidden md:block" />
+            <MapPin className="hidden size-4 text-muted-foreground md:block" />
             <Select
               value={selectedLocationId ?? undefined}
               onValueChange={setSelectedLocationId}
@@ -66,7 +66,7 @@ export function Header({ userName, locations }: HeaderProps) {
             </Select>
           </div>
         )}
-        <span className="hidden md:block text-sm text-brand-text-secondary">
+        <span className="hidden text-sm text-muted-foreground md:block">
           {userName}
         </span>
       </div>

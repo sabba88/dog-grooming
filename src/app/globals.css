@@ -26,6 +26,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -85,6 +86,8 @@
   --accent: #E6F1F2;
   --accent-foreground: #1A616B;
   --destructive: #C2453A;
+  /* Bianco: 4.99 contro #C2453A. Il foreground scuro qui sarebbe 3.40. */
+  --destructive-foreground: #FFFFFF;
   --border: #ECE3D9;
   --input: #E4D9CD;
   --ring: #227F8A;
@@ -135,6 +138,8 @@
   --accent: #243437;
   --accent-foreground: #9FDDE2;
   --destructive: #E57468;
+  /* Qui il bianco scende a 2.99 e non si legge: ci vuole scuro, 5.79. */
+  --destructive-foreground: #2A1512;
   --border: rgb(245 239 232 / 12%);
   --input: rgb(245 239 232 / 16%);
   --ring: #4BBFC8;
@@ -185,5 +190,12 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Tratto delle icone a 1.5 invece del 2 di default di lucide: sul fondo
+     crema il 2 e' troppo marcato e le icone pesano piu' del testo accanto.
+     Solo lucide, che marca ogni icona con .lucide; le serie dei grafici
+     (recharts) non hanno quella classe e restano al loro spessore. */
+  .lucide {
+    stroke-width: 1.5;
   }
 }

@@ -26,7 +26,7 @@ import { deactivateUser, reactivateUser } from '@/lib/actions/users'
 import { toast } from 'sonner'
 import { useAction } from 'next-safe-action/hooks'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, Users } from 'lucide-react'
 
 interface User {
   id: string
@@ -94,51 +94,65 @@ export function UserList({ users, currentUserId }: UserListProps) {
   const isActionPending = isDeactivating || isReactivating
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-foreground">Gestione Utenze</h1>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Gestione Utenze</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Chi lavora in salone, con il colore che lo distingue in agenda
+          </p>
+        </div>
         <Button onClick={handleNew}>
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="size-4 mr-2" />
           Nuovo Utente
         </Button>
       </div>
 
       {/* Desktop: Table */}
-      <div className="hidden md:block rounded-lg border border-border">
+      <div className="hidden md:block overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead>Ruolo</TableHead>
-              <TableHead>Stato</TableHead>
-              <TableHead className="text-right">Azioni</TableHead>
+            <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableHead className="text-xs font-medium text-muted-foreground">Nome</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground">Username</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground">Ruolo</TableHead>
+              <TableHead className="text-xs font-medium text-muted-foreground">Stato</TableHead>
+              <TableHead className="text-right text-xs font-medium text-muted-foreground">Azioni</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">
+                <TableCell className="font-medium text-foreground">
                   <div className="flex items-center gap-2">
                     {user.color && (
                       <span
-                        className="inline-block size-3 rounded-full shrink-0"
+                        className="inline-block size-2.5 rounded-full shrink-0 ring-1 ring-border"
                         style={{ backgroundColor: user.color }}
+                        aria-hidden
                       />
                     )}
                     {user.name}
                   </div>
                 </TableCell>
-                <TableCell>{user.username}</TableCell>
+                <TableCell className="text-muted-foreground">{user.username}</TableCell>
                 <TableCell>
                   <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                     {user.role === 'admin' ? 'Amministratore' : 'Collaboratore'}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={user.isActive ? 'outline' : 'destructive'}>
-                    {user.isActive ? 'Attivo' : 'Disattivo'}
-                  </Badge>
+                  {user.isActive ? (
+                    <Badge variant="outline" className="gap-1.5">
+                      <span className="size-1.5 rounded-full bg-brand-success" aria-hidden />
+                      Attivo
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-1.5 text-muted-foreground">
+                      <span className="size-1.5 rounded-full bg-muted-foreground" aria-hidden />
+                      Disattivo
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
@@ -148,7 +162,7 @@ export function UserList({ users, currentUserId }: UserListProps) {
                       onClick={() => handleEdit(user)}
                       aria-label={`Modifica ${user.name}`}
                     >
-                      <Pencil className="h-4 w-4 mr-1" />
+                      <Pencil className="size-4 mr-1" />
                       Modifica
                     </Button>
                     {user.id !== currentUserId && (
@@ -156,7 +170,7 @@ export function UserList({ users, currentUserId }: UserListProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => setDeactivateTarget(user)}
                           disabled={isActionPending}
                           aria-label={`Disattiva ${user.name}`}
@@ -188,38 +202,47 @@ export function UserList({ users, currentUserId }: UserListProps) {
         {users.map((user) => (
           <div
             key={user.id}
-            className="rounded-lg border border-border bg-card p-4"
+            className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 shadow-sm"
           >
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center gap-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2 min-w-0">
                 {user.color && (
                   <span
-                    className="inline-block size-3 rounded-full shrink-0 mt-0.5"
+                    className="inline-block size-2.5 rounded-full shrink-0 mt-1.5 ring-1 ring-border"
                     style={{ backgroundColor: user.color }}
+                    aria-hidden
                   />
                 )}
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-foreground">{user.name}</p>
                   <p className="text-sm text-muted-foreground">{user.username}</p>
                 </div>
               </div>
-              <div className="flex gap-1">
+              <div className="flex shrink-0 flex-col items-end gap-1">
                 <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                   {user.role === 'admin' ? 'Admin' : 'Collab.'}
                 </Badge>
-                <Badge variant={user.isActive ? 'outline' : 'destructive'}>
-                  {user.isActive ? 'Attivo' : 'Disattivo'}
-                </Badge>
+                {user.isActive ? (
+                  <Badge variant="outline" className="gap-1.5">
+                    <span className="size-1.5 rounded-full bg-brand-success" aria-hidden />
+                    Attivo
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="gap-1.5 text-muted-foreground">
+                    <span className="size-1.5 rounded-full bg-muted-foreground" aria-hidden />
+                    Disattivo
+                  </Badge>
+                )}
               </div>
             </div>
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleEdit(user)}
                 className="flex-1"
               >
-                <Pencil className="h-4 w-4 mr-1" />
+                <Pencil className="size-4 mr-1" />
                 Modifica
               </Button>
               {user.id !== currentUserId && (
@@ -227,7 +250,7 @@ export function UserList({ users, currentUserId }: UserListProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => setDeactivateTarget(user)}
                     disabled={isActionPending}
                   >
@@ -250,10 +273,16 @@ export function UserList({ users, currentUserId }: UserListProps) {
       </div>
 
       {users.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-muted-foreground mb-4">Nessun utente trovato</p>
+        <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-border bg-card/60 px-6 py-14 text-center">
+          <Users className="size-8 text-muted-foreground" />
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-foreground">Nessun utente trovato</p>
+            <p className="text-sm text-muted-foreground">
+              Crea il primo utente per assegnare appuntamenti e turni
+            </p>
+          </div>
           <Button onClick={handleNew}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="size-4 mr-2" />
             Aggiungi il primo utente
           </Button>
         </div>
@@ -295,6 +324,6 @@ export function UserList({ users, currentUserId }: UserListProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   )
 }
