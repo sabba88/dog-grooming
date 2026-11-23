@@ -42,6 +42,20 @@ const sexLabel: Record<string, string> = {
   femmina: 'Femmina',
 }
 
+// Pelo e taglia effettivi: quelli del cane, o quelli ereditati dalla sua razza.
+// Stessa derivazione che fanno l'export qui sotto e DogList: senza il fallback
+// l'elenco mostrava '-' per ogni cane che eredita i valori dalla razza, mentre
+// la scheda del cliente e il CSV della stessa pagina li mostravano.
+function peloTaglia(dog: Dog): { coat: string | null; size: string | null; parts: string[] } {
+  const coat = dog.coatType ?? dog.breedCoatType
+  const size = dog.sizeType ?? dog.breedSizeType
+  const parts = [
+    coat ? `Pelo ${COAT_LABELS[coat] ?? coat}` : null,
+    size ? `Taglia ${SIZE_LABELS[size] ?? size}` : null,
+  ].filter((v): v is string => v !== null)
+  return { coat, size, parts }
+}
+
 export function DogsPage({ dogs }: DogsPageProps) {
   const router = useRouter()
 
@@ -52,8 +66,7 @@ export function DogsPage({ dogs }: DogsPageProps) {
       'Sesso', 'Data di nascita', 'Sterilizzato', 'Proprietario', 'Telefono proprietario',
     ]
     const rows = dogs.map((dog) => {
-      const coat = dog.coatType ?? dog.breedCoatType
-      const size = dog.sizeType ?? dog.breedSizeType
+      const { coat, size } = peloTaglia(dog)
       const daRazza = (!dog.coatType && dog.breedCoatType) || (!dog.sizeType && dog.breedSizeType)
       return [
         dog.name,
@@ -125,10 +138,7 @@ export function DogsPage({ dogs }: DogsPageProps) {
                     <TableCell className="text-muted-foreground">{dog.breedName || '—'}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {(() => {
-                        const parts = [
-                          dog.coatType ? `Pelo ${COAT_LABELS[dog.coatType] ?? dog.coatType}` : null,
-                          dog.sizeType ? `Taglia ${SIZE_LABELS[dog.sizeType] ?? dog.sizeType}` : null,
-                        ].filter(Boolean)
+                        const { parts } = peloTaglia(dog)
                         return parts.length > 0 ? parts.join(' · ') : '—'
                       })()}
                     </TableCell>
@@ -155,11 +165,7 @@ export function DogsPage({ dogs }: DogsPageProps) {
                   <span className="truncate font-medium text-foreground">{dog.name}</span>
                   <span className="truncate text-sm text-muted-foreground">
                     {(() => {
-                      const parts = [
-                        dog.breedName,
-                        dog.coatType ? `Pelo ${COAT_LABELS[dog.coatType] ?? dog.coatType}` : null,
-                        dog.sizeType ? `Taglia ${SIZE_LABELS[dog.sizeType] ?? dog.sizeType}` : null,
-                      ].filter(Boolean)
+                      const parts = [dog.breedName, ...peloTaglia(dog).parts].filter(Boolean)
                       return parts.length > 0 ? parts.join(' · ') : 'Nessun dettaglio'
                     })()}
                   </span>
