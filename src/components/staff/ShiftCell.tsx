@@ -129,7 +129,7 @@ export function ShiftCell({
   }
 
   return (
-    <div className="flex flex-col gap-1 min-h-[60px] p-1">
+    <div className="flex flex-col gap-1 min-h-16 p-1">
       {shifts.map(shift => (
         <Popover
           key={shift.id}
@@ -139,12 +139,12 @@ export function ShiftCell({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="w-full text-left rounded-sm px-2 py-1 bg-emerald-600 border border-emerald-200 hover:bg-emerald-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full text-left rounded-sm px-2 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <div className="text-[11px] font-medium text-white truncate leading-tight">
+              <div className="text-xs font-medium truncate leading-tight">
                 {shift.locationName ?? 'Sede'}
               </div>
-              <div className="text-[10px] text-white/80 leading-tight">
+              <div className="text-[11px] text-primary-foreground/80 leading-tight tabular-nums">
                 {shift.startTime}–{shift.endTime}
               </div>
             </button>
@@ -185,12 +185,12 @@ export function ShiftCell({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="w-full text-left rounded-sm px-2 py-1 bg-emerald-50/40 border border-dashed border-emerald-300 opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full text-left rounded-sm px-2 py-1.5 border border-dashed border-slot-understaffed bg-slot-understaffed/40 hover:bg-slot-understaffed/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <div className="text-[11px] font-medium text-emerald-700 truncate leading-tight">
+              <div className="text-xs font-medium truncate leading-tight">
                 {recurring.locationName ?? 'Sede'}
               </div>
-              <div className="text-[10px] text-emerald-600 leading-tight">
+              <div className="text-[11px] text-muted-foreground leading-tight tabular-nums">
                 {recurring.startTime}–{recurring.endTime}
               </div>
             </button>
@@ -199,24 +199,24 @@ export function ShiftCell({
             {ghostPopoverView === 'actions' ? (
               <div className="flex flex-col gap-2">
                 <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Orario standard</p>
+                  <p className="text-[11px] font-medium text-muted-foreground">Orario standard</p>
                   <p className="text-sm font-medium mt-0.5">
                     {recurring.locationName ?? 'Sede'} · {recurring.startTime}–{recurring.endTime}
                   </p>
                 </div>
                 <Button
                   size="sm"
-                  className="w-full h-7 text-xs"
+                  className="w-full text-xs"
                   onClick={() => handleCreateFromTemplate(recurring)}
                   disabled={isPending}
                 >
-                  Crea turno per oggi
+                  Crea questo turno
                 </Button>
                 <Separator />
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full h-7 text-xs"
+                  className="w-full text-xs"
                   onClick={() => setGhostPopoverView('edit-template')}
                   disabled={isPending}
                 >
@@ -225,7 +225,7 @@ export function ShiftCell({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="w-full h-7 text-xs text-destructive hover:text-destructive"
+                  className="w-full text-xs text-destructive hover:text-destructive"
                   onClick={() => handleDeleteRecurring(recurring.id)}
                   disabled={isPending}
                 >
@@ -256,17 +256,17 @@ export function ShiftCell({
           key={`suggestion-${bh.locationId}-${bh.openTime}`}
           type="button"
           disabled={isPending}
-          className="w-full text-left rounded-sm px-2 py-1 bg-white border border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          className="w-full text-left rounded-sm px-2 py-1.5 bg-card border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           onClick={() => onAdd(userId, date, {
             locationId: bh.locationId,
             startTime: bh.openTime,
             endTime: bh.closeTime,
           })}
         >
-          <div className="text-[11px] font-medium text-emerald-700 truncate leading-tight">
+          <div className="text-xs font-medium truncate leading-tight">
             {getLocationName(bh.locationId)}
           </div>
-          <div className="text-[10px] text-emerald-500 leading-tight">
+          <div className="text-[11px] leading-tight tabular-nums">
             {bh.openTime}–{bh.closeTime}
           </div>
         </button>
@@ -282,10 +282,10 @@ export function ShiftCell({
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="w-full rounded-sm border border-dashed border-border hover:border-primary/50 hover:bg-muted/30 flex items-center justify-center h-7 text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="w-full rounded-sm border border-dashed border-border hover:border-primary/50 hover:bg-muted/30 flex items-center justify-center h-8 text-muted-foreground hover:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Aggiungi turno"
           >
-            <Plus className="size-3" />
+            <Plus className="size-4" />
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-64 p-3" align="start">
@@ -305,7 +305,7 @@ export function ShiftCell({
                   <Separator className="my-2" />
                   <button
                     type="button"
-                    className="w-full text-[11px] text-muted-foreground hover:text-foreground text-center py-0.5"
+                    className="w-full text-xs text-muted-foreground hover:text-foreground text-center py-1"
                     onClick={() => setAddView('template')}
                   >
                     Crea template ricorrente

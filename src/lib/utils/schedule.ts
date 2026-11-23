@@ -126,24 +126,42 @@ export function computeOverlapLanes<T extends { startTime: Date; endTime: Date }
   return result
 }
 
-export const SERVICE_COLORS = [
-  { bg: '#DBEAFE', border: '#93C5FD', label: 'Azzurro' },
-  { bg: '#DCFCE7', border: '#86EFAC', label: 'Verde' },
-  { bg: '#E8DEF8', border: '#C4B5FD', label: 'Lavanda' },
-  { bg: '#FED7AA', border: '#FDBA74', label: 'Pesca' },
-  { bg: '#F1F5F9', border: '#CBD5E1', label: 'Grigio' },
+/**
+ * Un blocco appuntamento porta due colori, che dicono due cose diverse:
+ * il riempimento e' il collaboratore, la spina da 4px a sinistra e' il servizio.
+ * Le spine sono le stesse cinque tinte dei grafici del tema, sature abbastanza
+ * da leggersi a quattro pixel di larghezza.
+ */
+export const SERVICE_SPINES = ['#0E8AA0', '#D9731A', '#7B5EA7', '#C2456B', '#2B5FA8'] as const
+
+/** Senza servizio non c'e' nulla da distinguere: la spina resta neutra. */
+export const UNPLANNED_SPINE = '#B3A699'
+
+/** Riempimento di un blocco il cui collaboratore non e' ancora assegnato. */
+export const UNASSIGNED_FILL = 'var(--muted)'
+
+/** Ripiego per un collaboratore senza colore in scheda: tinte pallide della stessa famiglia. */
+export const STAFF_FALLBACK_COLORS = [
+  { bg: '#DCEEF2', border: '#0E8AA0' },
+  { bg: '#F7E6D5', border: '#D9731A' },
+  { bg: '#E8E2F2', border: '#7B5EA7' },
+  { bg: '#F6DFE6', border: '#C2456B' },
+  { bg: '#DEE7F5', border: '#2B5FA8' },
 ] as const
 
-/** Tinta neutra degli appuntamenti prenotati ma non ancora pianificati. */
-export const UNPLANNED_COLOR = { bg: '#FEF3C7', border: '#F59E0B', label: 'Ambra' } as const
-
-export function getServiceColor(serviceId: string | null, allServiceIds: (string | null)[]) {
-  // Senza servizio non c'e' nulla da colorare per tipo: si usa la tinta "da pianificare".
-  if (!serviceId) return UNPLANNED_COLOR
-  const sorted = allServiceIds.filter((id): id is string => id !== null).sort()
-  const index = sorted.indexOf(serviceId)
-  if (index < 0) return UNPLANNED_COLOR
-  return SERVICE_COLORS[index % SERVICE_COLORS.length]
+/**
+ * Il colore di un servizio dipende solo dal servizio, mai da chi gli sta intorno.
+ * Prima l'indice usciva dalla posizione fra i servizi presenti quel giorno: lo
+ * stesso bagno era teal il lunedi' e arancio il martedi'. I servizi oltre il quinto
+ * riprendono un colore gia' usato, percio' il nome sta sempre accanto al colore.
+ */
+export function getServiceSpine(serviceId: string | null): string {
+  if (!serviceId) return UNPLANNED_SPINE
+  let hash = 0
+  for (let i = 0; i < serviceId.length; i++) {
+    hash = (hash * 31 + serviceId.charCodeAt(i)) >>> 0
+  }
+  return SERVICE_SPINES[hash % SERVICE_SPINES.length]
 }
 
 export function getUserColor(hex: string): { bg: string; border: string } {

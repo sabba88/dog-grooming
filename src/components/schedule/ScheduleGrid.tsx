@@ -10,7 +10,7 @@ import { PersonHeader } from './PersonHeader'
 import {
   generateTimeSlots,
   getAppointmentPosition,
-  getServiceColor,
+  getServiceSpine,
   getUserColor,
   timeToMinutes,
   minutesToTime,
@@ -20,6 +20,8 @@ import {
   MINUTES_PER_SLOT,
   UNASSIGNED_KEY,
   UNASSIGNED_LABEL,
+  UNASSIGNED_FILL,
+  STAFF_FALLBACK_COLORS,
 } from '@/lib/utils/schedule'
 import type { StaffStatus, ShiftInfo } from '@/lib/queries/staff'
 
@@ -143,7 +145,6 @@ export function ScheduleGrid({
   const totalMinutes = timeToMinutes(globalClose) - dayStartMinutes
   const totalHeight = (totalMinutes / MINUTES_PER_SLOT) * SLOT_HEIGHT_PX
 
-  const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
   // In vista persone la colonna e' il collaboratore: la postazione non si legge
   // da nessuna parte, quindi va scritta sul blocco.
   const stationNameById = new Map(stations.map(s => [s.id, s.name]))
@@ -170,14 +171,6 @@ export function ScheduleGrid({
   // d'occhio su chi c'e' in ogni momento della giornata.
   const showStaffPanel = activeStaff.length > 0
   const staffPanelWidth = showStaffPanel ? Math.max(64, activeStaff.length * 32) : 0
-
-  const STAFF_COLORS = [
-    { bg: 'rgba(219,234,254,0.85)', border: '#60a5fa' },
-    { bg: 'rgba(209,250,229,0.85)', border: '#34d399' },
-    { bg: 'rgba(237,233,254,0.85)', border: '#a78bfa' },
-    { bg: 'rgba(254,243,199,0.85)', border: '#fbbf24' },
-    { bg: 'rgba(254,226,226,0.85)', border: '#f87171' },
-  ]
 
   // --- Drag & drop ---------------------------------------------------------
   // I listener restano agganciati a window per tutta la durata del trascinamento.
@@ -428,7 +421,7 @@ export function ScheduleGrid({
             {activeStaff.map((person, personIdx) => {
               const color = person.color
                 ? getUserColor(person.color)
-                : STAFF_COLORS[personIdx % STAFF_COLORS.length]
+                : STAFF_FALLBACK_COLORS[personIdx % STAFF_FALLBACK_COLORS.length]
               const barLeft = (personIdx / activeStaff.length) * 100
               const barWidth = 100 / activeStaff.length
               const shortName = person.name.split(' ')[0].slice(0, 4)
@@ -457,7 +450,7 @@ export function ScheduleGrid({
                       title={`${person.name}: ${shift.startTime}–${shift.endTime}`}
                     >
                       <span
-                        className="text-[9px] font-semibold px-0.5 leading-tight truncate"
+                        className="text-[10px] font-medium px-1 leading-tight truncate"
                         style={{ color: color.border }}
                       >
                         {shortName}
@@ -520,7 +513,7 @@ export function ScheduleGrid({
                     style={{
                       top: `${top}px`,
                       height: `${height}px`,
-                      backgroundColor: shift.status === 'active' ? '#E5F7F9' : '#FEF3C7',
+                      backgroundColor: shift.status === 'active' ? 'var(--accent)' : 'var(--slot-understaffed)',
                     }}
                   />
                 )
@@ -632,7 +625,10 @@ export function ScheduleGrid({
               {computeOverlapLanes(columnAppointments).map(({ appointment: appt, lane, lanes }) => {
                 const position = getAppointmentPosition(appt.startTime, appt.endTime, dayStartMinutes)
                 const staffMember = staff.find(p => p.id === appt.userId)
-                const color = staffMember?.color ? getUserColor(staffMember.color) : getServiceColor(appt.serviceId, allServiceIds)
+                // Due codici colore, due domande diverse: di chi e' il lavoro (il
+                // riempimento) e che lavoro e' (la spina a sinistra).
+                const fill = staffMember?.color ? getUserColor(staffMember.color).bg : UNASSIGNED_FILL
+                const spine = getServiceSpine(appt.serviceId)
                 // left + right (mai width) per non sovravincolare il posizionamento assoluto.
                 const laneStyle = lanes > 1
                   ? {
@@ -663,7 +659,8 @@ export function ScheduleGrid({
                       closed={!!appt.closedAt}
                       startTime={appt.startTime}
                       endTime={appt.endTime}
-                      color={color}
+                      fill={fill}
+                      spine={spine}
                       variant="grid"
                       style={{ top: 0, bottom: 0 }}
                       onClick={handleBlockClick}

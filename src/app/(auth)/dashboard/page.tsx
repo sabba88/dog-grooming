@@ -12,7 +12,7 @@ import {
 import { KpiCard } from '@/components/dashboard/KpiCard'
 import { WeeklyTrendChart } from '@/components/dashboard/WeeklyTrendChart'
 import { MonthlyRevenueChart } from '@/components/dashboard/MonthlyRevenueChart'
-import { ServicesDistributionChart } from '@/components/dashboard/ServicesDistributionChart'
+import { ServicesBreakdown } from '@/components/dashboard/ServicesBreakdown'
 
 function calcPercentDelta(curr: number, prev: number): number {
   if (prev === 0) return curr > 0 ? 100 : 0
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
           <CalendarCheck className="h-5 w-5 text-brand-primary shrink-0" />
           <div>
             <p className="text-xs text-muted-foreground">Appuntamenti oggi</p>
-            <p className="text-xl font-bold text-foreground">{kpis.today}</p>
+            <p className="text-xl font-semibold text-foreground tabular-nums">{kpis.today}</p>
           </div>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default async function DashboardPage() {
           <p className="text-sm font-medium text-foreground mb-4">
             Servizi — {monthLabelCap}
           </p>
-          <ServicesDistributionChart data={services} />
+          <ServicesBreakdown data={services} />
         </div>
       </div>
 

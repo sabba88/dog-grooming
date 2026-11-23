@@ -2,11 +2,13 @@
 
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { WeeklyStationRow } from './WeeklyStationRow'
-import { WeeklyPersonRow } from './WeeklyPersonRow'
-import { formatDayHeader } from './WeeklyDayCell'
-import { useIsMobile } from '@/hooks/use-mobile'
-import { timeToMinutes, MINUTES_PER_SLOT, UNASSIGNED_KEY, UNASSIGNED_LABEL } from '@/lib/utils/schedule'
+import { cn } from '@/lib/utils'
+import {
+  generateTimeSlots,
+  timeToMinutes,
+  utcMinutesOfDay,
+  weekSlotState,
+} from '@/lib/utils/schedule'
 
 interface User {
   id: string
@@ -41,103 +43,79 @@ interface WeeklyScheduleViewProps {
   isLoading?: boolean
 }
 
-// 0=Lun..6=Dom  (stesso sistema del progetto)
+// Una cella non contiene testo, solo il colore: la riga puo' stare bassa.
+// Stessa altezza della griglia di prenotazione, cosi' le due schermate si somigliano.
+const WEEK_SLOT_HEIGHT_PX = 20
+
+// Usati solo se la sede non ha orari di apertura configurati.
+const FALLBACK_OPEN = '08:00'
+const FALLBACK_CLOSE = '20:00'
+
+const SLOT_CLASS: Record<string, string> = {
+  libero: 'bg-slot-free',
+  senza_collaboratori: 'bg-slot-understaffed',
+  pieno: 'bg-slot-full',
+  chiuso: 'bg-slot-closed',
+  capacita_ignota: 'bg-slot-unknown',
+}
+
+interface Interval {
+  start: number
+  end: number
+}
+
+/** Lunedi' = 0, come `location_business_hours` e `user_recurring_schedules`. */
 function dateToDayOfWeek(dateString: string): number {
   const [y, m, d] = dateString.split('-').map(Number)
   const jsDay = new Date(Date.UTC(y, m - 1, d)).getUTCDay() // 0=Dom
   return jsDay === 0 ? 6 : jsDay - 1
 }
 
-// Fasce di apertura del negozio per una data specifica, ordinate per orario
-function getBusinessHoursForDate(
-  dateString: string,
-  businessHours: BusinessHour[]
-): { startTime: string; endTime: string }[] {
-  const dow = dateToDayOfWeek(dateString)
-  return businessHours
-    .filter(bh => bh.dayOfWeek === dow)
-    .map(bh => ({ startTime: bh.openTime, endTime: bh.closeTime }))
-    .sort((a, b) => a.startTime.localeCompare(b.startTime))
+function formatDayHeader(dateString: string): string {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Intl.DateTimeFormat('it-IT', {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, day)))
 }
 
-// Raggruppa gli appuntamenti di una postazione per data (chiave YYYY-MM-DD UTC)
-function groupByDate(
-  appts: { startTime: Date; endTime: Date }[]
-): Record<string, { startTime: Date; endTime: Date }[]> {
-  const result: Record<string, { startTime: Date; endTime: Date }[]> = {}
-  for (const appt of appts) {
-    const y = appt.startTime.getUTCFullYear()
-    const m = String(appt.startTime.getUTCMonth() + 1).padStart(2, '0')
-    const d = String(appt.startTime.getUTCDate()).padStart(2, '0')
-    const key = `${y}-${m}-${d}`
-    if (!result[key]) result[key] = []
-    result[key].push(appt)
-  }
-  return result
+function formatDayLong(dateString: string): string {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Intl.DateTimeFormat('it-IT', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year, month - 1, day)))
 }
 
-// Per ogni postazione e ogni data: quali ore sono "understaffed"?
-// (staff attivi in quell'ora < postazioni già prenotate in quell'ora,
-//  e questa postazione non ha appuntamenti in quell'ora)
-function computeUnderstaffedHours(
-  weekDates: string[],
-  staff: User[],
-  staffShifts: Record<string, { date: string; shifts: { startTime: string; endTime: string }[] }[]>,
-  stations: Station[],
-  appointmentsByStation: Record<string, { startTime: Date; endTime: Date }[]>
-): Record<string, Record<string, Set<number>>> {
-  const result: Record<string, Record<string, Set<number>>> = {}
-  for (const s of stations) result[s.id] = {}
+/** La data di oggi come chiave 'YYYY-MM-DD', per evidenziare la colonna. */
+function todayKey(): string {
+  const now = new Date()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${now.getFullYear()}-${m}-${d}`
+}
 
-  for (const date of weekDates) {
-    // Slot = multiplo di MINUTES_PER_SLOT (15 min), chiave = minuto di inizio slot
-    const staffPerSlot: Record<number, number> = {}
-    for (const person of staff) {
-      const entry = staffShifts[person.id]?.find(e => e.date === date)
-      for (const shift of entry?.shifts ?? []) {
-        const sStart = Math.floor(timeToMinutes(shift.startTime) / MINUTES_PER_SLOT)
-        const sEnd = Math.ceil(timeToMinutes(shift.endTime) / MINUTES_PER_SLOT)
-        for (let s = sStart; s < sEnd; s++) {
-          staffPerSlot[s * MINUTES_PER_SLOT] = (staffPerSlot[s * MINUTES_PER_SLOT] ?? 0) + 1
-        }
-      }
-    }
-    if (Object.keys(staffPerSlot).length === 0) continue
+/** Gli orari degli appuntamenti sono UTC "nudi": la giornata si legge in UTC. */
+function dateKeyOf(date: Date): string {
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const d = String(date.getUTCDate()).padStart(2, '0')
+  return `${date.getUTCFullYear()}-${m}-${d}`
+}
 
-    const bookedPerSlot: Record<number, Set<string>> = {}
-    for (const station of stations) {
-      const appts = (appointmentsByStation[station.id] ?? []).filter(a => {
-        const d = String(a.startTime.getUTCDate()).padStart(2, '0')
-        const m = String(a.startTime.getUTCMonth() + 1).padStart(2, '0')
-        const y = a.startTime.getUTCFullYear()
-        return `${y}-${m}-${d}` === date
-      })
-      for (const appt of appts) {
-        const aStart = appt.startTime.getUTCHours() * 60 + appt.startTime.getUTCMinutes()
-        const aEnd = appt.endTime.getUTCHours() * 60 + appt.endTime.getUTCMinutes()
-        const sStart = Math.floor(aStart / MINUTES_PER_SLOT)
-        const sEnd = Math.ceil(aEnd / MINUTES_PER_SLOT)
-        for (let s = sStart; s < sEnd; s++) {
-          const key = s * MINUTES_PER_SLOT
-          if (!bookedPerSlot[key]) bookedPerSlot[key] = new Set()
-          bookedPerSlot[key].add(station.id)
-        }
-      }
-    }
+/** Estremi della griglia: dall'apertura piu' mattiniera alla chiusura piu' tarda della settimana. */
+function computeWeekRange(businessHours: BusinessHour[]): { from: string; to: string } {
+  if (businessHours.length === 0) return { from: FALLBACK_OPEN, to: FALLBACK_CLOSE }
+  const from = businessHours.reduce((min, h) => (h.openTime < min ? h.openTime : min), '23:59')
+  const to = businessHours.reduce((max, h) => (h.closeTime > max ? h.closeTime : max), '00:00')
+  return { from, to }
+}
 
-    for (const station of stations) {
-      const slots = new Set<number>()
-      for (const [keyStr, activeStaff] of Object.entries(staffPerSlot)) {
-        const slotMin = parseInt(keyStr)
-        const booked = bookedPerSlot[slotMin] ?? new Set()
-        if (booked.size >= activeStaff && !booked.has(station.id)) {
-          slots.add(slotMin)
-        }
-      }
-      if (slots.size > 0) result[station.id][date] = slots
-    }
-  }
-  return result
+function countCovering(intervals: Interval[], minutes: number): number {
+  return intervals.filter(iv => minutes >= iv.start && minutes < iv.end).length
 }
 
 export function WeeklyScheduleView({
@@ -155,182 +133,249 @@ export function WeeklyScheduleView({
   currentWeekLabel,
   isLoading = false,
 }: WeeklyScheduleViewProps) {
-  const isMobile = useIsMobile()
+  const { from, to } = computeWeekRange(businessHours)
+  const slots = generateTimeSlots(from, to)
+  const gridCols = `56px repeat(${weekDates.length}, minmax(0, 1fr))`
+  const oggi = todayKey()
 
   const navHeader = (
-    <div className="flex items-center justify-between gap-4 py-2">
-      <Button variant="outline" size="sm" onClick={onPrevWeek}>
-        <ChevronLeft className="size-4" />
-      </Button>
-      <span className="text-sm font-medium">{currentWeekLabel}</span>
-      <Button variant="outline" size="sm" onClick={onNextWeek}>
-        <ChevronRight className="size-4" />
-      </Button>
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="icon" onClick={onPrevWeek} aria-label="Settimana precedente">
+          <ChevronLeft className="size-4" />
+        </Button>
+        <span className="min-w-[180px] text-center text-sm font-medium">{currentWeekLabel}</span>
+        <Button variant="outline" size="icon" onClick={onNextWeek} aria-label="Settimana successiva">
+          <ChevronRight className="size-4" />
+        </Button>
+      </div>
+      {!isLoading && (
+        <span className="text-xs text-muted-foreground">
+          {groupBy === 'station'
+            ? `${stations.length} postazion${stations.length === 1 ? 'e' : 'i'}`
+            : `${staff.length} collaborator${staff.length === 1 ? 'e' : 'i'}`}
+        </span>
+      )}
     </div>
   )
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         {navHeader}
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-16 w-full animate-pulse rounded bg-muted" />
-          ))}
-        </div>
+        <div className="h-[420px] w-full animate-pulse rounded-lg bg-muted" />
       </div>
     )
   }
 
-  // Orari negozio per ogni giorno della settimana (usati come finestra per rettangoli e heatmap)
-  const businessHoursPerDate = Object.fromEntries(
-    weekDates.map(date => [date, getBusinessHoursForDate(date, businessHours)])
-  )
-
-  const dayHeaderRow = (
-    <>
-      <div className="bg-muted px-3 py-2 text-xs font-medium text-muted-foreground border-b border-r" />
-      {weekDates.map(date => (
-        <div
-          key={date}
-          className="bg-muted px-2 py-2 text-xs font-medium text-muted-foreground border-b border-r text-center capitalize"
-        >
-          {formatDayHeader(date)}
-        </div>
-      ))}
-    </>
-  )
-
-  if (groupBy === 'person') {
-    const unassignedAppts = appointmentsByPerson[UNASSIGNED_KEY] ?? []
-
-    if (staff.length === 0 && unassignedAppts.length === 0) {
-      return (
-        <div className="flex flex-col gap-2">
-          {navHeader}
-          <p className="text-center text-muted-foreground py-8 text-sm">
-            Nessuna persona in turno in questa sede questa settimana
-          </p>
-        </div>
-      )
+  // Quanti appuntamenti sono in corso in un quarto d'ora: per il colore conta
+  // il numero, non di chi sono. Le due mappe contengono gli stessi appuntamenti,
+  // raggruppati diversamente, quindi si legge quella del raggruppamento scelto.
+  const sourceMap = groupBy === 'station' ? appointmentsByStation : appointmentsByPerson
+  const busyByDate = new Map<string, Interval[]>()
+  for (const list of Object.values(sourceMap)) {
+    for (const appt of list) {
+      const key = dateKeyOf(appt.startTime)
+      const arr = busyByDate.get(key) ?? []
+      arr.push({ start: utcMinutesOfDay(appt.startTime), end: utcMinutesOfDay(appt.endTime) })
+      busyByDate.set(key, arr)
     }
+  }
 
-    const personRows = staff.map(person => ({
-      person,
-      shiftsPerDate: Object.fromEntries(
-        (staffShifts[person.id] ?? []).map(e => [e.date, e.shifts])
-      ) as Record<string, { startTime: string; endTime: string }[]>,
-      appointmentsPerDate: groupByDate(appointmentsByPerson[person.id] ?? []),
-    }))
-
-    if (unassignedAppts.length > 0) {
-      personRows.push({
-        person: { id: UNASSIGNED_KEY, name: UNASSIGNED_LABEL, role: 'collaborator' },
-        // Nessun turno da mostrare: la finestra di riferimento sono gli orari del negozio.
-        shiftsPerDate: businessHoursPerDate,
-        appointmentsPerDate: groupByDate(unassignedAppts),
-      })
+  // Turni del giorno, per sapere quanti collaboratori sono presenti in un quarto d'ora.
+  const shiftsByDate = new Map<string, Interval[]>()
+  for (const person of staff) {
+    for (const entry of staffShifts[person.id] ?? []) {
+      const arr = shiftsByDate.get(entry.date) ?? []
+      for (const shift of entry.shifts) {
+        arr.push({ start: timeToMinutes(shift.startTime), end: timeToMinutes(shift.endTime) })
+      }
+      shiftsByDate.set(entry.date, arr)
     }
+  }
 
-    const rows = personRows.map(row => (
-      <WeeklyPersonRow
-        key={row.person.id}
-        person={row.person}
-        weekDates={weekDates}
-        shiftsPerDate={row.shiftsPerDate}
-        appointmentsPerDate={row.appointmentsPerDate}
-        onDayClick={onDayClick}
-        isMobile={isMobile}
-      />
-    ))
+  // Se in tutta la settimana non c'e' nemmeno un turno, la sede non usa la
+  // pianificazione del personale: quel vincolo non si applica.
+  const staffKnown = shiftsByDate.size > 0
 
-    if (isMobile) {
-      return (
-        <div className="flex flex-col gap-0">
-          {navHeader}
-          <div className="flex flex-col">{rows}</div>
-        </div>
-      )
+  const openByDow = new Map<number, Interval[]>()
+  for (const bh of businessHours) {
+    const arr = openByDow.get(bh.dayOfWeek) ?? []
+    arr.push({ start: timeToMinutes(bh.openTime), end: timeToMinutes(bh.closeTime) })
+    openByDow.set(bh.dayOfWeek, arr)
+  }
+
+  function stateAt(date: string, minutes: number): string {
+    const isOpen = countCovering(openByDow.get(dateToDayOfWeek(date)) ?? [], minutes) > 0
+    const occupied = countCovering(busyByDate.get(date) ?? [], minutes)
+    const onShift = countCovering(shiftsByDate.get(date) ?? [], minutes)
+    // Per postazione il tetto sono le postazioni, e i collaboratori sono il
+    // secondo vincolo; per collaboratore il tetto sono gia' loro.
+    const capacity = groupBy === 'station' ? stations.length : onShift
+    return weekSlotState({
+      isOpen,
+      occupied,
+      stationCount: capacity,
+      staffCount: groupBy === 'station' && staffKnown ? onShift : null,
+    })
+  }
+
+  // Riepilogo per colonna: quanto e' pieno il giorno e quante fasce restano scoperte.
+  const dayStats = weekDates.map(date => {
+    let open = 0
+    let taken = 0
+    const understaffed: string[] = []
+    let runStart: string | null = null
+
+    for (const slot of slots) {
+      const state = stateAt(date, timeToMinutes(slot))
+      if (state !== 'chiuso') {
+        open += 1
+        if (state === 'pieno' || state === 'senza_collaboratori') taken += 1
+      }
+      if (state === 'senza_collaboratori') {
+        if (runStart === null) runStart = slot
+      } else if (runStart !== null) {
+        understaffed.push(`${runStart}–${slot}`)
+        runStart = null
+      }
     }
+    if (runStart !== null) understaffed.push(`${runStart}–${to}`)
 
-    return (
-      <div className="flex flex-col gap-0">
-        {navHeader}
-        <div
-          className="grid border-t border-l"
-          style={{ gridTemplateColumns: `180px repeat(${weekDates.length}, 1fr)` }}
-        >
-          {dayHeaderRow}
-          {rows}
-        </div>
-      </div>
-    )
-  }
+    return {
+      date,
+      open,
+      pct: open === 0 ? 0 : Math.round((taken / open) * 100),
+      appointments: (busyByDate.get(date) ?? []).length,
+      understaffed,
+    }
+  })
 
-  if (stations.length === 0) {
-    return (
-      <div className="flex flex-col gap-2">
-        {navHeader}
-        <p className="text-center text-muted-foreground py-8 text-sm">
-          Nessuna postazione configurata per questa sede
-        </p>
-      </div>
-    )
-  }
-
-  const understaffedHours = computeUnderstaffedHours(
-    weekDates, staff, staffShifts, stations, appointmentsByStation
-  )
-
-  const apptPerDateByStation = Object.fromEntries(
-    stations.map(s => [s.id, groupByDate(appointmentsByStation[s.id] ?? [])])
-  )
-
-  if (isMobile) {
-    return (
-      <div className="flex flex-col gap-0">
-        {navHeader}
-        <div className="flex flex-col">
-          {stations.map(station => (
-            <WeeklyStationRow
-              key={station.id}
-              station={station}
-              weekDates={weekDates}
-              appointmentsPerDate={apptPerDateByStation[station.id]}
-              understaffedHoursPerDate={understaffedHours[station.id] ?? {}}
-              businessHoursPerDate={businessHoursPerDate}
-              onDayClick={onDayClick}
-              isMobile={true}
-            />
-          ))}
-        </div>
-      </div>
-    )
-  }
+  const daCoprire = dayStats
+    .flatMap(s => s.understaffed.map(range => ({ date: s.date, range })))
+    .slice(0, 4)
 
   return (
-    <div className="flex flex-col gap-0">
+    <div className="flex flex-col gap-3">
       {navHeader}
-      <div
-        className="grid border-t border-l"
-        style={{ gridTemplateColumns: `180px repeat(${weekDates.length}, 1fr)` }}
-      >
-        {dayHeaderRow}
 
-        {/* Station rows */}
-        {stations.map(station => (
-          <WeeklyStationRow
-            key={station.id}
-            station={station}
-            weekDates={weekDates}
-            appointmentsPerDate={apptPerDateByStation[station.id]}
-            understaffedHoursPerDate={understaffedHours[station.id] ?? {}}
-            businessHoursPerDate={businessHoursPerDate}
-            onDayClick={onDayClick}
-            isMobile={false}
-          />
-        ))}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="size-3 rounded-[3px] bg-slot-free" />
+          Posti liberi
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-3 rounded-[3px] bg-slot-understaffed" />
+          Liberi, ma senza collaboratori
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-3 rounded-[3px] bg-slot-full" />
+          Pieno
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-3 rounded-[3px] bg-slot-closed" />
+          Chiuso
+        </span>
       </div>
+
+      <div className="overflow-auto rounded-lg border bg-card">
+        {/* Intestazione: i giorni della settimana */}
+        <div className="sticky top-0 z-10 grid border-b bg-card" style={{ gridTemplateColumns: gridCols }}>
+          <div className="p-2 text-xs font-medium text-muted-foreground">Orario</div>
+          {dayStats.map(stat => (
+            <button
+              key={stat.date}
+              onClick={() => onDayClick(stat.date)}
+              title="Apri la giornata"
+              className={cn(
+                'border-l p-2 text-left transition-colors hover:bg-accent',
+                stat.date === oggi && 'bg-accent/60'
+              )}
+            >
+              <span className="block text-xs font-medium capitalize">{formatDayHeader(stat.date)}</span>
+              <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-muted">
+                <span
+                  className={cn('block h-1 rounded-full', stat.pct >= 85 ? 'bg-slot-full' : 'bg-primary')}
+                  style={{ width: `${stat.pct}%` }}
+                />
+              </span>
+              <span className="mt-1 block text-[11px] text-muted-foreground">
+                {stat.open === 0 ? 'chiuso' : `${stat.pct}% · ${stat.appointments} appunt.`}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Righe: un quarto d'ora ciascuna */}
+        {slots.map(slot => {
+          const minutes = timeToMinutes(slot)
+          const isHour = slot.endsWith(':00')
+          return (
+            <div
+              key={slot}
+              className="grid"
+              style={{ gridTemplateColumns: gridCols, height: `${WEEK_SLOT_HEIGHT_PX}px` }}
+            >
+              <div
+                className={cn(
+                  'flex items-center justify-end pr-1.5 text-[11px] leading-none',
+                  isHour ? 'border-t border-border font-medium text-foreground' : 'border-t border-border/25 text-muted-foreground'
+                )}
+              >
+                {isHour ? slot : ''}
+              </div>
+
+              {weekDates.map(date => {
+                const state = stateAt(date, minutes)
+                const titolo = `${formatDayHeader(date)} ${slot} · ${
+                  {
+                    libero: 'posti liberi',
+                    senza_collaboratori: 'posti liberi ma collaboratori esauriti',
+                    pieno: 'pieno',
+                    chiuso: 'chiuso',
+                    capacita_ignota: 'capacita non configurata',
+                  }[state]
+                }`
+                return (
+                  <button
+                    key={date}
+                    onClick={() => onDayClick(date)}
+                    title={titolo}
+                    aria-label={`Apri ${formatDayLong(date)}, ore ${slot}`}
+                    className={cn(
+                      'border-l transition-opacity hover:opacity-70',
+                      isHour ? 'border-t border-t-border' : 'border-t border-t-border/25',
+                      SLOT_CLASS[state]
+                    )}
+                  />
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+
+      {daCoprire.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground">Da coprire</span>
+          {daCoprire.map(({ date, range }) => (
+            <button
+              key={`${date}-${range}`}
+              onClick={() => onDayClick(date)}
+              className="rounded-md border border-slot-understaffed bg-slot-understaffed/40 px-2 py-1 text-xs capitalize transition-colors hover:bg-slot-understaffed/70"
+            >
+              {formatDayHeader(date)} · {range}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {groupBy === 'station' && stations.length === 0 && (
+        <p className="text-xs text-muted-foreground">
+          Nessuna postazione configurata per questa sede: senza capacita non si puo dire se un quarto
+          d&apos;ora sia pieno.
+        </p>
+      )}
     </div>
   )
 }

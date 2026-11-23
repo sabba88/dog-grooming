@@ -123,25 +123,25 @@ export function BookingWeekGrid({
         {/* Legenda: senza, i colori vanno indovinati */}
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="size-3 rounded-sm bg-emerald-400" /> posti liberi
+            <span className="size-3 rounded-sm bg-slot-free" /> posti liberi
           </span>
           {staffKnown && (
             <span className="flex items-center gap-1.5">
-              <span className="size-3 rounded-sm bg-amber-400" /> posti liberi, collaboratori
+              <span className="size-3 rounded-sm bg-slot-understaffed" /> posti liberi, collaboratori
               occupati
             </span>
           )}
           <span className="flex items-center gap-1.5">
-            <span className="size-3 rounded-sm bg-red-400" /> tutto occupato
+            <span className="size-3 rounded-sm bg-slot-full" /> tutto occupato
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="size-3 rounded-sm bg-muted-foreground/25" /> chiuso
+            <span className="size-3 rounded-sm bg-slot-closed" /> chiuso
           </span>
         </div>
       </div>
 
       {!capacityKnown && (
-        <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <p className="rounded-md border border-slot-understaffed bg-slot-understaffed/40 px-3 py-2 text-xs text-foreground">
           Nessuna postazione configurata per questa sede: non si pu&ograve; sapere quando
           &egrave; tutto occupato. Le celle mostrano solo quante prenotazioni ci sono.
         </p>
@@ -187,7 +187,7 @@ export function BookingWeekGrid({
             >
               <div
                 className={cn(
-                  'flex items-center justify-end pr-1.5 text-[10px] leading-none',
+                  'flex items-center justify-end pr-1.5 text-[11px] leading-none',
                   isHour ? 'font-semibold text-foreground' : 'text-muted-foreground',
                   isHour ? 'border-t border-border' : 'border-t border-border/25'
                 )}
@@ -238,16 +238,15 @@ export function BookingWeekGrid({
                     className={cn(
                       'border-l transition-opacity hover:opacity-70',
                       isHour ? 'border-t border-t-border' : 'border-t border-t-border/25',
-                      state === 'chiuso' && 'bg-muted-foreground/20',
-                      state === 'capacita_ignota' && (occupied > 0 ? 'bg-sky-300' : 'bg-sky-100'),
-                      state === 'pieno' && 'bg-red-400',
+                      state === 'chiuso' && 'bg-slot-closed',
+                      state === 'capacita_ignota' && 'bg-slot-unknown',
+                      state === 'pieno' && 'bg-slot-full',
                       // Giallo: la postazione ci sarebbe, ma i collaboratori in turno
                       // sono gia' tutti impegnati (3 postazioni, 2 in turno, 2 prenotazioni).
-                      state === 'senza_collaboratori' && 'bg-amber-400',
-                      state === 'libero' && 'bg-emerald-400',
+                      state === 'senza_collaboratori' && 'bg-slot-understaffed',
                       // Piu' si riempie, piu' il verde si scurisce: il colpo d'occhio
                       // distingue "quasi pieno" da "vuoto" senza leggere il tooltip.
-                      state === 'libero' && occupied > 0 && 'opacity-60'
+                      state === 'libero' && (occupied > 0 ? 'bg-slot-free-busy' : 'bg-slot-free')
                     )}
                   />
                 )

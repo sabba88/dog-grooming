@@ -2,15 +2,13 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@source inline("bg-emerald-600 hover:bg-emerald-700 border-emerald-200");
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-jakarta);
+  --font-mono: var(--font-mono-stack);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,97 +45,145 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Stati di un quarto d'ora nelle griglie settimanali (agenda e prenotazione). */
+  --color-slot-free: var(--slot-free);
+  --color-slot-free-busy: var(--slot-free-busy);
+  --color-slot-understaffed: var(--slot-understaffed);
+  --color-slot-full: var(--slot-full);
+  --color-slot-closed: var(--slot-closed);
+  --color-slot-unknown: var(--slot-unknown);
+
+  /* Ombre calde: il nero puro su fondo crema sporca di grigio. */
+  --shadow-2xs: 0 1px 1px rgb(35 27 20 / 0.04);
+  --shadow-xs: 0 1px 2px rgb(35 27 20 / 0.05);
+  --shadow-sm: 0 1px 2px rgb(35 27 20 / 0.05), 0 2px 6px -2px rgb(35 27 20 / 0.08);
+  --shadow-md: 0 2px 4px rgb(35 27 20 / 0.05), 0 8px 20px -8px rgb(35 27 20 / 0.18);
+  --shadow-lg: 0 4px 8px rgb(35 27 20 / 0.05), 0 16px 32px -12px rgb(35 27 20 / 0.22);
+  --shadow-xl: 0 8px 16px rgb(35 27 20 / 0.06), 0 24px 48px -16px rgb(35 27 20 / 0.26);
 }
 
+/*
+ * Direzione "Pet care": fondo crema caldo, superfici bianche, teal di marca
+ * come unico accento forte e corallo riservato agli errori.
+ * I valori sono in esadecimale perche' sono gli stessi approvati sui mockup.
+ */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.875rem;
+  --background: #FAF6F1;
+  --foreground: #231B14;
+  --card: #FFFFFF;
+  --card-foreground: #231B14;
+  --popover: #FFFFFF;
+  --popover-foreground: #231B14;
+  --primary: #227F8A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F3EDE6;
+  --secondary-foreground: #4A3F36;
+  --muted: #F3EDE6;
+  --muted-foreground: #6F6054;
+  --accent: #E6F1F2;
+  --accent-foreground: #1A616B;
+  --destructive: #C2453A;
+  --border: #ECE3D9;
+  --input: #E4D9CD;
+  --ring: #227F8A;
+  /*
+   * Serie categoriale: la usano le spine dei servizi in agenda e i grafici della
+   * dashboard, quindi un servizio ha lo stesso colore dappertutto. Verificata con
+   * il validatore: passa banda di luminosita', soglia di croma, separazione per
+   * daltonismo (ΔE 9.7) e contrasto, su chiaro e su scuro. Non cambiarla a occhio:
+   * i cinque colori di prima (teal/ambra/salvia/mattone/lavanda) erano gradevoli e
+   * indistinguibili per chi ha un daltonismo rosso-verde. Tenere allineata a
+   * SERVICE_SPINES in src/lib/utils/schedule.ts.
+   */
+  --chart-1: #0E8AA0;
+  --chart-2: #D9731A;
+  --chart-3: #7B5EA7;
+  --chart-4: #C2456B;
+  --chart-5: #2B5FA8;
+  --sidebar: #FFFCF8;
+  --sidebar-foreground: #231B14;
+  --sidebar-primary: #227F8A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F3EDE6;
+  --sidebar-accent-foreground: #4A3F36;
+  --sidebar-border: #ECE3D9;
+  --sidebar-ring: #227F8A;
+  /* I quattro stati si distinguono anche per chiarezza, non solo per tinta. */
+  --slot-free: #E1F0E6;
+  --slot-free-busy: #BFDFCC;
+  --slot-understaffed: #F7D9A8;
+  --slot-full: #C25B4E;
+  --slot-closed: #F1EAE2;
+  --slot-unknown: #DCE9F0;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #17130F;
+  --foreground: #F5EFE8;
+  --card: #1F1A15;
+  --card-foreground: #F5EFE8;
+  --popover: #1F1A15;
+  --popover-foreground: #F5EFE8;
+  --primary: #4BBFC8;
+  --primary-foreground: #10211F;
+  --secondary: #2A241E;
+  --secondary-foreground: #F5EFE8;
+  --muted: #2A241E;
+  --muted-foreground: #B0A092;
+  --accent: #243437;
+  --accent-foreground: #9FDDE2;
+  --destructive: #E57468;
+  --border: rgb(245 239 232 / 12%);
+  --input: rgb(245 239 232 / 16%);
+  --ring: #4BBFC8;
+  /* Stessa serie del tema chiaro: verificata anche contro il fondo scuro. */
+  --chart-1: #0E8AA0;
+  --chart-2: #D9731A;
+  --chart-3: #7B5EA7;
+  --chart-4: #C2456B;
+  --chart-5: #2B5FA8;
+  --sidebar: #1A1511;
+  --sidebar-foreground: #F5EFE8;
+  --sidebar-primary: #4BBFC8;
+  --sidebar-primary-foreground: #10211F;
+  --sidebar-accent: #2A241E;
+  --sidebar-accent-foreground: #F5EFE8;
+  --sidebar-border: rgb(245 239 232 / 12%);
+  --sidebar-ring: #4BBFC8;
+  --slot-free: #1E3A30;
+  --slot-free-busy: #2C5144;
+  --slot-understaffed: #6B531C;
+  --slot-full: #A4473C;
+  --slot-closed: #221C17;
+  --slot-unknown: #24323B;
 }
 
 @theme inline {
-  --color-brand-primary: #4BBFC8;
-  --color-brand-primary-light: #E5F7F9;
-  --color-brand-primary-dark: #347D85;
-  --color-brand-coral: #E05C6B;
-  --color-brand-surface: #F8FAFB;
-  --color-brand-border: #E2E8F0;
-  --color-brand-text-primary: #1A202C;
-  --color-brand-text-secondary: #64748B;
-  --color-brand-text-muted: #94A3B8;
-  --color-brand-error: #EF4444;
-  --color-brand-success: #22C55E;
+  --color-brand-primary: #227F8A;
+  --color-brand-primary-light: #E6F1F2;
+  --color-brand-primary-dark: #185C64;
+  --color-brand-coral: #D94F5C;
+  --color-brand-surface: #FAF6F1;
+  --color-brand-border: #ECE3D9;
+  --color-brand-text-primary: #231B14;
+  --color-brand-text-secondary: #5B4D42;
+  --color-brand-text-muted: #6F6054;
+  --color-brand-error: #C2453A;
+  --color-brand-success: #2E7D5B;
+  /* Avviso scritto: il fondo ambra non si puo' usare come colore di testo. */
+  --color-brand-warning: #8A5A12;
 }
 
 @layer base {
+  :root {
+    --font-mono-stack: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
   }
 }

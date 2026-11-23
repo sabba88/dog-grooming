@@ -37,9 +37,9 @@ export function EmptySlot({
   isMovingTarget,
 }: EmptySlotProps) {
   if (variant === 'grid') {
-    let bg = 'white'
-    if (isMovingTarget) bg = '#F0FDF4'
-    else if (closed) bg = '#E5E7EB'
+    let bg = 'var(--card)'
+    if (isMovingTarget) bg = 'var(--slot-free)'
+    else if (closed) bg = 'var(--muted)'
     return (
       <button
         onClick={() => onClick?.({ stationId, stationName, userId, userName, date, time })}
@@ -58,12 +58,12 @@ export function EmptySlot({
       onClick={() => onClick?.({ stationId, stationName, userId, userName, date, time })}
       className="w-full rounded-lg p-3 text-left cursor-pointer transition-colors hover:border-primary min-h-11"
       style={{
-        border: isMovingTarget ? '2px dashed #86EFAC' : '2px dashed #E2E8F0',
-        backgroundColor: isMovingTarget ? '#F0FDF4' : closed ? '#E5E7EB' : undefined,
+        border: isMovingTarget ? '2px dashed var(--primary)' : '2px dashed var(--border)',
+        backgroundColor: isMovingTarget ? 'var(--slot-free)' : closed ? 'var(--muted)' : undefined,
       }}
     >
       <span className="text-sm text-muted-foreground">
-        {isMovingTarget ? 'Sposta qui' : `${time} · + Slot libero`}
+        {isMovingTarget ? 'Sposta qui' : `${time} · Slot libero`}
       </span>
     </button>
   )

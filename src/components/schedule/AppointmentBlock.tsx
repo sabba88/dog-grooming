@@ -37,7 +37,10 @@ interface AppointmentBlockProps {
   closed?: boolean
   startTime: Date
   endTime: Date
-  color: { bg: string; border: string }
+  /** Riempimento: dice di chi e' il lavoro. */
+  fill: string
+  /** Spina da 4px a sinistra: dice che servizio e'. */
+  spine: string
   variant: 'grid' | 'timeline'
   style?: React.CSSProperties
   onClick?: (id: string) => void
@@ -60,7 +63,8 @@ export function AppointmentBlock({
   closed,
   startTime,
   endTime,
-  color,
+  fill,
+  spine,
   variant,
   style,
   onClick,
@@ -107,7 +111,7 @@ export function AppointmentBlock({
         Dettaglio
       </DropdownMenuItem>
       <DropdownMenuItem onSelect={() => onContextAction?.('add-note', id)}>
-        Aggiungi Nota
+        Aggiungi nota
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem onSelect={() => onContextAction?.('move', id)}>
@@ -134,14 +138,17 @@ export function AppointmentBlock({
             onTouchMove={cancelLongPress}
             title={closed ? `${ownersTitle} · chiuso` : ownersTitle}
             className={cn(
-              "absolute inset-x-0.5 rounded-md px-1.5 py-1 text-left overflow-hidden cursor-pointer transition-shadow hover:shadow-md z-10",
-              daPianificare && "border border-dashed border-amber-500",
+              // Il passaggio del mouse accende un filo attorno al blocco: in una griglia
+              // fitta un'ombra che solleva fa ballare tutto quello che le sta intorno.
+              "absolute inset-x-0.5 rounded-md px-1.5 py-1 text-left overflow-hidden cursor-pointer z-10",
+              "ring-1 ring-transparent transition-shadow hover:ring-foreground/25",
+              daPianificare && "border border-dashed border-muted-foreground/50",
               isMoving && "opacity-40 pointer-events-none"
             )}
             style={{
               ...style,
-              backgroundColor: color.bg,
-              borderLeft: `4px solid ${color.border}`,
+              backgroundColor: fill,
+              borderLeft: `4px solid ${spine}`,
               minHeight: '44px',
             }}
           >
@@ -151,7 +158,7 @@ export function AppointmentBlock({
                 {breedName && <span className="font-normal text-muted-foreground"> ({breedName})</span>}
               </p>
               <span className="text-xs text-muted-foreground shrink-0">
-                {closed && <Check className="mr-0.5 inline size-3 text-emerald-600" />}
+                {closed && <Check className="mr-0.5 inline size-3 text-brand-success" />}
                 {formatTime(startTime)}
               </span>
             </div>
@@ -159,13 +166,10 @@ export function AppointmentBlock({
               {clientName}
               {coOwnerNames && <span> · {coOwnerNames}</span>}
             </p>
-            <p className={cn("text-xs truncate", serviceName ? "text-muted-foreground" : "text-amber-700 italic")}>
+            <p className="text-xs truncate text-muted-foreground">
               {formatServiceName(serviceName)}
             </p>
-            <p className={cn(
-              "text-xs truncate",
-              showStation && !stationName ? "text-amber-700 italic" : "text-muted-foreground"
-            )}>
+            <p className="text-xs truncate text-muted-foreground">
               {showStation
                 ? (stationName ?? 'Postazione da assegnare')
                 : (daPianificare ? DA_PIANIFICARE_LABEL : staffName)}
@@ -189,13 +193,14 @@ export function AppointmentBlock({
           onTouchMove={cancelLongPress}
           title={ownersTitle}
           className={cn(
-            "w-full rounded-lg p-3 text-left cursor-pointer transition-shadow hover:shadow-md",
-            daPianificare && "border border-dashed border-amber-500",
+            "w-full rounded-lg p-3 text-left cursor-pointer",
+            "ring-1 ring-transparent transition-shadow hover:ring-foreground/25",
+            daPianificare && "border border-dashed border-muted-foreground/50",
             isMoving && "opacity-40 pointer-events-none"
           )}
           style={{
-            backgroundColor: color.bg,
-            borderLeft: `4px solid ${color.border}`,
+            backgroundColor: fill,
+            borderLeft: `4px solid ${spine}`,
           }}
         >
           <div className="flex items-center justify-between gap-2">
@@ -204,7 +209,7 @@ export function AppointmentBlock({
               {breedName && <span className="font-normal text-muted-foreground"> ({breedName})</span>}
             </p>
             <span className="text-xs text-muted-foreground shrink-0">
-              {closed && <Check className="mr-0.5 inline size-3 text-emerald-600" />}
+              {closed && <Check className="mr-0.5 inline size-3 text-brand-success" />}
               {formatTime(startTime)} - {formatTime(endTime)}
             </span>
           </div>
@@ -215,15 +220,12 @@ export function AppointmentBlock({
             </p>
           )}
           <div className="flex items-center justify-between mt-1">
-            <p className={cn("text-xs", serviceName ? "text-muted-foreground" : "text-amber-700 italic")}>
+            <p className="text-xs text-muted-foreground">
               {formatServiceName(serviceName)}
             </p>
             <span className="text-xs font-medium text-foreground">{formatPriceOrDash(price)}</span>
           </div>
-          <p className={cn(
-            "text-xs mt-0.5",
-            showStation && !stationName ? "text-amber-700 italic" : "text-muted-foreground"
-          )}>
+          <p className="text-xs mt-0.5 text-muted-foreground">
             {showStation
               ? (stationName ?? 'Postazione da assegnare')
               : (daPianificare ? DA_PIANIFICARE_LABEL : staffName)}

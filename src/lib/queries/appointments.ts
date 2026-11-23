@@ -26,6 +26,8 @@ export async function getAppointmentById(id: string, tenantId: string) {
       owner3: clients.owner3,
       phone3: clients.phone3,
       dogName: dogs.name,
+      // Razza assente finche' non la si registra nella scheda del cane.
+      breedName: breeds.name,
       // Servizio assente finche' non lo si sceglie in pianificazione.
       serviceName: services.name,
       serviceId: appointments.serviceId,
@@ -40,6 +42,7 @@ export async function getAppointmentById(id: string, tenantId: string) {
     .from(appointments)
     .innerJoin(clients, eq(appointments.clientId, clients.id))
     .innerJoin(dogs, eq(appointments.dogId, dogs.id))
+    .leftJoin(breeds, eq(dogs.breedId, breeds.id))
     .leftJoin(services, eq(appointments.serviceId, services.id))
     .leftJoin(users, eq(appointments.userId, users.id))
     .leftJoin(stations, eq(appointments.stationId, stations.id))

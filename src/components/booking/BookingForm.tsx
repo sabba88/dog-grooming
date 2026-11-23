@@ -413,7 +413,7 @@ export function BookingForm({
         </Button>
         <Button
           type="button"
-          className="flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
+          className="flex-1"
           disabled={!canSave || isSaving}
           onClick={handleSubmit}
         >

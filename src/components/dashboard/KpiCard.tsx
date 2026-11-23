@@ -25,8 +25,8 @@ function DeltaBadge({ delta }: { delta: NonNullable<KpiCardProps['delta']> }) {
 
   if (isNeutral) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-        <Minus className="h-3 w-3" />
+      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
+        <Minus className="size-4" />
         {formatted} {label}
       </span>
     )
@@ -34,14 +34,14 @@ function DeltaBadge({ delta }: { delta: NonNullable<KpiCardProps['delta']> }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 text-xs font-medium ${
-        isPositive ? 'text-emerald-600' : 'text-red-500'
+      className={`inline-flex items-center gap-1 text-xs font-medium tabular-nums ${
+        isPositive ? 'text-brand-success' : 'text-destructive'
       }`}
     >
       {isPositive ? (
-        <TrendingUp className="h-3 w-3" />
+        <TrendingUp className="size-4" />
       ) : (
-        <TrendingDown className="h-3 w-3" />
+        <TrendingDown className="size-4" />
       )}
       {isPositive ? '+' : '-'}{formatted} {label}
     </span>
@@ -61,7 +61,7 @@ export function KpiCard({ label, value, delta, icon, highlight }: KpiCardProps) 
         <p className="text-sm text-muted-foreground">{label}</p>
         {icon && <span className="text-muted-foreground">{icon}</span>}
       </div>
-      <p className="text-3xl font-bold text-foreground tracking-tight">{value}</p>
+      <p className="text-3xl font-semibold text-foreground tabular-nums">{value}</p>
       {delta && <DeltaBadge delta={delta} />}
     </div>
   )

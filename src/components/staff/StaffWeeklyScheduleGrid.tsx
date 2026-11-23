@@ -246,7 +246,7 @@ export function StaffWeeklyScheduleGrid({
           <thead className="bg-muted/50">
             <tr>
               <th className="text-left px-3 py-2 w-36 border-b border-border">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                <span className="text-[11px] font-medium text-muted-foreground">
                   Dipendente
                 </span>
               </th>
@@ -256,7 +256,7 @@ export function StaffWeeklyScheduleGrid({
                 return (
                   <th key={day} className="px-1 py-2 border-b border-border min-w-[110px]">
                     <div
-                      className={`text-[10px] font-medium uppercase tracking-wide ${isToday ? 'text-primary' : 'text-muted-foreground'}`}
+                      className={`text-[11px] font-medium capitalize ${isToday ? 'text-primary' : 'text-muted-foreground'}`}
                     >
                       {format(dayDate, 'EEE', { locale: it })}
                     </div>
@@ -278,12 +278,12 @@ export function StaffWeeklyScheduleGrid({
               >
                 <td className="px-3 py-2 align-top">
                   <div className="text-sm font-medium">{user.name}</div>
-                  <div className="text-[10px] text-muted-foreground">
+                  <div className="text-[11px] text-muted-foreground">
                     {user.role === 'admin' ? 'Admin' : 'Collaboratore'}
                   </div>
                 </td>
                 {weekDays.map(day => (
-                  <td key={day} className="p-0.5 align-top">
+                  <td key={day} className="p-1 align-top">
                     <ShiftCell
                       userId={user.id}
                       date={day}
@@ -323,7 +323,7 @@ export function StaffWeeklyScheduleGrid({
                 return (
                   <div key={day} className="flex gap-3 px-3 py-2">
                     <div className="w-14 shrink-0">
-                      <div className="text-[10px] text-muted-foreground uppercase">
+                      <div className="text-[11px] text-muted-foreground capitalize">
                         {format(dayDate, 'EEE', { locale: it })}
                       </div>
                       <div className="text-sm font-medium">{format(dayDate, 'd', { locale: it })}</div>

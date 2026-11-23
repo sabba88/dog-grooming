@@ -129,6 +129,8 @@ export async function getServicesDistribution(tenantId: string) {
 
   const rows = await db
     .select({
+      // L'id serve a dare al servizio sempre lo stesso colore, in dashboard e in agenda.
+      id: services.id,
       name: services.name,
       count: count(),
       revenue: sum(appointments.price),
@@ -142,9 +144,9 @@ export async function getServicesDistribution(tenantId: string) {
       gte(appointments.startTime, monthStart),
       lt(appointments.startTime, monthEnd),
     ))
-    .groupBy(services.name)
+    .groupBy(services.id, services.name)
     .orderBy(sql`COUNT(*) DESC`)
     .limit(5)
 
-  return rows.map(r => ({ name: r.name, count: r.count, revenue: Number(r.revenue ?? 0) }))
+  return rows.map(r => ({ id: r.id, name: r.name, count: r.count, revenue: Number(r.revenue ?? 0) }))
 }

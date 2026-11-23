@@ -10,9 +10,9 @@ interface PersonHeaderProps {
 }
 
 const STATUS_BG: Record<StaffStatus, string> = {
-  active: '#E5F7F9',
-  elsewhere: '#FEF3C7',
-  unassigned: '#F9FAFB',
+  active: 'var(--accent)',
+  elsewhere: 'var(--slot-understaffed)',
+  unassigned: 'var(--muted)',
 }
 
 function getStatusLabel(overallStatus: StaffStatus, shifts: ShiftInfo[]): string {

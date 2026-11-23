@@ -905,7 +905,7 @@ export function AppointmentForm({ prefilledSlot, availableStaff, mode = 'create'
       {selectedServiceId && (
         <Button
           type="button"
-          className="w-full bg-emerald-600 text-white hover:bg-emerald-700"
+          className="w-full"
           disabled={!isFormComplete || isSaving}
           onClick={handleSubmit}
         >

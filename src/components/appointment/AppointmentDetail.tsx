@@ -302,7 +302,13 @@ export function AppointmentDetail({
   const telefono = phoneLabel(appointment)
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-5 p-4">
+      <header className="flex flex-col gap-0.5">
+        <h2 className="text-xl font-medium leading-tight">{appointment.dogName}</h2>
+        <p className="text-sm text-muted-foreground">
+          {appointment.breedName ?? 'Razza non indicata'}
+        </p>
+      </header>
       {telefono && (
         <div className="flex flex-col gap-1">
           <PhoneBadge label={telefono} className="self-start" />
@@ -315,14 +321,14 @@ export function AppointmentDetail({
         </div>
       )}
       {isDaPianificare(appointment) && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
-          <p className="text-sm font-medium text-amber-800">Da pianificare</p>
-          <p className="text-xs text-amber-700">Manca ancora: {planningGaps.join(', ')}.</p>
+        <div className="rounded-md border border-slot-understaffed bg-slot-understaffed/40 px-3 py-2">
+          <p className="text-sm font-medium">Da pianificare</p>
+          <p className="text-xs text-muted-foreground">Manca ancora: {planningGaps.join(', ')}</p>
         </div>
       )}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground w-20">Cliente</span>
+          <span className="text-sm text-muted-foreground w-24">Cliente</span>
           <span className="text-sm font-medium flex items-center gap-1.5">
             {isMissingValue(clientName) ? <MissingValue /> : clientName}
             {isMissingValue(appointment.clientPhone) ? (
@@ -334,7 +340,7 @@ export function AppointmentDetail({
         </div>
         {coOwners.map((owner) => (
           <div key={owner.slot} className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground w-20">Proprietario {owner.slot}</span>
+            <span className="text-sm text-muted-foreground w-24">Proprietario {owner.slot}</span>
             <span className="text-sm font-medium">
               {owner.name || '—'}
               <span className="text-muted-foreground font-normal"> · {owner.phone || '—'}</span>
@@ -342,19 +348,15 @@ export function AppointmentDetail({
           </div>
         ))}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground w-20">Cane</span>
-          <span className="text-sm font-medium">{appointment.dogName}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground w-20">Servizio</span>
+          <span className="text-sm text-muted-foreground w-24">Servizio</span>
           {appointment.serviceName ? (
             <span className="text-sm font-medium">{appointment.serviceName}</span>
           ) : (
-            <span className="text-sm font-medium text-amber-700 italic">Da definire</span>
+            <span className="text-sm text-muted-foreground">Da definire</span>
           )}
         </div>
         <div className="flex items-start gap-2">
-          <span className="text-sm text-muted-foreground w-20 pt-1">Persona</span>
+          <span className="text-sm text-muted-foreground w-24 pt-1">Persona</span>
           {editingStaff ? (
             <div className="flex items-center gap-2 flex-1">
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
@@ -369,20 +371,19 @@ export function AppointmentDetail({
               </Select>
               <Button
                 size="sm"
-                className="h-8"
                 disabled={isReassigning || selectedUserId === appointment.userId}
                 onClick={() => executeReassignStaff({ id: appointmentId, userId: selectedUserId })}
               >
-                {isReassigning ? <Loader2 className="size-3 animate-spin" /> : 'Salva'}
+                {isReassigning ? <Loader2 className="size-4 animate-spin" /> : 'Salva'}
               </Button>
-              <Button size="sm" variant="ghost" className="h-8" onClick={() => { setEditingStaff(false); setSelectedUserId(appointment.userId ?? '') }}>
+              <Button size="sm" variant="ghost" onClick={() => { setEditingStaff(false); setSelectedUserId(appointment.userId ?? '') }}>
                 Annulla
               </Button>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{appointment.userName ?? 'Non assegnato'}</span>
-              <Button size="sm" variant="ghost" className="h-6 px-2 text-xs text-muted-foreground" onClick={() => setEditingStaff(true)}>
+              <Button size="sm" variant="ghost" className="px-2 text-xs text-muted-foreground" onClick={() => setEditingStaff(true)}>
                 {appointment.userName ? 'Cambia' : 'Assegna'}
               </Button>
             </div>
@@ -390,30 +391,30 @@ export function AppointmentDetail({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground w-20">Postazione</span>
+          <span className="text-sm text-muted-foreground w-24">Postazione</span>
           {appointment.stationName ? (
             <span className="text-sm font-medium">{appointment.stationName}</span>
           ) : (
-            <span className="text-sm font-medium text-amber-700 italic">Da assegnare</span>
+            <span className="text-sm text-muted-foreground">Da assegnare</span>
           )}
         </div>
 
-        <div className="border-t pt-3 flex flex-col gap-3">
+        <div className="mt-1 border-t pt-4 flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground w-20">Data</span>
+            <span className="text-sm text-muted-foreground w-24">Data</span>
             <span className="text-sm font-medium">
               {format(startTime, "EEE d MMM yyyy", { locale: it })}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground w-20">Orario</span>
-            <span className="text-sm font-medium">
-              {formatTime(startTime)} - {formatTime(endTime)} ({formatDuration(durationMinutes)})
+            <span className="text-sm text-muted-foreground w-24">Orario</span>
+            <span className="text-sm font-medium tabular-nums">
+              {formatTime(startTime)} – {formatTime(endTime)} ({formatDuration(durationMinutes)})
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground w-20">Prezzo</span>
-            <span className="text-sm font-medium">{formatPriceOrDash(appointment.price)}</span>
+            <span className="text-sm text-muted-foreground w-24">Prezzo</span>
+            <span className="text-sm font-medium tabular-nums">{formatPriceOrDash(appointment.price)}</span>
           </div>
         </div>
       </div>
@@ -421,54 +422,57 @@ export function AppointmentDetail({
       {/* Chiusura: a prestazione finita si conferma il prezzo effettivo e
           l'appuntamento e' confermato. Da li' si ripete per la volta successiva. */}
       {isClosed ? (
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2">
-          <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-800">
-            <Check className="size-4" />
+        <div className="rounded-md border border-slot-free-busy bg-slot-free/60 px-3 py-3">
+          <p className="flex items-center gap-2 text-sm font-medium">
+            <Check className="size-4 text-brand-success" />
             Chiuso il {format(new Date(appointment.closedAt!), 'd MMM yyyy', { locale: it })}
             {appointment.closedByName ? ` da ${appointment.closedByName}` : ''}
           </p>
-          <p className="text-xs text-emerald-700">
+          <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
             Prezzo confermato: {formatPriceOrDash(appointment.price)}
           </p>
           <Button
             variant="ghost"
             size="sm"
-            className="mt-1 h-7 px-2 text-xs text-emerald-800 hover:text-emerald-900"
+            className="mt-2 px-2 text-xs"
             onClick={() => executeReopen({ id: appointmentId })}
             disabled={isReopening}
           >
-            <RotateCcw className="size-3 mr-1" />
+            <RotateCcw className="size-4 mr-2" />
             Riapri
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2">
+        <div className="rounded-md border bg-muted/40 px-3 py-3">
           <p className="text-sm font-medium">Chiusura appuntamento</p>
-          <p className="text-xs text-muted-foreground">
-            A prestazione finita, conferma qui il prezzo per chiudere.
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            A prestazione finita, conferma qui il prezzo per chiudere
           </p>
           {lastVisit && (
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground tabular-nums">
               Ultimo appuntamento: {formatPriceOrDash(lastVisit.price)} il{' '}
               {format(new Date(lastVisit.startTime), 'd MMM yyyy', { locale: it })}
               {lastVisit.userName ? ` · ${lastVisit.userName}` : ''}
             </p>
           )}
-          <div className="mt-2 flex items-end gap-2">
+          <div className="mt-3 flex items-end gap-2">
             <div>
               <Label htmlFor="ad-close-price" className="mb-1 block text-xs text-muted-foreground">
-                Prezzo (EUR)
+                Prezzo
               </Label>
-              <Input
-                id="ad-close-price"
-                type="number"
-                min={0}
-                step={1}
-                inputMode="decimal"
-                value={closePriceEur}
-                onChange={(e) => setClosePriceEur(e.target.value)}
-                className="h-9 w-28"
-              />
+              <div className="flex items-center gap-1.5">
+                <Input
+                  id="ad-close-price"
+                  type="number"
+                  min={0}
+                  step={1}
+                  inputMode="decimal"
+                  value={closePriceEur}
+                  onChange={(e) => setClosePriceEur(e.target.value)}
+                  className="h-9 w-24 tabular-nums"
+                />
+                <span className="text-sm text-muted-foreground">&euro;</span>
+              </div>
             </div>
             <Button
               className="h-9"
@@ -485,13 +489,13 @@ export function AppointmentDetail({
         </div>
       )}
 
-      <div className="border-t pt-3 flex flex-col gap-2">
-        <p className="text-sm font-medium">Note Prestazione</p>
+      <div className="border-t pt-4 flex flex-col gap-2">
+        <p className="text-sm font-medium">Note prestazione</p>
         <Textarea
           ref={notesTextareaRef}
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}
-          placeholder="Aggiungi una nota sulla prestazione..."
+          placeholder="Nota per chi lavora sul cane"
           rows={3}
         />
         <Button
@@ -501,20 +505,20 @@ export function AppointmentDetail({
           disabled={isSavingNote}
           className="self-start"
         >
-          {isSavingNote ? <Loader2 className="size-3 animate-spin mr-2" /> : null}
-          Salva Nota
+          {isSavingNote ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
+          Salva nota
         </Button>
 
         {serviceNotes.length > 0 && (
-          <div className="mt-3 pt-3 border-t">
-            <p className="text-xs text-muted-foreground font-medium mb-2">Storico note prestazione</p>
+          <div className="mt-2 pt-4 border-t">
+            <p className="mb-2 text-xs font-medium text-muted-foreground">Note delle volte precedenti</p>
             <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
               {serviceNotes.map((note) => (
-                <div key={note.id} className="text-xs border rounded-md p-2 bg-muted/30">
-                  <p className="text-muted-foreground mb-1">
+                <div key={note.id} className="rounded-md border bg-muted/40 p-2 text-xs">
+                  <p className="mb-1 text-muted-foreground">
                     {format(new Date(note.startTime), 'd MMM yyyy', { locale: it })} · {note.serviceName}
                   </p>
-                  <p className="text-foreground">{note.notes}</p>
+                  <p>{note.notes}</p>
                 </div>
               ))}
             </div>
@@ -522,54 +526,46 @@ export function AppointmentDetail({
         )}
       </div>
 
-      <div className="flex flex-col gap-2 pt-2 border-t">
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => setIsRepeating(true)}
-        >
-          <CalendarPlus className="size-4 mr-2" />
-          Nuovo appuntamento da questo
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => setIsEditingAppointment(true)}
-        >
-          <Pencil className="size-4 mr-2" />
-          Modifica appuntamento
-        </Button>
-        {appointment.serviceId ? (
-          <Link href={`/appointments/${appointmentId}/checkout`} className="w-full">
-            <Button variant="outline" className="w-full">
-              <ShoppingBag className="size-4 mr-2" />
-              Vendi Prodotti
-            </Button>
-          </Link>
-        ) : (
-          <Button variant="outline" className="w-full" disabled title="Serve prima il servizio">
-            <ShoppingBag className="size-4 mr-2" />
-            Vendi Prodotti
+      {/* Le azioni restano tutte in vista, ma non pesano uguale: quella che si usa a
+          fine prestazione e' il bottone pieno piu' in alto, queste sono di servizio,
+          e cancellare non deve stare a un dito di distanza dalle altre. */}
+      <div className="flex flex-col gap-3 pt-4 border-t">
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" onClick={() => setIsRepeating(true)}>
+            <CalendarPlus className="size-4 mr-2" />
+            Ripeti appuntamento
           </Button>
-        )}
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => onMove(appointmentId)}
-          >
+          <Button variant="outline" onClick={() => setIsEditingAppointment(true)}>
+            <Pencil className="size-4 mr-2" />
+            Modifica
+          </Button>
+          {appointment.serviceId ? (
+            <Link href={`/appointments/${appointmentId}/checkout`}>
+              <Button variant="outline" className="w-full">
+                <ShoppingBag className="size-4 mr-2" />
+                Vendi prodotti
+              </Button>
+            </Link>
+          ) : (
+            <Button variant="outline" disabled title="Serve prima il servizio">
+              <ShoppingBag className="size-4 mr-2" />
+              Vendi prodotti
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => onMove(appointmentId)}>
             <ArrowRightLeft className="size-4 mr-2" />
             Sposta
           </Button>
-          <Button
-            variant="destructive"
-            className="flex-1"
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            <Trash2 className="size-4 mr-2" />
-            Cancella
-          </Button>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="self-end text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setShowDeleteConfirm(true)}
+        >
+          <Trash2 className="size-4 mr-2" />
+          Cancella appuntamento
+        </Button>
       </div>
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
@@ -585,7 +581,7 @@ export function AppointmentDetail({
             <AlertDialogAction
               onClick={() => executeDelete({ id: appointmentId })}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
               {isDeleting ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
               Cancella

@@ -18,6 +18,7 @@ import {
   computeOverlapLanes,
   generateTimeSlots,
   getUserColor,
+  STAFF_FALLBACK_COLORS,
   minutesToTime,
   timeToMinutes,
   utcMinutesOfDay,
@@ -68,14 +69,6 @@ const DAY_END = '22:00'
 
 // Soglia oltre la quale un pointerdown diventa un trascinamento e non un click.
 const DRAG_THRESHOLD_PX = 4
-
-const STAFF_COLORS = [
-  { bg: 'rgba(219,234,254,0.85)', border: '#60a5fa' },
-  { bg: 'rgba(209,250,229,0.85)', border: '#34d399' },
-  { bg: 'rgba(237,233,254,0.85)', border: '#a78bfa' },
-  { bg: 'rgba(254,243,199,0.85)', border: '#fbbf24' },
-  { bg: 'rgba(254,226,226,0.85)', border: '#f87171' },
-]
 
 type DragInfo = {
   id: string
@@ -386,7 +379,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
           </span>
         )}
         {stationCount > 0 && (
-          <span className={cn(isOverCapacity && 'font-medium text-amber-700')}>
+          <span className={cn(isOverCapacity && 'font-medium text-brand-warning')}>
             {isOverCapacity
               ? `fino a ${maxLanes} in contemporanea su ${stationCount} postazioni`
               : `${stationCount} ${stationCount === 1 ? 'postazione' : 'postazioni'}`}
@@ -408,7 +401,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
   const formBody = (time: string, initial?: BookingInitialValues) => (
     <div className="flex flex-col gap-3">
       {telefonoDi(initial) && (
-        <div className="flex flex-col gap-1 rounded-md border border-sky-200 bg-sky-50/50 p-2">
+        <div className="flex flex-col gap-1 rounded-md border border-border bg-accent p-2">
           <PhoneBadge label={telefonoDi(initial)!.label} className="self-start" />
           {telefonoDi(initial)!.notes && (
             <p className="text-xs text-muted-foreground">{telefonoDi(initial)!.notes}</p>
@@ -488,7 +481,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
                 <div
                   key={slot}
                   className={cn(
-                    'flex items-start justify-end pr-1.5 text-[10px] leading-none',
+                    'flex items-start justify-end pr-1.5 text-[11px] leading-none',
                     isHour ? 'font-semibold text-foreground' : 'text-muted-foreground'
                   )}
                   style={{ height: `${SLOT_HEIGHT_PX}px`, paddingTop: '2px' }}
@@ -518,7 +511,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
               {activeStaff.map((person, personIdx) => {
                 const color = person.color
                   ? getUserColor(person.color)
-                  : STAFF_COLORS[personIdx % STAFF_COLORS.length]
+                  : STAFF_FALLBACK_COLORS[personIdx % STAFF_FALLBACK_COLORS.length]
                 const barLeft = (personIdx / activeStaff.length) * 100
                 const barWidth = 100 / activeStaff.length
                 const shortName = person.name.split(' ')[0].slice(0, 4)
@@ -545,7 +538,7 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
                         title={`${person.name}: ${shift.startTime}–${shift.endTime}`}
                       >
                         <span
-                          className="truncate px-0.5 text-[9px] font-semibold leading-tight"
+                          className="truncate px-1 text-[10px] font-medium leading-tight"
                           style={{ color: color.border }}
                         >
                           {shortName}

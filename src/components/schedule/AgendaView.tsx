@@ -442,7 +442,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
       variant="outline"
       size="sm"
       onClick={() => setTrayOpen(true)}
-      className="border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 hover:text-amber-900"
+      className="border-slot-understaffed bg-slot-understaffed/40 hover:bg-slot-understaffed/70"
       title="Appuntamenti prenotati ma non ancora pianificati"
     >
       <ClipboardList className="size-4" />
@@ -561,15 +561,15 @@ export function AgendaView({ locations }: AgendaViewProps) {
     <div className="flex flex-col gap-4">
       {/* Banner spostamento — solo in modalità giornaliera */}
       {viewMode === 'day' && movingAppointment && (
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm text-amber-800">
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-slot-understaffed bg-slot-understaffed/40 px-4 py-3">
+          <p className="text-sm">
             Tocca un nuovo slot per spostare &quot;{movingAppointment.serviceName}&quot;
           </p>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleMoveCancel}
-            className="text-amber-800 hover:text-amber-900 hover:bg-amber-100"
+            className="hover:bg-slot-understaffed/70"
           >
             <X className="size-4" />
             <span className="ml-1">Annulla</span>
@@ -654,7 +654,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
         <Sheet open={!!selectedAppointmentId} onOpenChange={(open) => { if (!open) handleDetailClose() }}>
           <SheetContent side="bottom" className="h-auto max-h-[80vh] overflow-y-auto">
             <SheetHeader>
-              <SheetTitle>Dettaglio Appuntamento</SheetTitle>
+              <SheetTitle>Dettaglio appuntamento</SheetTitle>
             </SheetHeader>
             {selectedAppointmentId && (
               <AppointmentDetail
@@ -673,7 +673,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
         <Dialog open={!!selectedAppointmentId} onOpenChange={(open) => { if (!open) handleDetailClose() }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>Dettaglio Appuntamento</DialogTitle>
+              <DialogTitle>Dettaglio appuntamento</DialogTitle>
             </DialogHeader>
             {selectedAppointmentId && (
               <AppointmentDetail
@@ -705,7 +705,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
               unplanned.map((appt) => {
                 const start = new Date(appt.startTime)
                 return (
-                  <div key={appt.id} className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <div key={appt.id} className="rounded-md border border-slot-understaffed bg-slot-understaffed/40 p-3">
                     <div className="flex items-baseline justify-between gap-2">
                       <p className="text-sm font-medium">
                         {appt.dogName}
@@ -717,7 +717,7 @@ export function AgendaView({ locations }: AgendaViewProps) {
                         {String(start.getUTCMinutes()).padStart(2, '0')}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-amber-700">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Manca: {missingPlanningFields(appt).join(', ')}
                     </p>
                     {phoneLabel(appt) && <PhoneBadge label={phoneLabel(appt)!} className="mt-1.5" />}

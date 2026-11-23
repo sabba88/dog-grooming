@@ -7,13 +7,14 @@ import { isDaPianificare } from '@/lib/utils/appointment'
 import { EmptySlot } from './EmptySlot'
 import {
   generateTimeSlots,
-  getServiceColor,
+  getServiceSpine,
   getUserColor,
   timeToMinutes,
   utcMinutesOfDay,
   MINUTES_PER_SLOT,
   UNASSIGNED_KEY,
   UNASSIGNED_LABEL,
+  UNASSIGNED_FILL,
 } from '@/lib/utils/schedule'
 import type { StaffStatus, ShiftInfo } from '@/lib/queries/staff'
 
@@ -86,7 +87,6 @@ function ColumnTimeline({
   column,
   groupBy,
   appointments,
-  allServiceIds,
   staff,
   dateString,
   globalOpen,
@@ -101,7 +101,6 @@ function ColumnTimeline({
   column: Column
   groupBy: 'station' | 'person'
   appointments: Appointment[]
-  allServiceIds: (string | null)[]
   staff: Person[]
   stationNameById: Map<string, string>
   dateString: string
@@ -156,7 +155,8 @@ function ColumnTimeline({
               <div className="flex-1 flex flex-col gap-2">
                 {startingHere.map((appt) => {
                   const staffMember = staff.find(p => p.id === appt.userId)
-                  const color = staffMember?.color ? getUserColor(staffMember.color) : getServiceColor(appt.serviceId, allServiceIds)
+                  const fill = staffMember?.color ? getUserColor(staffMember.color).bg : UNASSIGNED_FILL
+                  const spine = getServiceSpine(appt.serviceId)
                   return (
                     <AppointmentBlock
                       key={appt.id}
@@ -174,7 +174,8 @@ function ColumnTimeline({
                       closed={!!appt.closedAt}
                       startTime={appt.startTime}
                       endTime={appt.endTime}
-                      color={color}
+                      fill={fill}
+                      spine={spine}
                       variant="timeline"
                       onClick={onAppointmentClick}
                       isMoving={movingAppointmentId === appt.id}
@@ -230,7 +231,6 @@ export function ScheduleTimeline({
   movingAppointmentId,
   onContextAction,
 }: ScheduleTimelineProps) {
-  const allServiceIds = [...new Set(appointments.map((a) => a.serviceId))]
   const activeStaff = staff.filter(p => p.overallStatus === 'active')
 
   // Il tab "Da assegnare" compare solo se ci sono davvero appuntamenti senza
@@ -255,7 +255,6 @@ export function ScheduleTimeline({
 
   const timelineProps = {
     groupBy,
-    allServiceIds,
     staff,
     // In vista persone la colonna e' il collaboratore: la postazione va scritta sul blocco.
     stationNameById: new Map(stations.map(s => [s.id, s.name])),

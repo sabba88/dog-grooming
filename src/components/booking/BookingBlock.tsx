@@ -55,10 +55,13 @@ export function BookingBlock({
       onClick={() => onClick?.(id)}
       title={title}
       className={cn(
-        'absolute inset-x-0.5 overflow-hidden rounded-md px-1.5 py-1 text-left transition-shadow hover:shadow-md z-10',
+        'absolute inset-x-0.5 overflow-hidden rounded-md px-1.5 py-1 text-left z-10',
+        'ring-1 ring-transparent transition-shadow hover:ring-foreground/25',
+        // Solida la prenotazione a posto, tratteggiata quella ancora da pianificare:
+        // stesso linguaggio dei blocchi in agenda.
         daPianificare
-          ? 'border border-dashed border-amber-500 bg-amber-50'
-          : 'border border-emerald-300 bg-emerald-50'
+          ? 'border border-dashed border-muted-foreground/50 bg-muted'
+          : 'border border-border bg-accent'
       )}
       style={{ ...style, minHeight: '44px' }}
     >
@@ -78,8 +81,7 @@ export function BookingBlock({
       </p>
       <p
         className={cn(
-          'truncate text-xs',
-          serviceName ? 'text-muted-foreground' : 'italic text-amber-700'
+          'truncate text-xs text-muted-foreground'
         )}
       >
         {serviceName ?? DA_PIANIFICARE_LABEL}
