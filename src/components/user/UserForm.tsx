@@ -37,10 +37,33 @@ import { useAction } from 'next-safe-action/hooks'
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 
-const PRESET_COLORS = [
-  '#3B82F6', '#22C55E', '#A855F7', '#F97316',
-  '#EC4899', '#EF4444', '#14B8A6', '#EAB308',
-  '#6366F1', '#84CC16', '#06B6D4', '#F43F5E',
+/*
+ * Sette tinte, non piu' dodici, e in quest'ordine: chi assegna i colori parte
+ * dalla prima, e con pochi collaboratori si ritrova lo stacco massimo.
+ *
+ * Le dodici di prima erano tinte Tailwind scelte a occhio e tre coppie
+ * collassavano: indigo e viola davano ΔE 0.9 per un daltonismo rosso-verde
+ * (indistinguibili), rosa e rosso 3.5 perfino a vista piena, e sei su dodici
+ * stavano sotto 3:1 sul fondo crema, cioe' il pallino non si vedeva.
+ *
+ * Queste passano il validatore della skill dataviz su TUTTE le coppie (due
+ * collaboratori qualsiasi possono finire affiancati, quindi non basta il
+ * controllo sulle coppie adiacenti): banda di luminosita', croma, separazione
+ * per protanopia e deuteranopia (peggiore ΔE 8.3), soglia a vista piena
+ * (peggiore 15.6) e contrasto, sulle quattro superfici del tema - crema e card
+ * bianca del chiaro, fondo e card dello scuro. Sette e' il massimo: aggiungendo
+ * un'ottava tinta una coppia qualsiasi scende sotto soglia.
+ *
+ * Non cambiarle a occhio e non aggiungerne: rifare passare dal validatore.
+ */
+const PRESET_COLORS: { hex: string; nome: string }[] = [
+  { hex: '#739100', nome: 'Oliva' },
+  { hex: '#AA38AD', nome: 'Magenta' },
+  { hex: '#8E77FC', nome: 'Lavanda' },
+  { hex: '#EF4C77', nome: 'Rosa' },
+  { hex: '#9B540E', nome: 'Cuoio' },
+  { hex: '#0066DE', nome: 'Blu' },
+  { hex: '#089AC3', nome: 'Azzurro' },
 ]
 
 interface UserFormProps {
@@ -67,6 +90,10 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
       ? { id: user.id, name: user.name, username: user.username, role: user.role, color: user.color ?? null, password: '' }
       : { name: '', username: '', password: '', role: 'collaborator' as const, color: null },
   })
+
+  const colorCorrente = form.watch('color')
+  const colorFuoriElenco =
+    colorCorrente && !PRESET_COLORS.some((c) => c.hex === colorCorrente) ? colorCorrente : null
 
   const { execute: executeCreate, isPending: isCreating } = useAction(createUser, {
     onSuccess: () => {
@@ -211,9 +238,9 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
           <button
             type="button"
             onClick={() => form.setValue('color', null)}
-            aria-pressed={!form.watch('color')}
+            aria-pressed={!colorCorrente}
             className={`flex size-7 items-center justify-center rounded-full border border-border bg-muted text-muted-foreground transition-shadow ${
-              !form.watch('color')
+              !colorCorrente
                 ? 'ring-2 ring-ring ring-offset-2 ring-offset-background'
                 : 'hover:ring-1 hover:ring-border'
             }`}
@@ -222,23 +249,37 @@ export function UserForm({ open, onOpenChange, onSuccess, user }: UserFormProps)
             <X className="size-3.5" />
             <span className="sr-only">Nessun colore</span>
           </button>
-          {PRESET_COLORS.map((c) => (
+          {PRESET_COLORS.map(({ hex, nome }) => (
             <button
-              key={c}
+              key={hex}
               type="button"
-              onClick={() => form.setValue('color', c)}
-              aria-pressed={form.watch('color') === c}
+              onClick={() => form.setValue('color', hex)}
+              aria-pressed={colorCorrente === hex}
               className={`size-7 rounded-full ring-1 ring-border transition-shadow ${
-                form.watch('color') === c
+                colorCorrente === hex
                   ? 'ring-2 ring-ring ring-offset-2 ring-offset-background'
                   : ''
               }`}
-              style={{ backgroundColor: c }}
-              title={c}
+              style={{ backgroundColor: hex }}
+              title={nome}
             >
-              <span className="sr-only">Colore {c}</span>
+              <span className="sr-only">{nome}</span>
             </button>
           ))}
+          {/* I collaboratori gia' in archivio hanno i colori vecchi, che sono dati
+              nella tabella users: senza questa pastiglia aprire la scheda mostrerebbe
+              nessuna selezione e il colore sparirebbe al primo salvataggio. */}
+          {colorFuoriElenco && (
+            <button
+              type="button"
+              aria-pressed
+              className="size-7 rounded-full ring-2 ring-ring ring-offset-2 ring-offset-background"
+              style={{ backgroundColor: colorFuoriElenco }}
+              title="Colore attuale, fuori dall'elenco"
+            >
+              <span className="sr-only">Colore attuale {colorFuoriElenco}</span>
+            </button>
+          )}
         </div>
       </div>
 

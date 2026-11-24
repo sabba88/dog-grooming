@@ -537,10 +537,10 @@ export function BookingCalendar({ locations }: BookingCalendarProps) {
                         }}
                         title={`${person.name}: ${shift.startTime}–${shift.endTime}`}
                       >
-                        <span
-                          className="truncate px-1 text-[10px] font-medium leading-tight"
-                          style={{ color: color.border }}
-                        >
+                        {/* Come in agenda: il nome veste l'inchiostro del tema, non
+                            il colore del collaboratore, che a 10px sul riempimento
+                            pallido non arrivava nemmeno a 3:1. */}
+                        <span className="truncate px-1 text-[10px] font-medium leading-tight text-foreground">
                           {shortName}
                         </span>
                       </div>

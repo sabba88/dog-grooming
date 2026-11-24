@@ -449,10 +449,11 @@ export function ScheduleGrid({
                       }}
                       title={`${person.name}: ${shift.startTime}–${shift.endTime}`}
                     >
-                      <span
-                        className="text-[10px] font-medium px-1 leading-tight truncate"
-                        style={{ color: color.border }}
-                      >
+                      {/* Il nome veste l'inchiostro del tema, non il colore del
+                          collaboratore: su quel riempimento pallido il colore pieno
+                          dava anche 1.7 di contrasto (il giallo), illeggibile a 10px.
+                          L'identita' la portano la fascia e il bordo, non il testo. */}
+                      <span className="text-[10px] font-medium px-1 leading-tight truncate text-foreground">
                         {shortName}
                       </span>
                     </div>
