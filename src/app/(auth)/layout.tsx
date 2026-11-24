@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header'
 import { BottomBar } from '@/components/layout/BottomBar'
 import { getLocations } from '@/lib/queries/locations'
 import { countUnreadPhoneMessages } from '@/lib/queries/phone-messages'
+import { MESSAGGI_TELEFONO_VISIBILI } from '@/lib/feature-flags'
 import type { UserRole } from '@/lib/auth/permissions'
 
 export default async function AuthLayout({
@@ -18,8 +19,12 @@ export default async function AuthLayout({
 
   const userRole = (session.user.role as UserRole) || 'collaborator'
   const userName = session.user.name || ''
+  // Con i messaggi nascosti il contatore non si vede: non vale una query per pagina.
   const [locations, unreadMessages] = session.user.tenantId
-    ? await Promise.all([getLocations(session.user.tenantId), countUnreadPhoneMessages(session.user.tenantId)])
+    ? await Promise.all([
+        getLocations(session.user.tenantId),
+        MESSAGGI_TELEFONO_VISIBILI ? countUnreadPhoneMessages(session.user.tenantId) : 0,
+      ])
     : [[], 0]
 
   return (

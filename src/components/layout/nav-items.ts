@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   MessageSquare,
 } from 'lucide-react'
+import { MESSAGGI_TELEFONO_VISIBILI } from '@/lib/feature-flags'
 import type { UserRole } from '@/lib/auth/permissions'
 import type { LucideIcon } from 'lucide-react'
 
@@ -21,7 +22,7 @@ export type NavItem = {
   roles: UserRole[]
 }
 
-export const mainNavItems: NavItem[] = [
+const tutteLeVociPrincipali: NavItem[] = [
   // Prenotazioni e' la schermata di lavoro quotidiana: viene prima.
   { label: 'Prenotazioni', href: '/bookings', icon: CalendarPlus, roles: ['admin', 'collaborator'] },
   { label: 'Pianificazione', href: '/agenda', icon: Calendar, roles: ['admin', 'collaborator'] },
@@ -35,6 +36,12 @@ export const mainNavItems: NavItem[] = [
   { label: 'Shop', href: '/shop', icon: ShoppingBag, roles: ['admin'] },
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'collaborator'] },
 ]
+
+// La voce resta scritta al suo posto qui sopra: quando il flag torna true riappare
+// dov'era, fra Clienti e Cani, senza doverla rimettere a mano.
+export const mainNavItems: NavItem[] = tutteLeVociPrincipali.filter(
+  (item) => item.href !== '/messages' || MESSAGGI_TELEFONO_VISIBILI
+)
 
 export const footerNavItems: NavItem[] = [
   { label: 'Impostazioni', href: '/settings', icon: Settings, roles: ['admin'] },
@@ -55,6 +62,7 @@ export const pageTitles: Record<string, string> = {
   '/bookings': 'Prenotazioni',
   '/agenda': 'Pianificazione',
   '/clients': 'Clienti',
+  // Il titolo resta: serve se la pagina torna visibile, e non costa nulla qui.
   '/messages': 'Messaggi dal telefono',
   '/dogs': 'Cani',
   '/services': 'Servizi',
